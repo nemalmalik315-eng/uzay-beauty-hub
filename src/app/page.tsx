@@ -59,7 +59,7 @@ export default function Home() {
               alt="Uzay Beauty Hub"
               width={140}
               height={140}
-              className="rounded-full shadow-2xl border-4 border-gold/30"
+              className="rounded-full border-2 border-gold/20"
             />
           </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 leading-tight hero-animate hero-animate-2">
@@ -180,7 +180,7 @@ export default function Home() {
                 ),
               },
             ].map((item) => (
-              <div key={item.title} className="bg-cream rounded-xl p-8 text-center border border-gold/10 hover:border-gold/30 transition-colors">
+              <div key={item.title} className="bg-cream rounded-lg p-8 text-center border border-stone-200 hover:border-gold/40 transition-colors">
                 <div className="w-16 h-16 bg-gold-light rounded-full flex items-center justify-center mx-auto mb-5 text-gold">
                   {item.icon}
                 </div>
@@ -229,7 +229,7 @@ export default function Home() {
             ].map((img, i) => (
               <div
                 key={i}
-                className="relative overflow-hidden rounded-xl group break-inside-avoid"
+                className="relative overflow-hidden rounded-lg group break-inside-avoid"
               >
                 <Image
                   src={img.src}

@@ -29,7 +29,7 @@ export default function AboutPage() {
                   alt="Uzay Beauty Hub"
                   width={200}
                   height={200}
-                  className="rounded-2xl shadow-lg"
+                  className="rounded-lg"
                 />
               </div>
               <div>

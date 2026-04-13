@@ -57,7 +57,7 @@ export default function FAQ() {
           {faqs.map((faq, i) => (
             <div
               key={i}
-              className="border border-gray-100 rounded-xl overflow-hidden bg-cream/50 hover:border-gold/30 transition-colors"
+              className="border border-stone-200 rounded-lg overflow-hidden hover:border-gold/30 transition-colors"
             >
               <button
                 onClick={() => setOpen(open === i ? null : i)}

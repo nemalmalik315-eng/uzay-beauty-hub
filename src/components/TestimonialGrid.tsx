@@ -55,7 +55,7 @@ export default function TestimonialGrid() {
         {visible.map((review, i) => (
           <div
             key={i}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col"
+            className="bg-white rounded-lg p-6 border border-stone-200 hover:shadow-sm transition-shadow flex flex-col"
           >
             <div className="flex text-yellow-400 text-sm mb-3">
               {"★★★★★"}

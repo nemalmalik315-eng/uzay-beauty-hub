@@ -158,7 +158,7 @@ export default function Footer() {
         href="https://wa.me/923344198243?text=Hi!%20I%20would%20like%20to%20book%20an%20appointment%20at%20Uzay%20Beauty%20Hub"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg whatsapp-pulse transition-colors"
+        className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-md whatsapp-pulse transition-colors"
         aria-label="Chat on WhatsApp"
       >
         <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">

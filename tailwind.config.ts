@@ -10,23 +10,23 @@ const config: Config = {
     extend: {
       colors: {
         gold: {
-          DEFAULT: "#c5a03f",
-          light: "#f5e6c8",
-          dark: "#a8872e",
+          DEFAULT: "#b8963e",
+          light: "#f0e6d3",
+          dark: "#9a7d2e",
         },
         charcoal: {
           DEFAULT: "#2a2a2a",
           light: "#3d3d3d",
-          dark: "#1a1a1a",
+          dark: "#171717",
         },
         cream: {
-          DEFAULT: "#faf8f5",
-          dark: "#f0ece5",
+          DEFAULT: "#fafaf9",
+          dark: "#f5f5f4",
         },
       },
       fontFamily: {
-        heading: ["Playfair Display", "serif"],
-        body: ["Inter", "sans-serif"],
+        heading: ["Cormorant Garamond", "serif"],
+        body: ["DM Sans", "sans-serif"],
       },
     },
   },

@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
             alt="Uzay Beauty Hub"
             width={80}
             height={80}
-            className="rounded-full mx-auto mb-4 shadow-lg"
+            className="rounded-full mx-auto mb-4"
           />
           <h1 className="font-heading text-2xl font-bold text-charcoal">
             Admin Panel

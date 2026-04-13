@@ -151,7 +151,7 @@ export default function BookPage() {
                         key={service.id}
                         type="button"
                         onClick={() => toggleService(service.id)}
-                        className={`relative text-left p-4 rounded-xl border-2 transition-all ${
+                        className={`relative text-left p-4 rounded-lg border transition-all ${
                           isSelected
                             ? "border-gold bg-gold/5 shadow-sm"
                             : "border-gray-100 bg-white hover:border-gold/30"
@@ -189,7 +189,7 @@ export default function BookPage() {
 
                 {/* Selected Summary */}
                 {selectedDetails.length > 0 && (
-                  <div className="mt-6 p-4 bg-gold/5 border border-gold/20 rounded-xl">
+                  <div className="mt-6 p-4 bg-gold/5 border border-gold/20 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm font-medium text-charcoal">
                         {selectedDetails.length} service{selectedDetails.length > 1 ? "s" : ""} selected
