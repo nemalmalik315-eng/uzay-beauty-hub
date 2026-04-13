@@ -46,7 +46,6 @@ export default function BookPage() {
 
   const selectedDetails = services.filter((s) => selectedServices.includes(s.id));
   const totalPrice = selectedDetails.reduce((sum, s) => sum + s.price, 0);
-  const totalDuration = selectedDetails.reduce((sum, s) => sum + s.duration, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,9 +166,6 @@ export default function BookPage() {
                               <span className="text-gold font-semibold text-sm">
                                 Rs. {service.price.toLocaleString()}
                               </span>
-                              <span className="text-gray-400 text-xs">
-                                {service.duration} min
-                              </span>
                             </div>
                           </div>
                           <div
@@ -218,9 +214,6 @@ export default function BookPage() {
                       <div>
                         <p className="text-sm font-bold text-charcoal">
                           Total: Rs. {totalPrice.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          ~{totalDuration} min estimated
                         </p>
                       </div>
                     </div>
