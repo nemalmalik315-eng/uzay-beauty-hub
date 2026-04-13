@@ -9,15 +9,14 @@
     "seed": "node src/lib/seed.js"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.2",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.8.0",
     "next": "^14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "autoprefixer": "^10.4.27",

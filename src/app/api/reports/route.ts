@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const db = getDb();
   const { searchParams } = new URL(req.url);
-  const type = searchParams.get("type") || "daily"; // daily, weekly, monthly
+  const type = searchParams.get("type") || "daily";
 
   let query = "";
 
@@ -51,24 +51,22 @@ export async function GET(req: NextRequest) {
     `;
   }
 
-  const data = db.prepare(query).all();
+  const { rows: data } = await db.execute(query);
 
-  // Today's summary
-  const today = db
-    .prepare(
-      `SELECT
-        COUNT(*) as transactions,
-        COALESCE(SUM(total), 0) as revenue,
-        COALESCE(SUM(discount), 0) as discounts
-      FROM billing
-      WHERE DATE(created_at) = DATE('now')`
-    )
-    .get();
+  const { rows: todayRows } = await db.execute(`
+    SELECT
+      COUNT(*) as transactions,
+      COALESCE(SUM(total), 0) as revenue,
+      COALESCE(SUM(discount), 0) as discounts
+    FROM billing
+    WHERE DATE(created_at) = DATE('now')
+  `);
+  const today = todayRows[0];
 
-  // Total bookings today
-  const todayBookings = db
-    .prepare("SELECT COUNT(*) as count FROM bookings WHERE date = DATE('now')")
-    .get();
+  const { rows: bookingRows } = await db.execute(
+    "SELECT COUNT(*) as count FROM bookings WHERE date = DATE('now')"
+  );
+  const todayBookings = bookingRows[0];
 
   return NextResponse.json({ data, today, todayBookings });
 }

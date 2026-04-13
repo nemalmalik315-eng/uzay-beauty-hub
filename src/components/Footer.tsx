@@ -140,8 +140,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-500 text-sm">
+        <div className="border-t border-gray-700 mt-12 pt-8 flex items-center justify-between text-gray-500 text-sm">
           <p>&copy; {new Date().getFullYear()} Uzay Beauty Hub. All rights reserved.</p>
+          <Link
+            href="/admin/login"
+            className="text-gray-600 hover:text-gray-400 transition-colors text-xs"
+          >
+            Admin
+          </Link>
         </div>
       </div>
 

@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
   }
   query += " ORDER BY created_at DESC";
 
-  const customers = db.prepare(query).all(...params);
-  return NextResponse.json(customers);
+  const { rows } = await db.execute({ sql: query, args: params });
+  return NextResponse.json(rows);
 }
 
 export async function POST(req: NextRequest) {
@@ -30,9 +30,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Name and phone required" }, { status: 400 });
   }
 
-  const result = db
-    .prepare("INSERT INTO customers (name, phone, email) VALUES (?, ?, ?)")
-    .run(name, phone, email || null);
+  const result = await db.execute({
+    sql: "INSERT INTO customers (name, phone, email) VALUES (?, ?, ?)",
+    args: [name, phone, email || null],
+  });
 
   return NextResponse.json({ id: Number(result.lastInsertRowid) });
 }

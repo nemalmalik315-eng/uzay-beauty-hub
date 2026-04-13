@@ -14,15 +14,12 @@ interface Service {
 
 export const dynamic = "force-dynamic";
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
   const db = getDb();
-  const services = db
-    .prepare("SELECT * FROM services WHERE active = 1 ORDER BY category, id")
-    .all() as Service[];
+  const { rows } = await db.execute("SELECT * FROM services WHERE active = 1 ORDER BY category, id");
+  const services = rows as unknown as Service[];
 
   const categories = [...new Set(services.map((s) => s.category))];
-
-  // No emoji icons — clean professional look
 
   return (
     <>

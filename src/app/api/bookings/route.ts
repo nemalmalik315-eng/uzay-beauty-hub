@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     JOIN services s ON b.service_id = s.id
   `;
   const conditions: string[] = [];
-  const params: string[] = [];
+  const params: (string | number)[] = [];
 
   if (date) {
     conditions.push("b.date = ?");
@@ -31,8 +31,8 @@ export async function GET(req: NextRequest) {
   }
   query += " ORDER BY b.date DESC, b.time DESC";
 
-  const bookings = db.prepare(query).all(...params);
-  return NextResponse.json(bookings);
+  const { rows } = await db.execute({ sql: query, args: params });
+  return NextResponse.json(rows);
 }
 
 export async function POST(req: NextRequest) {
@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { name, phone, date, time, notes } = body;
 
-  // Support both single service_id and multiple service_ids
   const serviceIds: number[] = body.service_ids
     ? body.service_ids
     : body.service_id
@@ -52,30 +51,31 @@ export async function POST(req: NextRequest) {
   }
 
   // Find or create customer
-  let customer = db
-    .prepare("SELECT id FROM customers WHERE phone = ?")
-    .get(phone) as { id: number } | undefined;
+  const { rows: customerRows } = await db.execute({
+    sql: "SELECT id FROM customers WHERE phone = ?",
+    args: [phone],
+  });
 
-  if (!customer) {
-    const result = db
-      .prepare("INSERT INTO customers (name, phone) VALUES (?, ?)")
-      .run(name, phone);
-    customer = { id: Number(result.lastInsertRowid) };
+  let customerId: number;
+  if (customerRows.length > 0) {
+    customerId = customerRows[0].id as number;
+  } else {
+    const result = await db.execute({
+      sql: "INSERT INTO customers (name, phone) VALUES (?, ?)",
+      args: [name, phone],
+    });
+    customerId = Number(result.lastInsertRowid);
   }
 
   // Create a booking for each selected service
-  const insertStmt = db.prepare(
-    "INSERT INTO bookings (customer_id, service_id, customer_name, customer_phone, date, time, notes) VALUES (?, ?, ?, ?, ?, ?, ?)"
-  );
-
   const ids: number[] = [];
-  const insertAll = db.transaction(() => {
-    for (const sid of serviceIds) {
-      const result = insertStmt.run(customer!.id, sid, name, phone, date, time, notes || null);
-      ids.push(Number(result.lastInsertRowid));
-    }
-  });
-  insertAll();
+  for (const sid of serviceIds) {
+    const result = await db.execute({
+      sql: "INSERT INTO bookings (customer_id, service_id, customer_name, customer_phone, date, time, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      args: [customerId, sid, name, phone, date, time, notes || null],
+    });
+    ids.push(Number(result.lastInsertRowid));
+  }
 
   return NextResponse.json({
     ids,
@@ -92,6 +92,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
   }
 
-  db.prepare("UPDATE bookings SET status = ? WHERE id = ?").run(status, id);
+  await db.execute({ sql: "UPDATE bookings SET status = ? WHERE id = ?", args: [status, id] });
   return NextResponse.json({ message: "Booking updated" });
 }

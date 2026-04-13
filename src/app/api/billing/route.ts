@@ -6,12 +6,12 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const db = getDb();
   const { searchParams } = new URL(req.url);
-  const period = searchParams.get("period"); // today, week, month
+  const period = searchParams.get("period");
   const date = searchParams.get("date");
 
   let query = "SELECT * FROM billing";
   const conditions: string[] = [];
-  const params: string[] = [];
+  const params: (string | number)[] = [];
 
   if (period === "today" || (!period && !date)) {
     conditions.push("DATE(created_at) = DATE('now')");
@@ -29,20 +29,18 @@ export async function GET(req: NextRequest) {
   }
   query += " ORDER BY created_at DESC";
 
-  const bills = db.prepare(query).all(...params);
+  const { rows: bills } = await db.execute({ sql: query, args: params });
 
-  // Calculate summary
-  const summary = db
-    .prepare(
-      `SELECT
-        COALESCE(SUM(service_charge), 0) as total_charges,
-        COALESCE(SUM(discount), 0) as total_discounts,
-        COALESCE(SUM(total), 0) as total_revenue,
-        COUNT(*) as total_transactions
-      FROM billing
-      WHERE ${conditions.length > 0 ? conditions.join(" AND ") : "1=1"}`
-    )
-    .get(...params);
+  const summaryQuery = `SELECT
+    COALESCE(SUM(service_charge), 0) as total_charges,
+    COALESCE(SUM(discount), 0) as total_discounts,
+    COALESCE(SUM(total), 0) as total_revenue,
+    COUNT(*) as total_transactions
+  FROM billing
+  WHERE ${conditions.length > 0 ? conditions.join(" AND ") : "1=1"}`;
+
+  const { rows: summaryRows } = await db.execute({ sql: summaryQuery, args: params });
+  const summary = summaryRows[0];
 
   return NextResponse.json({ bills, summary });
 }
@@ -66,12 +64,10 @@ export async function POST(req: NextRequest) {
 
   const total = service_charge - discount;
 
-  const result = db
-    .prepare(
-      `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
+  const result = await db.execute({
+    sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
       booking_id || null,
       customer_id || null,
       customer_name,
@@ -79,12 +75,12 @@ export async function POST(req: NextRequest) {
       service_charge,
       discount,
       total,
-      payment_method
-    );
+      payment_method,
+    ],
+  });
 
-  // Update booking status if linked
   if (booking_id) {
-    db.prepare("UPDATE bookings SET status = 'completed' WHERE id = ?").run(booking_id);
+    await db.execute({ sql: "UPDATE bookings SET status = 'completed' WHERE id = ?", args: [booking_id] });
   }
 
   return NextResponse.json({ id: Number(result.lastInsertRowid) });

@@ -14,11 +14,12 @@ export async function GET(req: NextRequest) {
   }
   query += " ORDER BY category, product_name";
 
-  const items = db.prepare(query).all();
+  const { rows: items } = await db.execute(query);
 
-  const lowStockCount = (
-    db.prepare("SELECT COUNT(*) as count FROM stock WHERE quantity <= min_threshold").get() as { count: number }
-  ).count;
+  const { rows: countRows } = await db.execute(
+    "SELECT COUNT(*) as count FROM stock WHERE quantity <= min_threshold"
+  );
+  const lowStockCount = Number(countRows[0].count);
 
   return NextResponse.json({ items, lowStockCount });
 }
@@ -32,11 +33,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Product name and category required" }, { status: 400 });
   }
 
-  const result = db
-    .prepare(
-      "INSERT INTO stock (product_name, category, quantity, min_threshold, unit_price, last_restocked) VALUES (?, ?, ?, ?, ?, datetime('now'))"
-    )
-    .run(product_name, category, quantity || 0, min_threshold, unit_price);
+  const result = await db.execute({
+    sql: "INSERT INTO stock (product_name, category, quantity, min_threshold, unit_price, last_restocked) VALUES (?, ?, ?, ?, ?, datetime('now'))",
+    args: [product_name, category, quantity || 0, min_threshold, unit_price],
+  });
 
   return NextResponse.json({ id: Number(result.lastInsertRowid) });
 }
@@ -51,22 +51,22 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (quantity !== undefined) {
-    db.prepare("UPDATE stock SET quantity = ?, last_restocked = datetime('now') WHERE id = ?").run(
-      quantity,
-      id
-    );
+    await db.execute({
+      sql: "UPDATE stock SET quantity = ?, last_restocked = datetime('now') WHERE id = ?",
+      args: [quantity, id],
+    });
   }
   if (product_name) {
-    db.prepare("UPDATE stock SET product_name = ? WHERE id = ?").run(product_name, id);
+    await db.execute({ sql: "UPDATE stock SET product_name = ? WHERE id = ?", args: [product_name, id] });
   }
   if (category) {
-    db.prepare("UPDATE stock SET category = ? WHERE id = ?").run(category, id);
+    await db.execute({ sql: "UPDATE stock SET category = ? WHERE id = ?", args: [category, id] });
   }
   if (min_threshold !== undefined) {
-    db.prepare("UPDATE stock SET min_threshold = ? WHERE id = ?").run(min_threshold, id);
+    await db.execute({ sql: "UPDATE stock SET min_threshold = ? WHERE id = ?", args: [min_threshold, id] });
   }
   if (unit_price !== undefined) {
-    db.prepare("UPDATE stock SET unit_price = ? WHERE id = ?").run(unit_price, id);
+    await db.execute({ sql: "UPDATE stock SET unit_price = ? WHERE id = ?", args: [unit_price, id] });
   }
 
   return NextResponse.json({ message: "Stock updated" });
@@ -81,6 +81,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  db.prepare("DELETE FROM stock WHERE id = ?").run(id);
+  await db.execute({ sql: "DELETE FROM stock WHERE id = ?", args: [id] });
   return NextResponse.json({ message: "Stock deleted" });
 }
