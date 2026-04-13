@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { rows } = await db.execute({ sql: "SELECT * FROM admin_users WHERE username = ?", args: [username] });
-  const user = rows[0] as { id: number; username: string; password_hash: string } | undefined;
+  const user = rows[0] as unknown as { id: number; username: string; password_hash: string } | undefined;
 
   if (!user) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
