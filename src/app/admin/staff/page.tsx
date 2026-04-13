@@ -55,7 +55,7 @@ export default function StaffPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deactivating, setDeactivating] = useState<Employee | null>(null);
   const [empForm, setEmpForm] = useState({
-    name: "", phone: "", role: "Stylist", shift_start: "11:00",
+    name: "", phone: "", shift_start: "11:00",
   });
 
   // Attendance state
@@ -98,7 +98,7 @@ export default function StaffPage() {
     });
     if (res.ok) {
       toast("Employee added");
-      setEmpForm({ name: "", phone: "", role: "Stylist", shift_start: "11:00" });
+      setEmpForm({ name: "", phone: "", shift_start: "11:00" });
       setShowAddEmployee(false);
       loadEmployees();
       loadAttendance();
@@ -116,7 +116,6 @@ export default function StaffPage() {
         id: editingEmployee.id,
         name: empForm.name,
         phone: empForm.phone,
-        role: empForm.role,
         shift_start: empForm.shift_start,
       }),
     });
@@ -214,24 +213,6 @@ export default function StaffPage() {
                   onChange={(e) => setEmpForm({ ...empForm, phone: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
                 />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Role</label>
-                <input
-                  type="text"
-                  value={empForm.role}
-                  onChange={(e) => setEmpForm({ ...empForm, role: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
-                  list="roles-list"
-                />
-                <datalist id="roles-list">
-                  <option value="Stylist" />
-                  <option value="Senior Stylist" />
-                  <option value="Makeup Artist" />
-                  <option value="Nail Technician" />
-                  <option value="Receptionist" />
-                  <option value="Manager" />
-                </datalist>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Shift Start</label>
@@ -338,7 +319,6 @@ export default function StaffPage() {
                 <thead>
                   <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     <th className="px-6 py-3">Employee</th>
-                    <th className="px-6 py-3">Role</th>
                     <th className="px-6 py-3">Shift</th>
                     <th className="px-6 py-3">Status</th>
                     <th className="px-6 py-3">Check-in</th>
@@ -348,7 +328,7 @@ export default function StaffPage() {
                 <tbody className="divide-y divide-gray-50">
                   {attendance.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
                         No employees yet. Add team members in the Team tab.
                       </td>
                     </tr>
@@ -363,7 +343,6 @@ export default function StaffPage() {
                             <p className="text-sm font-medium text-charcoal">{row.name}</p>
                             <p className="text-xs text-gray-400">{row.phone}</p>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{row.role}</td>
                           <td className="px-6 py-4 text-sm text-gray-600">{row.shift_start}</td>
                           <td className="px-6 py-4">
                             {currentStatus ? (
@@ -420,7 +399,7 @@ export default function StaffPage() {
               <button
                 onClick={() => {
                   setShowAddEmployee(!showAddEmployee);
-                  setEmpForm({ name: "", phone: "", role: "Stylist", shift_start: "11:00" });
+                  setEmpForm({ name: "", phone: "", shift_start: "11:00" });
                 }}
                 className="btn-gold text-sm py-2"
               >
@@ -433,7 +412,7 @@ export default function StaffPage() {
           {showAddEmployee && (
             <form onSubmit={addEmployee} className="bg-white rounded-lg border border-gray-100 p-6">
               <h3 className="font-heading text-lg font-semibold mb-4">New Employee</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <input
                   type="text"
                   placeholder="Name *"
@@ -450,22 +429,6 @@ export default function StaffPage() {
                   onChange={(e) => setEmpForm({ ...empForm, phone: e.target.value })}
                   className="px-4 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
                 />
-                <input
-                  type="text"
-                  placeholder="Role"
-                  value={empForm.role}
-                  onChange={(e) => setEmpForm({ ...empForm, role: e.target.value })}
-                  className="px-4 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
-                  list="roles-list-add"
-                />
-                <datalist id="roles-list-add">
-                  <option value="Stylist" />
-                  <option value="Senior Stylist" />
-                  <option value="Makeup Artist" />
-                  <option value="Nail Technician" />
-                  <option value="Receptionist" />
-                  <option value="Manager" />
-                </datalist>
                 <input
                   type="time"
                   value={empForm.shift_start}
@@ -490,7 +453,6 @@ export default function StaffPage() {
                   <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     <th className="px-6 py-3">Name</th>
                     <th className="px-6 py-3">Phone</th>
-                    <th className="px-6 py-3">Role</th>
                     <th className="px-6 py-3">Shift Start</th>
                     <th className="px-6 py-3">Status</th>
                     <th className="px-6 py-3">Actions</th>
@@ -499,7 +461,7 @@ export default function StaffPage() {
                 <tbody className="divide-y divide-gray-50">
                   {employees.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
                         No employees yet
                       </td>
                     </tr>
@@ -508,7 +470,6 @@ export default function StaffPage() {
                       <tr key={emp.id} className={`hover:bg-gray-50 ${!emp.active ? "opacity-50" : ""}`}>
                         <td className="px-6 py-4 text-sm font-medium text-charcoal">{emp.name}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{emp.phone}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{emp.role}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{emp.shift_start}</td>
                         <td className="px-6 py-4">
                           <span className={`text-xs font-medium px-2 py-1 rounded-full ${
@@ -525,7 +486,6 @@ export default function StaffPage() {
                                 setEmpForm({
                                   name: emp.name,
                                   phone: emp.phone,
-                                  role: emp.role,
                                   shift_start: emp.shift_start,
                                 });
                               }}
