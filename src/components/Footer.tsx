@@ -1,13 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
+import BackToTop from "@/components/BackToTop";
 
 export default function Footer() {
   return (
     <footer className="bg-charcoal-dark text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10">
           {/* Brand */}
-          <div className="md:col-span-1">
+          <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
               <Image
                 src="/logo.jpeg"
@@ -89,13 +90,24 @@ export default function Footer() {
             <h4 className="font-heading text-lg font-semibold text-gold mb-4">
               Services
             </h4>
-            <ul className="space-y-2 text-gray-400 text-sm">
-              <li>Hair Styling & Treatments</li>
-              <li>Skin Care & Facials</li>
-              <li>Nail Art & Care</li>
-              <li>Makeup Services</li>
-              <li>Bridal Packages</li>
-              <li>Waxing & Threading</li>
+            <ul className="space-y-2 text-sm">
+              {[
+                "Hair Styling & Treatments",
+                "Skin Care & Facials",
+                "Nail Art & Care",
+                "Makeup Services",
+                "Bridal Packages",
+                "Waxing & Threading",
+              ].map((s) => (
+                <li key={s}>
+                  <Link
+                    href="/services"
+                    className="text-gray-400 hover:text-gold transition-colors"
+                  >
+                    {s}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -132,6 +144,8 @@ export default function Footer() {
           <p>&copy; {new Date().getFullYear()} Uzay Beauty Hub. All rights reserved.</p>
         </div>
       </div>
+
+      <BackToTop />
 
       {/* WhatsApp floating button */}
       <a

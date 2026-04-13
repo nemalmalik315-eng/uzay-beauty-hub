@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FAQ from "@/components/FAQ";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
+import TestimonialGrid from "@/components/TestimonialGrid";
 
 const categories = [
   {
@@ -143,11 +144,13 @@ export default function Home() {
             </div>
           </AnimateOnScroll>
 
-          <AnimateOnScroll staggerChildren stagger={150} className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <AnimateOnScroll staggerChildren stagger={150} className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
                 title: "Expert Team",
                 desc: "Our skilled professionals bring years of experience and passion to every service.",
+                stat: "10+",
+                statLabel: "Years Experience",
                 icon: (
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -157,6 +160,8 @@ export default function Home() {
               {
                 title: "Premium Products",
                 desc: "We use only the highest quality, salon-grade products for the best results.",
+                stat: "158+",
+                statLabel: "Happy Clients",
                 icon: (
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -166,6 +171,8 @@ export default function Home() {
               {
                 title: "Relaxing Atmosphere",
                 desc: "Step into a world of calm and luxury designed for your ultimate comfort.",
+                stat: "5.0",
+                statLabel: "Google Rating",
                 icon: (
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -173,14 +180,18 @@ export default function Home() {
                 ),
               },
             ].map((item) => (
-              <div key={item.title} className="text-center">
+              <div key={item.title} className="bg-cream rounded-xl p-8 text-center border border-gold/10 hover:border-gold/30 transition-colors">
                 <div className="w-16 h-16 bg-gold-light rounded-full flex items-center justify-center mx-auto mb-5 text-gold">
                   {item.icon}
                 </div>
                 <h3 className="font-heading text-xl font-semibold text-charcoal mb-3">
                   {item.title}
                 </h3>
-                <p className="text-gray-500 leading-relaxed">{item.desc}</p>
+                <p className="text-gray-500 leading-relaxed mb-5">{item.desc}</p>
+                <div className="pt-4 border-t border-gold/10">
+                  <p className="text-2xl font-heading font-bold text-gold">{item.stat}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">{item.statLabel}</p>
+                </div>
               </div>
             ))}
           </AnimateOnScroll>
@@ -285,64 +296,7 @@ export default function Home() {
           </div>
           </AnimateOnScroll>
 
-          <AnimateOnScroll staggerChildren stagger={80} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                name: "Aamina Ahmad",
-                text: "I had such a lovely experience at this salon during my stay in Lahore! I visited three times and was really impressed.",
-                service: "Multiple Visits",
-              },
-              {
-                name: "Asvir Naveed",
-                text: "Had a great experience at Uzay Beauty Hub. This is a hidden gem in Nashimeen-e-Iqbal Phase 2. A highly recommended place.",
-                service: "Salon Services",
-              },
-              {
-                name: "Aina",
-                text: "Very good experience at the salon. Haircut, facial, and soft glam makeup were done nicely. My mother and I were happy. The owner guided us well.",
-                service: "Haircut, Facial & Makeup",
-              },
-              {
-                name: "Nimra Azam",
-                text: "I always have great experiences at this salon. So much satisfying results and the staff is very friendly, specially Sara and Iqra. Great experience and budget friendly!",
-                service: "Regular Client",
-              },
-              {
-                name: "Iman Zaheer",
-                text: "I have been visiting here for 4 years and every time I have a great experience whether it is body waxing, haircut or other services.",
-                service: "4-Year Client",
-              },
-              {
-                name: "Azka Awan",
-                text: "Easy appointments, welcoming staff, and talented employees! I was thrilled with my hydra facial and mani pedi services.",
-                service: "Hydra Facial & Mani Pedi",
-              },
-              {
-                name: "Yumna Asim",
-                text: "I got my rukhsati makeup done from here and it was a beautiful experience. The staff was so good and the owner was so polite. I highly recommend it!",
-                service: "Bridal Makeup",
-              },
-              {
-                name: "Najeeba Zulfiqar",
-                text: "Got my hair and makeup done here. Very affordable but good results. The staff is very humble too.",
-                service: "Hair & Makeup",
-              },
-            ].map((review, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col"
-              >
-                <div className="flex text-yellow-400 text-sm mb-3">★★★★★</div>
-                <p className="text-gray-600 text-sm leading-relaxed flex-1">
-                  &ldquo;{review.text}&rdquo;
-                </p>
-                <div className="mt-4 pt-4 border-t border-gray-50">
-                  <p className="font-semibold text-charcoal text-sm">{review.name}</p>
-                  <p className="text-xs text-gold">{review.service}</p>
-                </div>
-              </div>
-            ))}
-          </AnimateOnScroll>
+          <TestimonialGrid />
         </div>
       </section>
 
