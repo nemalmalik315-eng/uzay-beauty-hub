@@ -22,18 +22,7 @@ export default function ServicesPage() {
 
   const categories = [...new Set(services.map((s) => s.category))];
 
-  const categoryIcons: Record<string, string> = {
-    Hair: "✂️",
-    Facials: "✨",
-    Cleansing: "🧼",
-    Polisher: "🧴",
-    "Manicure & Pedicure": "💅",
-    Makeup: "💄",
-    "Body Waxing": "🌸",
-    "Face Waxing": "🪷",
-    Kids: "👧",
-    Bridal: "👰",
-  };
+  // No emoji icons — clean professional look
 
   return (
     <>
@@ -59,12 +48,12 @@ export default function ServicesPage() {
         <div className="max-w-6xl mx-auto">
           {categories.map((category) => (
             <div key={category} className="mb-16 last:mb-0">
-              <div className="flex items-center gap-3 mb-8">
-                <span className="text-3xl">{categoryIcons[category] || "💎"}</span>
-                <h2 className="text-3xl font-heading font-bold text-charcoal">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-1 h-8 bg-gold rounded-full" />
+                <h2 className="text-2xl md:text-3xl font-heading font-bold text-charcoal">
                   {category}
                 </h2>
-                <div className="flex-1 h-px bg-gold/30 ml-4" />
+                <div className="flex-1 h-px bg-gold/20 ml-2" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -83,7 +72,7 @@ export default function ServicesPage() {
                           {service.description}
                         </p>
                         <p className="text-xs text-gray-400 mt-2">
-                          ⏱ {service.duration} min
+                          {service.duration} min
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">

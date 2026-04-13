@@ -8,33 +8,33 @@ import AnimateOnScroll from "@/components/AnimateOnScroll";
 const categories = [
   {
     name: "Hair Care",
-    icon: "✂️",
     desc: "Cuts, coloring, keratin, blowouts & more",
+    icon: <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" /></svg>,
   },
   {
     name: "Skin Care",
-    icon: "✨",
     desc: "Herbal, whitening, hydra & Korean facials",
+    icon: <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" /></svg>,
   },
   {
     name: "Nail Art",
-    icon: "💅",
     desc: "Manicure, pedicure, gel & acrylic nails",
+    icon: <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10.05 4.575a1.575 1.575 0 10-3.15 0v3.026a3.12 3.12 0 01-.475 0H5.25a1.575 1.575 0 100 3.15h.175a3.13 3.13 0 01.475 0v3.674a1.575 1.575 0 103.15 0v-3.674a3.13 3.13 0 01.475 0h.175a1.575 1.575 0 100-3.15h-.175a3.12 3.12 0 01-.475 0V4.575zm7.5 0a1.575 1.575 0 10-3.15 0v3.026a3.12 3.12 0 01-.475 0h-.175a1.575 1.575 0 100 3.15h.175a3.13 3.13 0 01.475 0v3.674a1.575 1.575 0 103.15 0v-3.674a3.13 3.13 0 01.475 0h.175a1.575 1.575 0 100-3.15h-.175a3.12 3.12 0 01-.475 0V4.575z" /></svg>,
   },
   {
     name: "Makeup",
-    icon: "💄",
     desc: "Party, bridal, engagement & natural looks",
+    icon: <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" /></svg>,
   },
   {
     name: "Waxing",
-    icon: "🌸",
     desc: "Full body, face, arms & legs waxing",
+    icon: <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>,
   },
   {
     name: "Bridal",
-    icon: "👰",
     desc: "Complete bridal & mehndi packages",
+    icon: <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
   },
 ];
 
@@ -109,9 +109,9 @@ export default function Home() {
                 href="/services"
                 className="card group hover:border-gold border-2 border-transparent text-center"
               >
-                <span className="text-4xl mb-4 block group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gold-light rounded-full flex items-center justify-center mx-auto mb-4 text-gold group-hover:bg-gold group-hover:text-white transition-colors">
                   {cat.icon}
-                </span>
+                </div>
                 <h3 className="font-heading text-xl font-semibold text-charcoal mb-2">
                   {cat.name}
                 </h3>

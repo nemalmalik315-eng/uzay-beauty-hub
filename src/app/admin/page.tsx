@@ -63,28 +63,28 @@ export default function AdminDashboard() {
     {
       label: "Today's Revenue",
       value: `Rs. ${data.todayRevenue.toFixed(0)}`,
-      icon: "💰",
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>,
       color: "bg-green-50 text-green-700",
       link: "/admin/billing",
     },
     {
       label: "Today's Bookings",
       value: data.todayBookings,
-      icon: "📅",
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>,
       color: "bg-blue-50 text-blue-700",
       link: "/admin/bookings",
     },
     {
       label: "Total Customers",
       value: data.totalCustomers,
-      icon: "👥",
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>,
       color: "bg-purple-50 text-purple-700",
       link: "/admin/customers",
     },
     {
       label: "Low Stock Items",
       value: data.lowStockCount,
-      icon: "⚠️",
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>,
       color: data.lowStockCount > 0 ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-700",
       link: "/admin/stock",
     },
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
             className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-2xl">{stat.icon}</span>
+              <span>{stat.icon}</span>
               <span className={`text-xs font-medium px-2 py-1 rounded-full ${stat.color}`}>
                 View
               </span>
@@ -185,21 +185,21 @@ export default function AdminDashboard() {
           href="/admin/bookings"
           className="bg-gold/10 border border-gold/20 rounded-xl p-6 text-center hover:bg-gold/20 transition-colors"
         >
-          <span className="text-3xl block mb-2">📅</span>
+          <div className="flex justify-center mb-2 text-gold"><svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg></div>
           <p className="font-semibold text-charcoal">Manage Bookings</p>
         </Link>
         <Link
           href="/admin/billing"
           className="bg-green-50 border border-green-100 rounded-xl p-6 text-center hover:bg-green-100 transition-colors"
         >
-          <span className="text-3xl block mb-2">💰</span>
+          <div className="flex justify-center mb-2 text-green-600"><svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg></div>
           <p className="font-semibold text-charcoal">Add Bill</p>
         </Link>
         <Link
           href="/admin/stock"
           className="bg-blue-50 border border-blue-100 rounded-xl p-6 text-center hover:bg-blue-100 transition-colors"
         >
-          <span className="text-3xl block mb-2">📦</span>
+          <div className="flex justify-center mb-2 text-blue-600"><svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg></div>
           <p className="font-semibold text-charcoal">Check Stock</p>
         </Link>
       </div>

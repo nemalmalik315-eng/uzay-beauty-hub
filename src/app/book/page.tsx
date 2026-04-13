@@ -75,7 +75,7 @@ export default function BookPage() {
         <div className="max-w-2xl mx-auto">
           {submitted ? (
             <div className="card text-center py-12">
-              <div className="text-5xl mb-4">🎉</div>
+              <div className="flex justify-center mb-4"><svg className="w-16 h-16 text-gold" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
               <h2 className="text-2xl font-heading font-bold text-charcoal mb-2">
                 Booking Confirmed!
               </h2>
