@@ -38,9 +38,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { name, phone, service_id, date, time, notes } = body;
+  const { name, phone, date, time, notes } = body;
 
-  if (!name || !phone || !service_id || !date || !time) {
+  // Support both single service_id and multiple service_ids
+  const serviceIds: number[] = body.service_ids
+    ? body.service_ids
+    : body.service_id
+    ? [Number(body.service_id)]
+    : [];
+
+  if (!name || !phone || !date || !time || serviceIds.length === 0) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -56,13 +63,24 @@ export async function POST(req: NextRequest) {
     customer = { id: Number(result.lastInsertRowid) };
   }
 
-  const result = db
-    .prepare(
-      "INSERT INTO bookings (customer_id, service_id, customer_name, customer_phone, date, time, notes) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    )
-    .run(customer.id, service_id, name, phone, date, time, notes || null);
+  // Create a booking for each selected service
+  const insertStmt = db.prepare(
+    "INSERT INTO bookings (customer_id, service_id, customer_name, customer_phone, date, time, notes) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  );
 
-  return NextResponse.json({ id: Number(result.lastInsertRowid), message: "Booking created" });
+  const ids: number[] = [];
+  const insertAll = db.transaction(() => {
+    for (const sid of serviceIds) {
+      const result = insertStmt.run(customer!.id, sid, name, phone, date, time, notes || null);
+      ids.push(Number(result.lastInsertRowid));
+    }
+  });
+  insertAll();
+
+  return NextResponse.json({
+    ids,
+    message: `${ids.length} booking${ids.length > 1 ? "s" : ""} created`,
+  });
 }
 
 export async function PATCH(req: NextRequest) {
