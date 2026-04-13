@@ -86,12 +86,26 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { id, status } = body;
+  const { id, status, date, time, notes } = body;
 
-  if (!id || !status) {
-    return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  await db.execute({ sql: "UPDATE bookings SET status = ? WHERE id = ?", args: [status, id] });
+  // Build dynamic update
+  const sets: string[] = [];
+  const args: (string | number | null)[] = [];
+
+  if (status) { sets.push("status = ?"); args.push(status); }
+  if (date) { sets.push("date = ?"); args.push(date); }
+  if (time) { sets.push("time = ?"); args.push(time); }
+  if (notes !== undefined) { sets.push("notes = ?"); args.push(notes || null); }
+
+  if (sets.length === 0) {
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
+
+  args.push(id);
+  await db.execute({ sql: `UPDATE bookings SET ${sets.join(", ")} WHERE id = ?`, args });
   return NextResponse.json({ message: "Booking updated" });
 }

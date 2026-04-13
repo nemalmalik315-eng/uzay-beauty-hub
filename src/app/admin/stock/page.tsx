@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useToast } from "@/components/admin/Toast";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 
 interface StockItem {
   id: number;
@@ -19,6 +21,7 @@ export default function StockPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editQty, setEditQty] = useState(0);
+  const [deletingItem, setDeletingItem] = useState<StockItem | null>(null);
   const [form, setForm] = useState({
     product_name: "",
     category: "",
@@ -26,6 +29,7 @@ export default function StockPage() {
     min_threshold: 5,
     unit_price: 0,
   });
+  const { toast } = useToast();
 
   const loadStock = async () => {
     const url = showLow ? "/api/stock?low_stock=true" : "/api/stock";
@@ -41,39 +45,64 @@ export default function StockPage() {
 
   const addItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/stock", {
+    const res = await fetch("/api/stock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    setForm({ product_name: "", category: "", quantity: 0, min_threshold: 5, unit_price: 0 });
-    setShowAdd(false);
-    loadStock();
+    if (res.ok) {
+      toast("Product added");
+      setForm({ product_name: "", category: "", quantity: 0, min_threshold: 5, unit_price: 0 });
+      setShowAdd(false);
+      loadStock();
+    } else {
+      toast("Failed to add product", "error");
+    }
   };
 
   const updateQuantity = async (id: number) => {
-    await fetch("/api/stock", {
+    const res = await fetch("/api/stock", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, quantity: editQty }),
     });
-    setEditingId(null);
-    loadStock();
+    if (res.ok) {
+      toast("Quantity updated");
+      setEditingId(null);
+      loadStock();
+    } else {
+      toast("Failed to update quantity", "error");
+    }
   };
 
-  const deleteItem = async (id: number) => {
-    if (!confirm("Delete this stock item?")) return;
-    await fetch(`/api/stock?id=${id}`, { method: "DELETE" });
-    loadStock();
+  const deleteItem = async (item: StockItem) => {
+    const res = await fetch(`/api/stock?id=${item.id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast("Product deleted");
+      setDeletingItem(null);
+      loadStock();
+    } else {
+      toast("Failed to delete product", "error");
+    }
   };
 
   const categories = [...new Set(items.map((i) => i.category))];
 
   return (
     <div className="space-y-6">
+      <ConfirmDialog
+        open={!!deletingItem}
+        title="Delete Product"
+        message={`Delete "${deletingItem?.product_name}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        confirmColor="red"
+        onConfirm={() => deletingItem && deleteItem(deletingItem)}
+        onCancel={() => setDeletingItem(null)}
+      />
+
       {/* Low stock alert */}
       {lowStockCount > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
           <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
           <div>
             <p className="font-semibold text-red-700">
@@ -93,7 +122,7 @@ export default function StockPage() {
       )}
 
       {/* Actions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
         <div className="flex flex-wrap gap-4 items-center">
           <button
             onClick={() => setShowAdd(!showAdd)}
@@ -117,7 +146,7 @@ export default function StockPage() {
 
       {/* Add form */}
       {showAdd && (
-        <form onSubmit={addItem} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <form onSubmit={addItem} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
           <h3 className="font-heading text-lg font-semibold mb-4">New Product</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <input
@@ -178,7 +207,7 @@ export default function StockPage() {
       )}
 
       {/* Stock table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -258,7 +287,7 @@ export default function StockPage() {
                           Update Qty
                         </button>
                         <button
-                          onClick={() => deleteItem(item.id)}
+                          onClick={() => setDeletingItem(item)}
                           className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100"
                         >
                           Delete

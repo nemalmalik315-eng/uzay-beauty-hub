@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { ToastProvider } from "@/components/admin/Toast";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: "grid" },
@@ -59,7 +60,7 @@ export default function AdminLayout({
   };
 
   if (pathname === "/admin/login") {
-    return <>{children}</>;
+    return <ToastProvider>{children}</ToastProvider>;
   }
 
   if (authenticated === null) {
@@ -76,7 +77,7 @@ export default function AdminLayout({
   if (!authenticated) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <ToastProvider><div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-charcoal-dark text-white transform transition-transform duration-300 lg:translate-x-0 lg:static ${
@@ -182,6 +183,6 @@ export default function AdminLayout({
 
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
-    </div>
+    </div></ToastProvider>
   );
 }

@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
     booking_id,
     customer_id,
     customer_name,
+    customer_phone,
     service_name,
     service_charge,
     discount = 0,
@@ -62,6 +63,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  // Find or create customer if phone provided
+  let resolvedCustomerId = customer_id || null;
+  if (customer_phone && !resolvedCustomerId) {
+    const { rows: existing } = await db.execute({
+      sql: "SELECT id FROM customers WHERE phone = ?",
+      args: [customer_phone],
+    });
+    if (existing.length > 0) {
+      resolvedCustomerId = existing[0].id;
+    } else {
+      const custResult = await db.execute({
+        sql: "INSERT INTO customers (name, phone) VALUES (?, ?)",
+        args: [customer_name, customer_phone],
+      });
+      resolvedCustomerId = Number(custResult.lastInsertRowid);
+    }
+  }
+
   const total = service_charge - discount;
 
   const result = await db.execute({
@@ -69,7 +88,7 @@ export async function POST(req: NextRequest) {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       booking_id || null,
-      customer_id || null,
+      resolvedCustomerId,
       customer_name,
       service_name,
       service_charge,
@@ -83,5 +102,18 @@ export async function POST(req: NextRequest) {
     await db.execute({ sql: "UPDATE bookings SET status = 'completed' WHERE id = ?", args: [booking_id] });
   }
 
-  return NextResponse.json({ id: Number(result.lastInsertRowid) });
+  return NextResponse.json({ id: Number(result.lastInsertRowid), customer_id: resolvedCustomerId });
+}
+
+export async function DELETE(req: NextRequest) {
+  const db = getDb();
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+
+  await db.execute({ sql: "DELETE FROM billing WHERE id = ?", args: [Number(id)] });
+  return NextResponse.json({ message: "Bill deleted" });
 }

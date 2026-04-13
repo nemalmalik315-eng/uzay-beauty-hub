@@ -36,7 +36,7 @@ export default function ReportsPage() {
     <div className="space-y-6">
       {/* Today's highlight */}
       {today && (
-        <div className="bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/20 rounded-xl p-6">
+        <div className="bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/20 rounded-lg p-6">
           <h2 className="font-heading text-xl font-semibold text-charcoal mb-4">
             Today&apos;s Summary
           </h2>
@@ -58,7 +58,7 @@ export default function ReportsPage() {
       )}
 
       {/* Period selector */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
         <div className="flex gap-2">
           {[
             { key: "daily", label: "Daily (30 days)" },
@@ -82,7 +82,7 @@ export default function ReportsPage() {
 
       {/* Visual bar chart */}
       {data.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
           <h3 className="font-heading text-lg font-semibold text-charcoal mb-6">Revenue Overview</h3>
           <div className="space-y-3">
             {data.slice(0, 15).map((row) => (
@@ -112,7 +112,7 @@ export default function ReportsPage() {
       )}
 
       {/* Detailed table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
