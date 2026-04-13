@@ -61,7 +61,7 @@ export default function BillingPage() {
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingBill, setDeletingBill] = useState<Bill | null>(null);
-  const phoneTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const phoneTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const serviceRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
