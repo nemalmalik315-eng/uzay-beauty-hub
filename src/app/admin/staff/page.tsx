@@ -35,7 +35,40 @@ interface AttendanceSummary {
   unmarked: number;
 }
 
-type Tab = "team" | "attendance";
+type Tab = "team" | "attendance" | "bonuses";
+
+interface BonusEmployee {
+  employee_id: number;
+  name: string;
+  total: number;
+  days_qualified: number;
+}
+
+interface BonusDaily {
+  date: string;
+  pool: number;
+  present_count: number;
+  per_share: number;
+  present_employee_ids: number[];
+}
+
+interface BonusMonth {
+  month: string;
+  paid: boolean;
+  paid_at?: string;
+  employees: BonusEmployee[];
+  daily: BonusDaily[];
+  grand_total: number;
+  total_pool: number;
+  days_with_eyebrows: number;
+}
+
+interface HistoryMonth {
+  month: string;
+  total: number;
+  employee_count: number;
+  paid_at: string;
+}
 
 const statusOptions = [
   { value: "present", label: "Present", color: "bg-green-100 text-green-700" },
@@ -65,6 +98,13 @@ export default function StaffPage() {
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
 
+  // Bonuses state
+  const [bonusMonth, setBonusMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [bonusData, setBonusData] = useState<BonusMonth | null>(null);
+  const [bonusHistory, setBonusHistory] = useState<HistoryMonth[]>([]);
+  const [showDaily, setShowDaily] = useState(false);
+  const [confirmPayout, setConfirmPayout] = useState(false);
+
   // Load employees
   const loadEmployees = async () => {
     const res = await fetch("/api/employees?all=true");
@@ -87,6 +127,59 @@ export default function StaffPage() {
   useEffect(() => {
     loadAttendance();
   }, [attendanceDate]);
+
+  // Load bonus data for the selected month
+  const loadBonus = async () => {
+    const res = await fetch(`/api/bonuses?month=${bonusMonth}`);
+    const data = await res.json();
+    setBonusData(data);
+  };
+
+  // Load history of paid months
+  const loadHistory = async () => {
+    const res = await fetch(`/api/bonuses?history=true`);
+    const data = await res.json();
+    setBonusHistory(data.months || []);
+  };
+
+  useEffect(() => {
+    if (tab === "bonuses") {
+      loadBonus();
+      loadHistory();
+    }
+  }, [tab, bonusMonth]);
+
+  const payoutMonth = async () => {
+    const res = await fetch("/api/bonuses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ month: bonusMonth }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      toast(`Paid out Rs. ${data.grand_total.toLocaleString()} to ${data.employee_count} employees`);
+      setConfirmPayout(false);
+      loadBonus();
+      loadHistory();
+    } else {
+      const err = await res.json();
+      toast(err.error || "Failed to pay out", "error");
+      setConfirmPayout(false);
+    }
+  };
+
+  // Format YYYY-MM as "May 2026"
+  const formatMonth = (m: string) => {
+    const [y, mo] = m.split("-");
+    return new Date(Number(y), Number(mo) - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  };
+
+  const formatDate = (d: string) => {
+    return new Date(d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  };
+
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const isCurrentMonth = bonusMonth === currentMonth;
 
   // Team actions
   const addEmployee = async (e: React.FormEvent) => {
@@ -254,6 +347,14 @@ export default function StaffPage() {
             }`}
           >
             Team
+          </button>
+          <button
+            onClick={() => setTab("bonuses")}
+            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+              tab === "bonuses" ? "bg-gold text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            Bonuses
           </button>
         </div>
       </div>
@@ -502,6 +603,228 @@ export default function StaffPage() {
                               {emp.active ? "Deactivate" : "Reactivate"}
                             </button>
                           </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ===== BONUSES TAB ===== */}
+      {tab === "bonuses" && (
+        <>
+          <ConfirmDialog
+            open={confirmPayout}
+            title="Pay Out & Reset Month"
+            message={`Pay out Rs. ${bonusData?.grand_total?.toLocaleString() || 0} to ${bonusData?.employees?.length || 0} employees for ${formatMonth(bonusMonth)}? This freezes the amounts in history and starts a fresh tally.`}
+            confirmLabel="Pay & Lock"
+            confirmColor="green"
+            onConfirm={payoutMonth}
+            onCancel={() => setConfirmPayout(false)}
+          />
+
+          {/* Month picker */}
+          <div className="bg-white rounded-lg border border-gray-100 p-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <label className="text-xs font-medium text-gray-500 uppercase">Month</label>
+              <input
+                type="month"
+                value={bonusMonth}
+                onChange={(e) => setBonusMonth(e.target.value)}
+                className="px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+              />
+              {!isCurrentMonth && (
+                <button
+                  onClick={() => setBonusMonth(currentMonth)}
+                  className="text-sm text-gold hover:text-gold-dark font-medium"
+                >
+                  Go to Current Month
+                </button>
+              )}
+              {bonusData?.paid && (
+                <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-100 text-green-700">
+                  ✓ Paid Out
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Bonus pool = total eyebrow service charges that day. Only employees marked <span className="text-green-600 font-medium">Present</span> share that day's pool.
+            </p>
+          </div>
+
+          {/* Summary cards */}
+          {bonusData && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-gradient-to-br from-gold/10 to-gold/5 rounded-lg border border-gold/20 p-4">
+                <p className="text-xs text-gray-500 uppercase mb-1">Total Bonus Pool</p>
+                <p className="text-2xl font-bold text-charcoal">Rs. {bonusData.grand_total.toLocaleString()}</p>
+                <p className="text-xs text-gray-400 mt-1">{formatMonth(bonusMonth)}</p>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-100 p-4">
+                <p className="text-xs text-gray-500 uppercase mb-1">Eligible Employees</p>
+                <p className="text-2xl font-bold text-charcoal">{bonusData.employees.length}</p>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-100 p-4">
+                <p className="text-xs text-gray-500 uppercase mb-1">Days With Eyebrows</p>
+                <p className="text-2xl font-bold text-charcoal">{bonusData.days_with_eyebrows || (bonusData.paid ? "—" : 0)}</p>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-100 p-4 flex items-center justify-center">
+                {bonusData.paid ? (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 uppercase mb-1">Paid On</p>
+                    <p className="text-sm font-medium text-charcoal">
+                      {bonusData.paid_at ? new Date(bonusData.paid_at).toLocaleDateString() : "—"}
+                    </p>
+                  </div>
+                ) : bonusData.employees.length > 0 ? (
+                  <button
+                    onClick={() => setConfirmPayout(true)}
+                    className="btn-gold text-sm py-2 px-4 w-full"
+                    disabled={isCurrentMonth}
+                    title={isCurrentMonth ? "Wait until month is over to pay out" : "Pay out and lock this month"}
+                  >
+                    {isCurrentMonth ? "Current Month — Wait" : "Pay & Lock Month"}
+                  </button>
+                ) : (
+                  <p className="text-xs text-gray-400 text-center">No bonus to pay</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Per-employee table */}
+          <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <div className="px-6 py-3 bg-gray-50 border-b border-gray-100">
+              <h3 className="font-heading text-sm font-semibold text-charcoal uppercase tracking-wider">
+                {bonusData?.paid ? "Final Payouts" : "Running Tally"}
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50/50">
+                    <th className="px-6 py-3">Employee</th>
+                    <th className="px-6 py-3">Days Qualified</th>
+                    <th className="px-6 py-3 text-right">Bonus</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {!bonusData || bonusData.employees.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center text-gray-400">
+                        No bonus earned for {formatMonth(bonusMonth)} yet
+                      </td>
+                    </tr>
+                  ) : (
+                    bonusData.employees.map((emp) => (
+                      <tr key={emp.employee_id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm font-medium text-charcoal">{emp.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{emp.days_qualified} day(s)</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-charcoal text-right">
+                          Rs. {emp.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Daily breakdown (only for unpaid/live months) */}
+          {bonusData && !bonusData.paid && bonusData.daily.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+              <button
+                onClick={() => setShowDaily(!showDaily)}
+                className="w-full px-6 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between hover:bg-gray-100 transition-colors"
+              >
+                <h3 className="font-heading text-sm font-semibold text-charcoal uppercase tracking-wider">
+                  Daily Breakdown ({bonusData.daily.length} day{bonusData.daily.length === 1 ? "" : "s"})
+                </h3>
+                <span className="text-xs text-gray-400">{showDaily ? "Hide" : "Show"}</span>
+              </button>
+              {showDaily && (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50/50">
+                        <th className="px-6 py-3">Date</th>
+                        <th className="px-6 py-3 text-right">Eyebrow Pool</th>
+                        <th className="px-6 py-3 text-center">Present</th>
+                        <th className="px-6 py-3 text-right">Per Share</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {bonusData.daily.map((d) => (
+                        <tr key={d.date} className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-sm text-charcoal">{formatDate(d.date)}</td>
+                          <td className="px-6 py-3 text-sm text-gray-600 text-right">Rs. {d.pool.toLocaleString()}</td>
+                          <td className="px-6 py-3 text-sm text-gray-600 text-center">
+                            {d.present_count === 0 ? (
+                              <span className="text-red-500">0 (forfeit)</span>
+                            ) : (
+                              d.present_count
+                            )}
+                          </td>
+                          <td className="px-6 py-3 text-sm text-charcoal text-right">
+                            {d.per_share > 0 ? `Rs. ${d.per_share.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* History */}
+          <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <div className="px-6 py-3 bg-gray-50 border-b border-gray-100">
+              <h3 className="font-heading text-sm font-semibold text-charcoal uppercase tracking-wider">
+                Payout History
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50/50">
+                    <th className="px-6 py-3">Month</th>
+                    <th className="px-6 py-3">Employees Paid</th>
+                    <th className="px-6 py-3">Paid On</th>
+                    <th className="px-6 py-3 text-right">Total Paid</th>
+                    <th className="px-6 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {bonusHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                        No payouts yet
+                      </td>
+                    </tr>
+                  ) : (
+                    bonusHistory.map((h) => (
+                      <tr key={h.month} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm font-medium text-charcoal">{formatMonth(h.month)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{h.employee_count} employees</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {new Date(h.paid_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-semibold text-charcoal text-right">
+                          Rs. {h.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => setBonusMonth(h.month)}
+                            className="text-xs text-gold hover:text-gold-dark font-medium"
+                          >
+                            View
+                          </button>
                         </td>
                       </tr>
                     ))

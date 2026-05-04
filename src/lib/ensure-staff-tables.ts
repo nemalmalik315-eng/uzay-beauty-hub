@@ -27,6 +27,19 @@ export async function ensureStaffTables() {
       FOREIGN KEY (employee_id) REFERENCES employees(id),
       UNIQUE(employee_id, date)
     );
+
+    CREATE TABLE IF NOT EXISTS bonus_payouts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      employee_id INTEGER NOT NULL,
+      month TEXT NOT NULL,
+      amount REAL NOT NULL,
+      days_qualified INTEGER NOT NULL DEFAULT 0,
+      paid_at TEXT NOT NULL DEFAULT (datetime('now')),
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (employee_id) REFERENCES employees(id),
+      UNIQUE(employee_id, month)
+    );
   `);
   initialized = true;
 }
