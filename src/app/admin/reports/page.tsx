@@ -61,9 +61,9 @@ export default function ReportsPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 sm:p-4">
         <div className="flex gap-2 flex-wrap">
           {[
-            { key: "daily", label: "Daily", short: "Daily" },
-            { key: "weekly", label: "Weekly", short: "Weekly" },
-            { key: "monthly", label: "Monthly", short: "Monthly" },
+            { key: "daily", short: "Daily", long: "Daily (30 days)" },
+            { key: "weekly", short: "Weekly", long: "Weekly (90 days)" },
+            { key: "monthly", short: "Monthly", long: "Monthly (1 year)" },
           ].map((p) => (
             <button
               key={p.key}
@@ -74,7 +74,8 @@ export default function ReportsPage() {
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {p.label}
+              <span className="sm:hidden">{p.short}</span>
+              <span className="hidden sm:inline">{p.long}</span>
             </button>
           ))}
         </div>

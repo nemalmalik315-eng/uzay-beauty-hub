@@ -173,11 +173,21 @@ export default function AdminLayout({
               )?.label || "Admin"}
             </h1>
             <div className="hidden sm:block text-sm text-gray-500 whitespace-nowrap">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}
+              <span className="lg:hidden">
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              <span className="hidden lg:inline">
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
             </div>
           </div>
         </header>

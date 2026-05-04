@@ -334,11 +334,16 @@ export default function BookPage() {
                   disabled={loading || selectedServices.length === 0}
                   className="btn-gold w-full text-base sm:text-lg py-4 mt-4 disabled:opacity-50"
                 >
-                  {loading
-                    ? "Booking..."
-                    : selectedServices.length === 0
-                    ? "Select at least one service"
-                    : `Confirm — Rs. ${totalPrice.toLocaleString()}`}
+                  {loading ? (
+                    "Booking..."
+                  ) : selectedServices.length === 0 ? (
+                    "Select at least one service"
+                  ) : (
+                    <>
+                      <span className="sm:hidden">Confirm — Rs. {totalPrice.toLocaleString()}</span>
+                      <span className="hidden sm:inline">Confirm Booking — Rs. {totalPrice.toLocaleString()}</span>
+                    </>
+                  )}
                 </button>
 
                 <div className="text-center mt-4">
