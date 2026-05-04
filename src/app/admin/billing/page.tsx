@@ -260,22 +260,22 @@ export default function BillingPage() {
 
       {/* Summary cards */}
       {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg border border-gray-100 p-5">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Total Charges</p>
-            <p className="text-2xl font-bold text-charcoal mt-1">Rs. {summary.total_charges.toFixed(0)}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+          <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-5">
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Total Charges</p>
+            <p className="text-base sm:text-2xl font-bold text-charcoal mt-1">Rs. {summary.total_charges.toFixed(0)}</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-100 p-5">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Discounts</p>
-            <p className="text-2xl font-bold text-red-500 mt-1">-Rs. {summary.total_discounts.toFixed(0)}</p>
+          <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-5">
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Discounts</p>
+            <p className="text-base sm:text-2xl font-bold text-red-500 mt-1">-Rs. {summary.total_discounts.toFixed(0)}</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-100 p-5">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Net Revenue</p>
-            <p className="text-2xl font-bold text-green-600 mt-1">Rs. {summary.total_revenue.toFixed(0)}</p>
+          <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-5">
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Net Revenue</p>
+            <p className="text-base sm:text-2xl font-bold text-green-600 mt-1">Rs. {summary.total_revenue.toFixed(0)}</p>
           </div>
-          <div className="bg-white rounded-lg border border-gray-100 p-5">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Transactions</p>
-            <p className="text-2xl font-bold text-charcoal mt-1">{summary.total_transactions}</p>
+          <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-5">
+            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Transactions</p>
+            <p className="text-base sm:text-2xl font-bold text-charcoal mt-1">{summary.total_transactions}</p>
           </div>
         </div>
       )}
@@ -541,8 +541,8 @@ export default function BillingPage() {
         </form>
       )}
 
-      {/* Bills table */}
-      <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+      {/* Bills — table (desktop) */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -608,6 +608,51 @@ export default function BillingPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Bills — cards (mobile) */}
+      <div className="md:hidden space-y-3">
+        {filteredBills.length === 0 ? (
+          <div className="bg-white rounded-lg border border-gray-100 px-4 py-12 text-center text-gray-400 text-sm">
+            {serviceFilter ? `No bills matching "${serviceFilter}"` : "No bills for this period"}
+          </div>
+        ) : (
+          filteredBills.map((b) => (
+            <div key={b.id} className="bg-white rounded-lg border border-gray-100 p-4">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-charcoal truncate">{b.customer_name}</p>
+                  <p className="text-[10px] text-gray-400">#{b.id} · {new Date(b.created_at).toLocaleString()}</p>
+                </div>
+                <span className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
+                  {b.payment_method}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mb-3">{b.service_name}</p>
+              <div className="flex items-end justify-between gap-3 pb-3 border-b border-gray-100 mb-3">
+                <div className="text-xs text-gray-500">
+                  <div>Charge: Rs. {b.service_charge.toFixed(0)}</div>
+                  {b.discount > 0 && <div className="text-red-500">Discount: -Rs. {b.discount.toFixed(0)}</div>}
+                </div>
+                <p className="text-base font-bold text-green-600">Rs. {b.total.toFixed(0)}</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => printReceipt(b)}
+                  className="text-xs text-gold hover:text-gold-dark font-medium"
+                >
+                  Print Receipt
+                </button>
+                <button
+                  onClick={() => setDeletingBill(b)}
+                  className="text-xs text-red-400 hover:text-red-600"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

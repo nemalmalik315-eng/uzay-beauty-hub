@@ -93,29 +93,29 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {stats.map((stat) => (
           <Link
             key={stat.label}
             href={stat.link}
-            className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+            className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 sm:p-6 hover:shadow-md transition-shadow"
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span>{stat.icon}</span>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${stat.color}`}>
+              <span className={`text-[10px] sm:text-xs font-medium px-2 py-1 rounded-full ${stat.color}`}>
                 View
               </span>
             </div>
-            <p className="text-2xl font-bold text-charcoal">{stat.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+            <p className="text-lg sm:text-2xl font-bold text-charcoal">{stat.value}</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">{stat.label}</p>
           </Link>
         ))}
       </div>
 
       {/* Recent Bookings */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-heading text-xl font-semibold text-charcoal">
+        <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="font-heading text-lg sm:text-xl font-semibold text-charcoal">
             Recent Bookings
           </h2>
           <Link
@@ -125,7 +125,8 @@ export default function AdminDashboard() {
             View All →
           </Link>
         </div>
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -176,6 +177,33 @@ export default function AdminDashboard() {
               )}
             </tbody>
           </table>
+        </div>
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-gray-50">
+          {data.recentBookings.length === 0 ? (
+            <div className="px-4 py-8 text-center text-gray-400 text-sm">No bookings yet</div>
+          ) : (
+            data.recentBookings.map((booking) => (
+              <div key={booking.id} className="px-4 py-3">
+                <div className="flex items-start justify-between gap-3 mb-1">
+                  <p className="text-sm font-medium text-charcoal truncate">{booking.customer_name}</p>
+                  <span
+                    className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      booking.status === "completed"
+                        ? "bg-green-100 text-green-700"
+                        : booking.status === "cancelled"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {booking.status}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 truncate">{booking.service_name}</p>
+                <p className="text-xs text-gray-400 mt-1">{booking.date} · {booking.time}</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

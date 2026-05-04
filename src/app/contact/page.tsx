@@ -105,12 +105,12 @@ export default function ContactPage() {
               <h3 className="font-heading text-xl font-semibold text-charcoal mb-4">
                 Find Us on the Map
               </h3>
-              <div className="flex-1 rounded-lg overflow-hidden min-h-[400px]">
+              <div className="flex-1 rounded-lg overflow-hidden min-h-[280px] sm:min-h-[400px]">
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3402.5!2d74.2!3d31.4!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTEyQiwgQmxvY2sgQiwgTmFzaGVtYW4tZS1JcWJhbCBQaGFzZSAyLCBMYWhvcmU!5e0!3m2!1sen!2spk!4v1"
                   width="100%"
                   height="100%"
-                  style={{ border: 0, minHeight: "400px" }}
+                  style={{ border: 0, minHeight: "280px" }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"

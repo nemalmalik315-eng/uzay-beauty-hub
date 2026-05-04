@@ -284,7 +284,7 @@ export default function StaffPage() {
       {editingEmployee && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setEditingEmployee(null)} />
-          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-heading text-lg font-semibold text-charcoal mb-4">
               Edit Employee
             </h3>
@@ -364,30 +364,30 @@ export default function StaffPage() {
         <>
           {/* Summary cards */}
           {summary && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <div className="bg-white rounded-lg border border-gray-100 p-4 text-center">
-                <p className="text-xs text-gray-500 uppercase">Total</p>
-                <p className="text-2xl font-bold text-charcoal">{summary.total}</p>
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+              <div className="bg-white rounded-lg border border-gray-100 p-2 sm:p-4 text-center">
+                <p className="text-[10px] sm:text-xs text-gray-500 uppercase">Total</p>
+                <p className="text-lg sm:text-2xl font-bold text-charcoal">{summary.total}</p>
               </div>
-              <div className="bg-green-50 rounded-lg border border-green-100 p-4 text-center">
-                <p className="text-xs text-green-600 uppercase">Present</p>
-                <p className="text-2xl font-bold text-green-700">{summary.present}</p>
+              <div className="bg-green-50 rounded-lg border border-green-100 p-2 sm:p-4 text-center">
+                <p className="text-[10px] sm:text-xs text-green-600 uppercase">Present</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-700">{summary.present}</p>
               </div>
-              <div className="bg-yellow-50 rounded-lg border border-yellow-100 p-4 text-center">
-                <p className="text-xs text-yellow-600 uppercase">Late</p>
-                <p className="text-2xl font-bold text-yellow-700">{summary.late}</p>
+              <div className="bg-yellow-50 rounded-lg border border-yellow-100 p-2 sm:p-4 text-center">
+                <p className="text-[10px] sm:text-xs text-yellow-600 uppercase">Late</p>
+                <p className="text-lg sm:text-2xl font-bold text-yellow-700">{summary.late}</p>
               </div>
-              <div className="bg-red-50 rounded-lg border border-red-100 p-4 text-center">
-                <p className="text-xs text-red-600 uppercase">Absent</p>
-                <p className="text-2xl font-bold text-red-700">{summary.absent}</p>
+              <div className="bg-red-50 rounded-lg border border-red-100 p-2 sm:p-4 text-center">
+                <p className="text-[10px] sm:text-xs text-red-600 uppercase">Absent</p>
+                <p className="text-lg sm:text-2xl font-bold text-red-700">{summary.absent}</p>
               </div>
-              <div className="bg-blue-50 rounded-lg border border-blue-100 p-4 text-center">
-                <p className="text-xs text-blue-600 uppercase">Leave</p>
-                <p className="text-2xl font-bold text-blue-700">{summary.leave}</p>
+              <div className="bg-blue-50 rounded-lg border border-blue-100 p-2 sm:p-4 text-center">
+                <p className="text-[10px] sm:text-xs text-blue-600 uppercase">Leave</p>
+                <p className="text-lg sm:text-2xl font-bold text-blue-700">{summary.leave}</p>
               </div>
-              <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-center">
-                <p className="text-xs text-gray-500 uppercase">Unmarked</p>
-                <p className="text-2xl font-bold text-gray-600">{summary.unmarked}</p>
+              <div className="bg-gray-50 rounded-lg border border-gray-200 p-2 sm:p-4 text-center">
+                <p className="text-[10px] sm:text-xs text-gray-500 uppercase">Unmarked</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-600">{summary.unmarked}</p>
               </div>
             </div>
           )}
@@ -413,8 +413,8 @@ export default function StaffPage() {
             </div>
           </div>
 
-          {/* Attendance list */}
-          <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+          {/* Attendance list — table (desktop) */}
+          <div className="hidden md:block bg-white rounded-lg border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -488,6 +488,62 @@ export default function StaffPage() {
               </table>
             </div>
           </div>
+
+          {/* Attendance list — cards (mobile) */}
+          <div className="md:hidden space-y-3">
+            {attendance.length === 0 ? (
+              <div className="bg-white rounded-lg border border-gray-100 px-4 py-12 text-center text-gray-400 text-sm">
+                No employees yet. Add team members in the Team tab.
+              </div>
+            ) : (
+              attendance.map((row) => {
+                const currentStatus = statusOptions.find((s) => s.value === row.status);
+                const lateHint = isToday && !row.status && isLateHint(row.shift_start);
+
+                return (
+                  <div key={row.employee_id} className="bg-white rounded-lg border border-gray-100 p-4">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-charcoal truncate">{row.name}</p>
+                        <p className="text-xs text-gray-400">{row.phone}</p>
+                        <p className="text-xs text-gray-500 mt-1">Shift: {row.shift_start}{row.check_in_time && ` · In: ${row.check_in_time}`}</p>
+                      </div>
+                      <div className="flex-shrink-0">
+                        {currentStatus ? (
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${currentStatus.color}`}>
+                            {currentStatus.label}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">
+                            {lateHint ? (
+                              <span className="text-yellow-600 font-medium">Late</span>
+                            ) : (
+                              "—"
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1">
+                      {statusOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => markAttendance(row.employee_id, opt.value)}
+                          className={`text-[11px] px-1 py-1.5 rounded transition-colors text-center ${
+                            row.status === opt.value
+                              ? opt.color + " font-bold ring-1 ring-current"
+                              : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </>
       )}
 
@@ -546,8 +602,8 @@ export default function StaffPage() {
             </form>
           )}
 
-          {/* Employee table */}
-          <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+          {/* Employee table — desktop */}
+          <div className="hidden md:block bg-white rounded-lg border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -610,6 +666,51 @@ export default function StaffPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Employee list — mobile cards */}
+          <div className="md:hidden space-y-3">
+            {employees.length === 0 ? (
+              <div className="bg-white rounded-lg border border-gray-100 px-4 py-12 text-center text-gray-400 text-sm">
+                No employees yet
+              </div>
+            ) : (
+              employees.map((emp) => (
+                <div key={emp.id} className={`bg-white rounded-lg border border-gray-100 p-4 ${!emp.active ? "opacity-60" : ""}`}>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-charcoal truncate">{emp.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{emp.phone}</p>
+                      <p className="text-xs text-gray-400 mt-1">Shift: {emp.shift_start}</p>
+                    </div>
+                    <span className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-full ${
+                      emp.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"
+                    }`}>
+                      {emp.active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <div className="flex gap-3 pt-2 border-t border-gray-100">
+                    <button
+                      onClick={() => {
+                        setEditingEmployee(emp);
+                        setEmpForm({ name: emp.name, phone: emp.phone, shift_start: emp.shift_start });
+                      }}
+                      className="text-xs text-gold hover:text-gold-dark font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeactivating(emp)}
+                      className={`text-xs font-medium ${
+                        emp.active ? "text-red-400 hover:text-red-600" : "text-green-500 hover:text-green-700"
+                      }`}
+                    >
+                      {emp.active ? "Deactivate" : "Reactivate"}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </>
       )}

@@ -85,36 +85,36 @@ export default function CustomersPage() {
       {selectedCustomer && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedCustomer(null)} />
-          <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-heading text-xl font-semibold text-charcoal">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-3 sm:mx-4 max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-4 sm:p-6 border-b border-gray-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-charcoal truncate">
                     {selectedCustomer.customer.name}
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
                     {selectedCustomer.customer.phone}
                     {selectedCustomer.customer.email && ` • ${selectedCustomer.customer.email}`}
                   </p>
                 </div>
-                <button onClick={() => setSelectedCustomer(null)} className="text-gray-400 hover:text-gray-600 text-xl">
+                <button onClick={() => setSelectedCustomer(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none flex-shrink-0">
                   &times;
                 </button>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 mt-5">
-                <div className="bg-green-50 rounded-md p-3 text-center">
-                  <p className="text-xs text-gray-500">Total Spent</p>
-                  <p className="text-lg font-bold text-green-600">Rs. {selectedCustomer.stats.totalSpent.toFixed(0)}</p>
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4">
+                <div className="bg-green-50 rounded-md p-2 sm:p-3 text-center">
+                  <p className="text-[10px] sm:text-xs text-gray-500">Total Spent</p>
+                  <p className="text-sm sm:text-lg font-bold text-green-600">Rs. {selectedCustomer.stats.totalSpent.toFixed(0)}</p>
                 </div>
-                <div className="bg-blue-50 rounded-md p-3 text-center">
-                  <p className="text-xs text-gray-500">Visits</p>
-                  <p className="text-lg font-bold text-blue-600">{selectedCustomer.stats.totalVisits}</p>
+                <div className="bg-blue-50 rounded-md p-2 sm:p-3 text-center">
+                  <p className="text-[10px] sm:text-xs text-gray-500">Visits</p>
+                  <p className="text-sm sm:text-lg font-bold text-blue-600">{selectedCustomer.stats.totalVisits}</p>
                 </div>
-                <div className="bg-red-50 rounded-md p-3 text-center">
-                  <p className="text-xs text-gray-500">Discounts</p>
-                  <p className="text-lg font-bold text-red-500">Rs. {selectedCustomer.stats.totalDiscount.toFixed(0)}</p>
+                <div className="bg-red-50 rounded-md p-2 sm:p-3 text-center">
+                  <p className="text-[10px] sm:text-xs text-gray-500">Discounts</p>
+                  <p className="text-sm sm:text-lg font-bold text-red-500">Rs. {selectedCustomer.stats.totalDiscount.toFixed(0)}</p>
                 </div>
               </div>
               {selectedCustomer.stats.lastVisit && (
@@ -125,8 +125,8 @@ export default function CustomersPage() {
             </div>
 
             {/* Transaction history */}
-            <div className="overflow-y-auto flex-1 p-6">
-              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+            <div className="overflow-y-auto flex-1 p-4 sm:p-6">
+              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
                 Transaction History
               </h4>
               {selectedCustomer.bills.length === 0 ? (
@@ -134,14 +134,14 @@ export default function CustomersPage() {
               ) : (
                 <div className="space-y-3">
                   {selectedCustomer.bills.map((bill) => (
-                    <div key={bill.id} className="flex items-center justify-between py-3 border-b border-gray-50">
-                      <div>
-                        <p className="text-sm font-medium text-charcoal">{bill.service_name}</p>
-                        <p className="text-xs text-gray-400">
+                    <div key={bill.id} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-charcoal break-words">{bill.service_name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
                           {new Date(bill.created_at).toLocaleDateString()} • {bill.payment_method}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <p className="text-sm font-bold text-green-600">Rs. {bill.total.toFixed(0)}</p>
                         {bill.discount > 0 && (
                           <p className="text-xs text-red-400">-Rs. {bill.discount.toFixed(0)} off</p>
@@ -215,11 +215,10 @@ export default function CustomersPage() {
         </form>
       )}
 
-      {/* Customers table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 text-sm text-gray-500">
-          {customers.length} customer(s)
-        </div>
+      <div className="text-sm text-gray-500 px-1">{customers.length} customer(s)</div>
+
+      {/* Customers — table (desktop) */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -264,6 +263,34 @@ export default function CustomersPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Customers — cards (mobile) */}
+      <div className="md:hidden space-y-3">
+        {customers.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-12 text-center text-gray-400 text-sm">
+            No customers found
+          </div>
+        ) : (
+          customers.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => viewCustomer(c.id)}
+              disabled={loadingDetail}
+              className="w-full text-left bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-charcoal truncate">{c.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{c.phone}</p>
+                  {c.email && <p className="text-xs text-gray-400 mt-0.5 truncate">{c.email}</p>}
+                  <p className="text-[10px] text-gray-400 mt-1">Joined {new Date(c.created_at).toLocaleDateString()}</p>
+                </div>
+                <span className="flex-shrink-0 text-xs text-gold font-medium">View →</span>
+              </div>
+            </button>
+          ))
+        )}
       </div>
     </div>
   );

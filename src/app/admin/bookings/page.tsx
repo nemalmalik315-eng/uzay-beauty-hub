@@ -112,7 +112,7 @@ export default function BookingsPage() {
       {editingBooking && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setEditingBooking(null)} />
-          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-heading text-lg font-semibold text-charcoal mb-4">
               Edit Booking — {editingBooking.customer_name}
             </h3>
@@ -198,8 +198,8 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      {/* Bookings table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      {/* Bookings — table (desktop) */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -300,6 +300,90 @@ export default function BookingsPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Bookings — cards (mobile) */}
+      <div className="md:hidden space-y-3">
+        {bookings.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-12 text-center text-gray-400 text-sm">
+            No bookings found
+          </div>
+        ) : (
+          bookings.map((b) => (
+            <div key={b.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-charcoal truncate">{b.customer_name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{b.customer_phone}</p>
+                </div>
+                <span
+                  className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-full ${
+                    b.status === "completed"
+                      ? "bg-green-100 text-green-700"
+                      : b.status === "cancelled"
+                      ? "bg-red-100 text-red-700"
+                      : b.status === "confirmed"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-yellow-100 text-yellow-700"
+                  }`}
+                >
+                  {b.status}
+                </span>
+              </div>
+              <div className="text-xs space-y-1 mb-3 pb-3 border-b border-gray-100">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Service</span>
+                  <span className="text-gray-700 text-right ml-3">{b.service_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Date · Time</span>
+                  <span className="text-gray-700">{b.date} · {b.time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Price</span>
+                  <span className="text-charcoal font-medium">Rs. {b.service_price}</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(b.status === "pending" || b.status === "confirmed") && (
+                  <button
+                    onClick={() => {
+                      setEditingBooking(b);
+                      setEditForm({ date: b.date, time: b.time, notes: b.notes || "" });
+                    }}
+                    className="text-xs bg-gray-50 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-100"
+                  >
+                    Edit
+                  </button>
+                )}
+                {b.status === "pending" && (
+                  <button
+                    onClick={() => handleStatusClick(b.id, "confirmed", b.customer_name)}
+                    className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded hover:bg-blue-100"
+                  >
+                    Confirm
+                  </button>
+                )}
+                {(b.status === "pending" || b.status === "confirmed") && (
+                  <>
+                    <button
+                      onClick={() => handleStatusClick(b.id, "completed", b.customer_name)}
+                      className="text-xs bg-green-50 text-green-600 px-3 py-1.5 rounded hover:bg-green-100"
+                    >
+                      Complete
+                    </button>
+                    <button
+                      onClick={() => handleStatusClick(b.id, "cancelled", b.customer_name)}
+                      className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded hover:bg-red-100"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -102,19 +102,21 @@ export default function StockPage() {
 
       {/* Low stock alert */}
       {lowStockCount > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
-          <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
-          <div>
-            <p className="font-semibold text-red-700">
-              {lowStockCount} item(s) running low on stock!
-            </p>
-            <p className="text-sm text-red-600">
-              These items are at or below their minimum threshold.
-            </p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-start gap-3 flex-1">
+            <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+            <div className="min-w-0">
+              <p className="font-semibold text-red-700 text-sm sm:text-base">
+                {lowStockCount} item(s) running low!
+              </p>
+              <p className="text-xs sm:text-sm text-red-600">
+                At or below minimum threshold.
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setShowLow(!showLow)}
-            className="ml-auto text-sm font-medium text-red-700 hover:text-red-800 px-3 py-1 rounded bg-red-100"
+            className="self-start sm:self-auto text-xs sm:text-sm font-medium text-red-700 hover:text-red-800 px-3 py-1.5 rounded bg-red-100 whitespace-nowrap"
           >
             {showLow ? "Show All" : "Show Low Stock"}
           </button>
@@ -206,8 +208,8 @@ export default function StockPage() {
         </form>
       )}
 
-      {/* Stock table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      {/* Stock — table (desktop) */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -300,6 +302,96 @@ export default function StockPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Stock — cards (mobile) */}
+      <div className="md:hidden space-y-3">
+        {items.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-12 text-center text-gray-400 text-sm">
+            No products found
+          </div>
+        ) : (
+          items.map((item) => {
+            const isLow = item.quantity <= item.min_threshold;
+            return (
+              <div key={item.id} className={`bg-white rounded-lg shadow-sm border p-4 ${isLow ? "border-red-200 bg-red-50/30" : "border-gray-100"}`}>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-charcoal truncate">{item.product_name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{item.category}</p>
+                  </div>
+                  <span className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                    isLow ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                  }`}>
+                    {isLow ? "Low Stock" : "In Stock"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center py-2 border-y border-gray-100 my-2">
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase">Qty</p>
+                    {editingId === item.id ? (
+                      <input
+                        type="number"
+                        min={0}
+                        value={editQty}
+                        onChange={(e) => setEditQty(parseInt(e.target.value) || 0)}
+                        className="w-full px-2 py-1 rounded border border-gray-300 text-sm text-center"
+                      />
+                    ) : (
+                      <p className={`text-base font-bold ${isLow ? "text-red-600" : "text-charcoal"}`}>
+                        {item.quantity}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase">Min</p>
+                    <p className="text-base text-gray-600">{item.min_threshold}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase">Price</p>
+                    <p className="text-base text-gray-600">Rs. {item.unit_price.toFixed(0)}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {editingId === item.id ? (
+                    <>
+                      <button
+                        onClick={() => updateQuantity(item.id)}
+                        className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded hover:bg-green-200"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="text-xs text-gray-500 px-2 py-1.5"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setEditingId(item.id);
+                          setEditQty(item.quantity);
+                        }}
+                        className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded hover:bg-blue-100"
+                      >
+                        Update Qty
+                      </button>
+                      <button
+                        onClick={() => setDeletingItem(item)}
+                        className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded hover:bg-red-100"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

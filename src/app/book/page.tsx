@@ -332,13 +332,13 @@ export default function BookPage() {
                 <button
                   type="submit"
                   disabled={loading || selectedServices.length === 0}
-                  className="btn-gold w-full text-lg py-4 mt-4 disabled:opacity-50"
+                  className="btn-gold w-full text-base sm:text-lg py-4 mt-4 disabled:opacity-50"
                 >
                   {loading
                     ? "Booking..."
                     : selectedServices.length === 0
                     ? "Select at least one service"
-                    : `Confirm Booking — Rs. ${totalPrice.toLocaleString()}`}
+                    : `Confirm — Rs. ${totalPrice.toLocaleString()}`}
                 </button>
 
                 <div className="text-center mt-4">

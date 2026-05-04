@@ -165,25 +165,24 @@ export default function AdminLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <h1 className="text-lg font-semibold text-charcoal font-heading">
+            <h1 className="text-base sm:text-lg font-semibold text-charcoal font-heading truncate">
               {navItems.find((i) =>
                 i.href === "/admin"
                   ? pathname === "/admin"
                   : pathname.startsWith(i.href)
               )?.label || "Admin"}
             </h1>
-            <div className="text-sm text-gray-500">
+            <div className="hidden sm:block text-sm text-gray-500 whitespace-nowrap">
               {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
+                weekday: "short",
+                month: "short",
                 day: "numeric",
               })}
             </div>
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="p-3 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div></ToastProvider>
   );
