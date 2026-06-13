@@ -213,7 +213,7 @@ export default function Home() {
 
           <AnimateOnScroll animation="fade-in" duration={800}>
           <div className="columns-2 md:columns-3 gap-3 md:gap-4 space-y-3 md:space-y-4">
-            [
+            {[
               { src: "/gallery/bridal-makeup-1.png", alt: "Bridal Glam Makeup" },
               { src: "/gallery/bridal-red-portrait.png", alt: "Bridal Glam, Done Right" },
               { src: "/gallery/bridal-braid-mehndi-1.png", alt: "Bridal Braid with Mehndi" },
