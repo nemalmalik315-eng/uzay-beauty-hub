@@ -213,16 +213,25 @@ export default function Home() {
 
           <AnimateOnScroll animation="fade-in" duration={800}>
           <div className="columns-2 md:columns-3 gap-3 md:gap-4 space-y-3 md:space-y-4">
-            {[
+            [
               { src: "/gallery/bridal-makeup-1.png", alt: "Bridal Glam Makeup" },
-              { src: "/gallery/2025-11-08.jpg", alt: "Salon Interior" },
+              { src: "/gallery/bridal-red-portrait.png", alt: "Bridal Glam, Done Right" },
+              { src: "/gallery/bridal-braid-mehndi-1.png", alt: "Bridal Braid with Mehndi" },
+              { src: "/gallery/bridal-maroon-1.png", alt: "A Bridal Look They'll Remember" },
               { src: "/gallery/mehndi-1.png", alt: "Mehndi Art" },
+              { src: "/gallery/soft-glam-green-bridal.png", alt: "Soft Glam, Beautifully Done" },
               { src: "/gallery/bridal-hairstyle-2.png", alt: "Bridal Braid with Jewelry" },
+              { src: "/gallery/bridal-braid-back-1.png", alt: "Bridal Braid Back View" },
               { src: "/gallery/jelly-mani-pedi-2.png", alt: "Jelly Mani Pedi Results" },
+              { src: "/gallery/party-makeup-pink.png", alt: "Your Dream Look, Done Right" },
               { src: "/gallery/bridal-makeup-2.png", alt: "Party Makeup Look" },
-              { src: "/gallery/2025-11-08-1.jpg", alt: "Elegant Gold Decor" },
+              { src: "/gallery/bridal-gold-glam.png", alt: "Ready for Your Main Character Moment" },
               { src: "/gallery/bridal-hairstyle-1.png", alt: "Bridal Hair Styling" },
+              { src: "/gallery/bridal-hair-mehndi-2.png", alt: "Hair That Finishes The Whole Look" },
               { src: "/gallery/jelly-mani-pedi-1.png", alt: "Jelly Manicure & Pedicure" },
+              { src: "/gallery/bridal-braid-gold-1.png", alt: "Hair That Gets Noticed" },
+              { src: "/gallery/2025-11-08.jpg", alt: "Salon Interior" },
+              { src: "/gallery/2025-11-08-1.jpg", alt: "Elegant Gold Decor" },
               { src: "/gallery/2025-11-08-2.jpg", alt: "Pedicure Station" },
               { src: "/gallery/2025-12-13.jpg", alt: "Uzay Beauty Hub" },
               { src: "/gallery/2025-12-13-1.jpg", alt: "Garden Entrance" },
