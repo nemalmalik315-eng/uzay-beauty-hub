@@ -60,9 +60,30 @@ export default function Home() {
       <Navbar />
 
       {/* ── Hero ── */}
-      <section className="relative h-[88vh] md:min-h-screen flex items-end justify-center overflow-hidden bg-charcoal-dark">
-        {/* Subtle radial glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#C9A84C15_0%,_transparent_70%)]" />
+      <section className="relative h-[88vh] md:min-h-screen flex items-end justify-center overflow-hidden">
+        {/* Background photo */}
+        <Image
+          src="/gallery/hero-salon.jpg"
+          alt="Uzay Beauty Hub bridal makeup"
+          fill
+          className="object-cover object-[center_12%]"
+          priority
+        />
+        {/* Gradient: dark top for logo, light mid, dark bottom for text */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/10 to-black/80" />
+
+        {/* Logo */}
+        <div className="absolute top-20 sm:top-24 left-0 right-0 flex justify-center z-10">
+          <div className="bg-white rounded-2xl px-5 py-3 shadow-xl">
+            <Image
+              src="/logo.jpeg"
+              alt="Uzay Beauty Hub"
+              width={130}
+              height={85}
+              className="object-contain"
+            />
+          </div>
+        </div>
 
         <div className="relative z-10 text-center px-5 pb-14 md:pb-24 w-full max-w-3xl mx-auto">
           <p className="text-gold text-xs tracking-[0.25em] uppercase font-medium mb-4 hero-animate hero-animate-1">
