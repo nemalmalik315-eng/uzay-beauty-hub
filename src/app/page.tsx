@@ -63,14 +63,16 @@ export default function Home() {
       <section className="relative h-[88vh] md:min-h-screen flex items-end justify-center overflow-hidden">
         {/* Background photo */}
         <Image
-          src="/gallery/bridal-red-portrait.png"
+          src="/gallery/hero-braid.png"
           alt="Uzay Beauty Hub"
           fill
-          className="object-cover object-top"
+          className="object-cover object-left-top"
           priority
         />
-        {/* Gradient overlay — heavy to kill any watermarks */}
-        <div className="absolute inset-0 bg-gradient-to-t from-charcoal-dark via-charcoal-dark/80 to-charcoal-dark/40" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-charcoal-dark via-charcoal-dark/70 to-charcoal-dark/30" />
+        {/* Extra cover for top-right logo watermark */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-charcoal-dark/80 to-transparent" />
 
         <div className="relative z-10 text-center px-5 pb-14 md:pb-24 w-full max-w-3xl mx-auto">
           <p className="text-gold text-xs tracking-[0.25em] uppercase font-medium mb-4 hero-animate hero-animate-1">
