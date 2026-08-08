@@ -217,23 +217,31 @@ export default function Home() {
               {
                 title: "Expert Team",
                 desc: "Skilled professionals with years of experience and passion for beauty.",
-                icon: "👩‍🎨",
+                icon: (
+                  <svg className="w-6 h-6 text-gold" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" /></svg>
+                ),
               },
               {
                 title: "Premium Products",
                 desc: "Only the highest quality, salon-grade products for the best results.",
-                icon: "✨",
+                icon: (
+                  <svg className="w-6 h-6 text-gold" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" /></svg>
+                ),
               },
               {
                 title: "Luxurious Atmosphere",
                 desc: "Step into a world of calm and luxury designed for your comfort.",
-                icon: "🌸",
+                icon: (
+                  <svg className="w-6 h-6 text-gold" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+                ),
               },
             ].map((item) => (
-              <div key={item.title} className="flex gap-4 bg-white/5 border border-white/10 rounded-xl p-5 md:flex-col md:text-center md:items-center">
-                <div className="text-3xl flex-shrink-0">{item.icon}</div>
+              <div key={item.title} className="flex gap-4 bg-white/5 border border-white/8 rounded-2xl p-5 md:flex-col md:p-6">
+                <div className="w-12 h-12 rounded-xl bg-gold/15 border border-gold/20 flex items-center justify-center flex-shrink-0">
+                  {item.icon}
+                </div>
                 <div>
-                  <h3 className="font-heading text-lg font-semibold text-white mb-1">{item.title}</h3>
+                  <h3 className="font-heading text-lg font-semibold text-white mb-1.5">{item.title}</h3>
                   <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
                 </div>
               </div>
