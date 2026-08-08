@@ -69,21 +69,18 @@ export default function Home() {
           className="object-cover object-top"
           priority
         />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-charcoal-dark via-charcoal-dark/75 to-charcoal-dark/15" />
+        {/* Gradient overlay — heavy to kill any watermarks */}
+        <div className="absolute inset-0 bg-gradient-to-t from-charcoal-dark via-charcoal-dark/80 to-charcoal-dark/40" />
 
         <div className="relative z-10 text-center px-5 pb-14 md:pb-24 w-full max-w-3xl mx-auto">
-          <p className="text-gold text-xs tracking-[0.25em] uppercase font-medium mb-3 hero-animate hero-animate-1">
+          <p className="text-gold text-xs tracking-[0.25em] uppercase font-medium mb-4 hero-animate hero-animate-1">
             Lahore&apos;s Premier Beauty Salon
           </p>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-4 leading-tight hero-animate hero-animate-2">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-8 leading-tight hero-animate hero-animate-2">
             Where <span className="text-gold">Elegance</span>
             <br />Meets Expertise
           </h1>
-          <p className="text-sm md:text-lg text-gray-300 mb-7 hero-animate hero-animate-3">
-            Premium beauty services crafted with care and precision.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center hero-animate hero-animate-4">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center hero-animate hero-animate-3">
             <Link href="/book" className="btn-gold text-base px-8 py-3.5 rounded-full">
               Book Appointment
             </Link>

@@ -44,26 +44,23 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-3">
+            {/* Logo image only on desktop */}
             <Image
               src="/logo.jpeg"
               alt="Uzay Beauty Hub"
-              width={44}
-              height={44}
-              className="rounded-xl flex-shrink-0"
+              width={40}
+              height={40}
+              className="hidden sm:block rounded-lg flex-shrink-0"
             />
-            <div>
-              <span
-                className={`font-heading text-base sm:text-xl font-bold block leading-tight transition-colors duration-300 ${
-                  isTransparent ? "text-white" : "text-charcoal"
-                }`}
-              >
-                Uzay Beauty Hub
-              </span>
-              <span className={`text-[10px] tracking-widest uppercase font-medium hidden sm:block transition-colors duration-300 ${isTransparent ? "text-gold/80" : "text-gold"}`}>
-                Lahore
-              </span>
-            </div>
+            {/* Mobile: just the elegant wordmark */}
+            <span
+              className={`font-heading text-lg sm:text-xl font-bold transition-colors duration-300 ${
+                isTransparent ? "text-white" : "text-charcoal"
+              }`}
+            >
+              Uzay Beauty Hub
+            </span>
           </Link>
 
           {/* Desktop nav */}
