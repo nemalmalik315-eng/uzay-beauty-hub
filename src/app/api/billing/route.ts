@@ -16,9 +16,9 @@ export async function GET(req: NextRequest) {
   if (period === "today" || (!period && !date)) {
     conditions.push("DATE(created_at) = DATE('now')");
   } else if (period === "week") {
-    conditions.push("DATE(created_at) >= DATE('now', '-7 days')");
+    conditions.push("strftime('%Y-%W', created_at) = strftime('%Y-%W', 'now')");
   } else if (period === "month") {
-    conditions.push("DATE(created_at) >= DATE('now', '-30 days')");
+    conditions.push("strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
   } else if (date) {
     conditions.push("DATE(created_at) = ?");
     params.push(date);
@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     service_charge,
     discount = 0,
     payment_method = "cash",
+    bill_date,
   } = body;
 
   if (!customer_name || !service_name || service_charge === undefined) {
@@ -83,26 +84,42 @@ export async function POST(req: NextRequest) {
 
   const total = service_charge - discount;
 
-  const result = await db.execute({
-    sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [
-      booking_id || null,
-      resolvedCustomerId,
-      customer_name,
-      service_name,
-      service_charge,
-      discount,
-      total,
-      payment_method,
-    ],
-  });
+  const result = await db.execute(
+    bill_date
+      ? {
+          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, bill_date],
+        }
+      : {
+          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method],
+        }
+  );
 
   if (booking_id) {
     await db.execute({ sql: "UPDATE bookings SET status = 'completed' WHERE id = ?", args: [booking_id] });
   }
 
   return NextResponse.json({ id: Number(result.lastInsertRowid), customer_id: resolvedCustomerId });
+}
+
+export async function PATCH(req: NextRequest) {
+  const db = getDb();
+  const body = await req.json();
+  const { id, service_name, service_charge, discount = 0, payment_method = "cash" } = body;
+
+  if (!id || !service_name || service_charge === undefined) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const total = service_charge - discount;
+
+  await db.execute({
+    sql: "UPDATE billing SET service_name = ?, service_charge = ?, discount = ?, total = ?, payment_method = ? WHERE id = ?",
+    args: [service_name, service_charge, discount, total, payment_method, Number(id)],
+  });
+
+  return NextResponse.json({ id: Number(id) });
 }
 
 export async function DELETE(req: NextRequest) {

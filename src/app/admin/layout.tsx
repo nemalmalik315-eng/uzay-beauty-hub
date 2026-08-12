@@ -50,6 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [showMore, setShowMore] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -63,6 +64,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setAuthenticated(false);
         } else {
           setAuthenticated(true);
+          // Load pending booking count — only count unviewed ones
+          fetch("/api/bookings?status=pending")
+            .then((r) => r.json())
+            .then((data) => {
+              if (!Array.isArray(data)) return;
+              const pendingIds: number[] = data.map((b: { id: number }) => b.id);
+              let viewedIds: number[] = [];
+              try { viewedIds = JSON.parse(localStorage.getItem("viewedBookingIds") || "[]"); } catch {}
+              if (pathname === "/admin/bookings") {
+                // Admin is looking at bookings — mark all as seen
+                const merged = Array.from(new Set([...viewedIds, ...pendingIds]));
+                localStorage.setItem("viewedBookingIds", JSON.stringify(merged));
+                setPendingCount(0);
+              } else {
+                setPendingCount(pendingIds.filter((id) => !viewedIds.includes(id)).length);
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {
@@ -130,6 +149,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 >
                   <Icon name={item.icon} className="w-4.5 h-4.5 flex-shrink-0" />
                   {item.label}
+                  {item.label === "Bookings" && pendingCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+                      {pendingCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -202,7 +226,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     isActive ? "text-gold" : "text-gray-400"
                   }`}
                 >
-                  <Icon name={tab.icon} className="w-5 h-5" />
+                  <div className="relative">
+                    <Icon name={tab.icon} className="w-5 h-5" />
+                    {tab.label === "Bookings" && pendingCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold px-1 py-px rounded-full min-w-[14px] text-center leading-none">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </div>
                   <span className={`text-[10px] font-medium leading-none ${isActive ? "text-gold" : "text-gray-400"}`}>
                     {tab.label}
                   </span>

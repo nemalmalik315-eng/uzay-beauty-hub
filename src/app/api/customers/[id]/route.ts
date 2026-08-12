@@ -26,15 +26,33 @@ export async function GET(
     args: [Number(id)],
   });
 
-  // Get booking history
-  const { rows: bookings } = await db.execute({
-    sql: `SELECT b.*, s.name as service_name, s.price as service_price, s.category
+  // Get grouped booking history
+  const { rows: bookingRows } = await db.execute({
+    sql: `SELECT
+            COALESCE(b.booking_group_id, b.id) as group_id,
+            b.date, b.time,
+            MAX(b.status) as status,
+            GROUP_CONCAT(s.name, ' + ') as service_names,
+            SUM(s.price) as subtotal,
+            MAX(COALESCE(b.discount, 0)) as discount
           FROM bookings b JOIN services s ON b.service_id = s.id
-          WHERE b.customer_id = ? ORDER BY b.date DESC, b.time DESC`,
+          WHERE b.customer_id = ?
+          GROUP BY COALESCE(b.booking_group_id, b.id)
+          ORDER BY b.date DESC, b.time DESC`,
     args: [Number(id)],
   });
 
-  // Calculate totals
+  const bookingHistory = bookingRows.map((r) => ({
+    group_id: Number(r.group_id),
+    date: String(r.date),
+    time: String(r.time),
+    status: String(r.status),
+    service_names: String(r.service_names || ""),
+    total: Number(r.subtotal) || 0,
+    discount: Number(r.discount) || 0,
+  }));
+
+  // Calculate totals (billing + confirmed/completed bookings)
   const totalSpent = bills.reduce((sum, b) => sum + (b.total as number), 0);
   const totalVisits = bills.length;
   const totalDiscount = bills.reduce((sum, b) => sum + (b.discount as number), 0);
@@ -42,7 +60,7 @@ export async function GET(
   return NextResponse.json({
     customer: customers[0],
     bills,
-    bookings,
+    bookingHistory,
     stats: {
       totalSpent,
       totalVisits,
@@ -50,4 +68,29 @@ export async function GET(
       lastVisit: bills.length > 0 ? bills[0].created_at : null,
     },
   });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const db = getDb();
+  const { id } = await params;
+  const body = await req.json();
+  const { name, phone, email, surname, house_no, society, notes } = body;
+
+  await db.execute({
+    sql: `UPDATE customers SET
+            name    = COALESCE(?, name),
+            phone   = COALESCE(?, phone),
+            email   = ?,
+            surname = ?,
+            house_no = ?,
+            society = ?,
+            notes   = ?
+          WHERE id = ?`,
+    args: [name || null, phone || null, email || null, surname || null, house_no || null, society || null, notes || null, Number(id)],
+  });
+
+  return NextResponse.json({ success: true });
 }

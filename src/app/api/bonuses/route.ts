@@ -23,32 +23,44 @@ interface EmployeeBonus {
 async function computeMonthLive(month: string) {
   const db = getDb();
 
-  // Get all eyebrow bills for the month, grouped by date
-  // Match service_name containing "eyebrow" (case-insensitive)
+  // Fetch bills that contain any eyebrow service, then parse line-by-line
+  // service_name format: "ServiceName~~price|||ServiceName~~price"
   const { rows: billRows } = await db.execute({
-    sql: `SELECT DATE(created_at) as date, COALESCE(SUM(total), 0) as pool
+    sql: `SELECT DATE(created_at) as date, service_name
           FROM billing
           WHERE strftime('%Y-%m', created_at) = ?
-            AND LOWER(service_name) LIKE '%eyebrow%'
-          GROUP BY DATE(created_at)`,
+            AND LOWER(service_name) LIKE '%eyebrow%'`,
     args: [month],
   });
 
   // Get all "present" attendance records for the month, grouped by date
+  // Only include employees marked as bonus_eligible
   const { rows: attendanceRows } = await db.execute({
     sql: `SELECT a.date, a.employee_id, e.name
           FROM attendance a
           JOIN employees e ON e.id = a.employee_id
           WHERE strftime('%Y-%m', a.date) = ?
-            AND a.status = 'present'
+            AND a.status IN ('present', 'leave')
+            AND e.bonus_eligible = 1
           ORDER BY a.date ASC, e.name ASC`,
     args: [month],
   });
 
-  // Build pool-by-date map
+  // Build pool-by-date map: only sum eyebrow line prices, not the whole bill
   const poolByDate = new Map<string, number>();
   for (const r of billRows) {
-    poolByDate.set(String(r.date), Number(r.pool));
+    const date = String(r.date);
+    const lines = String(r.service_name).split("|||");
+    let eyebrowTotal = 0;
+    for (const line of lines) {
+      const [name, priceStr] = line.split("~~");
+      if (name && name.toLowerCase().includes("eyebrow")) {
+        eyebrowTotal += parseFloat(priceStr) || 0;
+      }
+    }
+    if (eyebrowTotal > 0) {
+      poolByDate.set(date, (poolByDate.get(date) || 0) + eyebrowTotal);
+    }
   }
 
   // Build present-by-date map

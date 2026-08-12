@@ -11,6 +11,8 @@ interface Employee {
   role: string;
   shift_start: string;
   active: number;
+  salary: number;
+  bonus_eligible: number;
 }
 
 interface AttendanceRow {
@@ -35,7 +37,10 @@ interface AttendanceSummary {
   unmarked: number;
 }
 
-type Tab = "team" | "attendance" | "bonuses";
+type Tab = "team" | "attendance" | "bonuses" | "pay";
+
+// ← Change this to whatever PIN you want
+const PAY_PIN = "1234";
 
 interface BonusEmployee {
   employee_id: number;
@@ -70,13 +75,85 @@ interface HistoryMonth {
   paid_at: string;
 }
 
-const statusOptions = [
-  { value: "present", label: "Present", color: "bg-green-100 text-green-700" },
-  { value: "late", label: "Late", color: "bg-yellow-100 text-yellow-700" },
+// Returns "present" if within 10-min grace period, "late" otherwise
+function determineStatus(checkInTime: string, shiftStart: string): "present" | "late" {
+  if (!checkInTime || !shiftStart) return "present";
+  const [ch, cm] = checkInTime.split(":").map(Number);
+  const [sh, sm] = shiftStart.split(":").map(Number);
+  return (ch * 60 + cm) <= (sh * 60 + sm + 10) ? "present" : "late";
+}
+
+const absenceOptions = [
   { value: "absent", label: "Absent", color: "bg-red-100 text-red-700" },
   { value: "leave", label: "Leave", color: "bg-blue-100 text-blue-700" },
   { value: "uninformed", label: "Uninformed", color: "bg-gray-200 text-gray-700" },
 ];
+
+const statusColors: Record<string, string> = {
+  present: "bg-green-100 text-green-700",
+  late: "bg-yellow-100 text-yellow-700",
+  absent: "bg-red-100 text-red-700",
+  leave: "bg-blue-100 text-blue-700",
+  uninformed: "bg-gray-200 text-gray-700",
+};
+
+function parse24To12(t: string): { h: number; m: number; period: "AM" | "PM" } {
+  if (!t) {
+    const now = new Date();
+    const hh = now.getHours();
+    return { h: hh === 0 ? 12 : hh > 12 ? hh - 12 : hh, m: now.getMinutes(), period: hh >= 12 ? "PM" : "AM" };
+  }
+  const [hh, mm] = t.split(":").map(Number);
+  return { h: hh === 0 ? 12 : hh > 12 ? hh - 12 : hh, m: mm, period: hh >= 12 ? "PM" : "AM" };
+}
+
+function parts12To24(h: number, m: number, period: "AM" | "PM"): string {
+  let h24 = h;
+  if (period === "AM" && h === 12) h24 = 0;
+  else if (period === "PM" && h !== 12) h24 = h + 12;
+  return `${String(h24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function format12(t: string): string {
+  if (!t) return "";
+  const { h, m, period } = parse24To12(t);
+  return `${h}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+function TimeInput12({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const parts = parse24To12(value);
+  return (
+    <div className="flex items-center gap-0.5">
+      <select
+        value={parts.h}
+        onChange={(e) => onChange(parts12To24(Number(e.target.value), parts.m, parts.period))}
+        className="px-1.5 py-1 rounded border border-gray-200 text-sm focus:border-gold outline-none"
+      >
+        {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((v) => (
+          <option key={v} value={v}>{v}</option>
+        ))}
+      </select>
+      <span className="text-gray-400 text-xs px-0.5">:</span>
+      <select
+        value={parts.m}
+        onChange={(e) => onChange(parts12To24(parts.h, Number(e.target.value), parts.period))}
+        className="px-1.5 py-1 rounded border border-gray-200 text-sm focus:border-gold outline-none"
+      >
+        {Array.from({ length: 60 }, (_, i) => (
+          <option key={i} value={i}>{String(i).padStart(2, "0")}</option>
+        ))}
+      </select>
+      <select
+        value={parts.period}
+        onChange={(e) => onChange(parts12To24(parts.h, parts.m, e.target.value as "AM" | "PM"))}
+        className="px-1.5 py-1 rounded border border-gray-200 text-sm focus:border-gold outline-none"
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  );
+}
 
 export default function StaffPage() {
   const [tab, setTab] = useState<Tab>("attendance");
@@ -97,6 +174,14 @@ export default function StaffPage() {
   );
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
+  const [checkInTimes, setCheckInTimes] = useState<Record<number, string>>({});
+
+  // Pay tab state
+  const [payUnlocked, setPayUnlocked] = useState(false);
+  const [payPinInput, setPayPinInput] = useState("");
+  const [payPinError, setPayPinError] = useState(false);
+  const [editingSalaryId, setEditingSalaryId] = useState<number | null>(null);
+  const [salaryInput, setSalaryInput] = useState("");
 
   // Bonuses state
   const [bonusMonth, setBonusMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -118,6 +203,16 @@ export default function StaffPage() {
     const data = await res.json();
     setAttendance(data.attendance);
     setSummary(data.summary);
+    // Pre-fill time inputs: use existing check_in_time if already marked, else current time
+    const now = new Date();
+    const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    setCheckInTimes((prev) => {
+      const next = { ...prev };
+      (data.attendance as AttendanceRow[]).forEach((row) => {
+        next[row.employee_id] = row.check_in_time || next[row.employee_id] || nowStr;
+      });
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -236,10 +331,50 @@ export default function StaffPage() {
     }
   };
 
+  // Pay tab actions
+  const submitPin = () => {
+    if (payPinInput === PAY_PIN) {
+      setPayUnlocked(true);
+      setPayPinError(false);
+      setPayPinInput("");
+    } else {
+      setPayPinError(true);
+      setPayPinInput("");
+      setTimeout(() => setPayPinError(false), 1500);
+    }
+  };
+
+  const saveSalary = async (emp: Employee) => {
+    const salary = parseInt(salaryInput) || 0;
+    await fetch("/api/employees", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: emp.id, salary }),
+    });
+    toast(`Salary updated for ${emp.name}`);
+    setEditingSalaryId(null);
+    loadEmployees();
+  };
+
   // Attendance actions
   const markAttendance = async (employeeId: number, status: string) => {
     const now = new Date();
-    const checkInTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const fallback = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const checkInTime = checkInTimes[employeeId] || fallback;
+
+    // Optimistic update — reflect instantly, no waiting for network
+    const updated = attendance.map((row) =>
+      row.employee_id === employeeId
+        ? { ...row, status, check_in_time: (status === "present" || status === "late") ? checkInTime : null }
+        : row
+    );
+    setAttendance(updated);
+    const counts = { present: 0, late: 0, absent: 0, leave: 0, uninformed: 0, unmarked: 0 };
+    updated.forEach((r) => {
+      if (!r.status) counts.unmarked++;
+      else if (r.status in counts) (counts as Record<string, number>)[r.status]++;
+    });
+    setSummary({ total: updated.length, ...counts });
 
     const res = await fetch("/api/attendance", {
       method: "POST",
@@ -251,10 +386,9 @@ export default function StaffPage() {
         check_in_time: (status === "present" || status === "late") ? checkInTime : null,
       }),
     });
-    if (res.ok) {
-      loadAttendance();
-    } else {
+    if (!res.ok) {
       toast("Failed to mark attendance", "error");
+      loadAttendance(); // revert on failure
     }
   };
 
@@ -331,10 +465,10 @@ export default function StaffPage() {
 
       {/* Tab switcher */}
       <div className="bg-white rounded-lg border border-gray-100 p-4">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setTab("attendance")}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-shrink-0 px-5 py-2 rounded-md text-sm font-medium transition-colors ${
               tab === "attendance" ? "bg-gold text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -342,7 +476,7 @@ export default function StaffPage() {
           </button>
           <button
             onClick={() => setTab("team")}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-shrink-0 px-5 py-2 rounded-md text-sm font-medium transition-colors ${
               tab === "team" ? "bg-gold text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -350,11 +484,25 @@ export default function StaffPage() {
           </button>
           <button
             onClick={() => setTab("bonuses")}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-shrink-0 px-5 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
               tab === "bonuses" ? "bg-gold text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
             Bonuses
+          </button>
+          <button
+            onClick={() => setTab("pay")}
+            className={`flex-shrink-0 px-5 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              tab === "pay" ? "bg-gold text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            Pay
           </button>
         </div>
       </div>
@@ -364,8 +512,8 @@ export default function StaffPage() {
         <>
           {/* Summary cards */}
           {summary && (
-            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-              <div className="bg-white rounded-lg border border-gray-100 p-2 sm:p-4 text-center">
+            <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3">
+              <div className="bg-white rounded-lg border border-gray-100 p-2 sm:p-4 text-center col-span-1">
                 <p className="text-[10px] sm:text-xs text-gray-500 uppercase">Total</p>
                 <p className="text-lg sm:text-2xl font-bold text-charcoal">{summary.total}</p>
               </div>
@@ -384,6 +532,10 @@ export default function StaffPage() {
               <div className="bg-blue-50 rounded-lg border border-blue-100 p-2 sm:p-4 text-center">
                 <p className="text-[10px] sm:text-xs text-blue-600 uppercase">Leave</p>
                 <p className="text-lg sm:text-2xl font-bold text-blue-700">{summary.leave}</p>
+              </div>
+              <div className="bg-gray-100 rounded-lg border border-gray-200 p-2 sm:p-4 text-center">
+                <p className="text-[10px] sm:text-xs text-gray-500 uppercase">Uninformed</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-600">{summary.uninformed}</p>
               </div>
               <div className="bg-gray-50 rounded-lg border border-gray-200 p-2 sm:p-4 text-center">
                 <p className="text-[10px] sm:text-xs text-gray-500 uppercase">Unmarked</p>
@@ -435,7 +587,6 @@ export default function StaffPage() {
                     </tr>
                   ) : (
                     attendance.map((row) => {
-                      const currentStatus = statusOptions.find((s) => s.value === row.status);
                       const lateHint = isToday && !row.status && isLateHint(row.shift_start);
 
                       return (
@@ -444,28 +595,38 @@ export default function StaffPage() {
                             <p className="text-sm font-medium text-charcoal">{row.name}</p>
                             <p className="text-xs text-gray-400">{row.phone}</p>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{row.shift_start}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{format12(row.shift_start)}</td>
                           <td className="px-6 py-4">
-                            {currentStatus ? (
-                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${currentStatus.color}`}>
-                                {currentStatus.label}
+                            {row.status ? (
+                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[row.status] || "bg-gray-100 text-gray-600"}`}>
+                                {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
                               </span>
                             ) : (
                               <span className="text-xs text-gray-400">
-                                {lateHint ? (
-                                  <span className="text-yellow-600 font-medium">Shift started</span>
-                                ) : (
-                                  "Not marked"
-                                )}
+                                {lateHint ? <span className="text-yellow-600 font-medium">Shift started</span> : "Not marked"}
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            {row.check_in_time || "—"}
+                          <td className="px-6 py-4">
+                            <TimeInput12
+                              value={checkInTimes[row.employee_id] || ""}
+                              onChange={(v) => setCheckInTimes((prev) => ({ ...prev, [row.employee_id]: v }))}
+                            />
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex gap-1 flex-wrap">
-                              {statusOptions.map((opt) => (
+                              {/* Auto-detect present/late based on time + grace period */}
+                              <button
+                                onClick={() => markAttendance(row.employee_id, determineStatus(checkInTimes[row.employee_id] || "", row.shift_start))}
+                                className={`text-xs px-2 py-1 rounded transition-colors ${
+                                  row.status === "present" ? "bg-green-100 text-green-700 font-bold ring-1 ring-green-400"
+                                  : row.status === "late" ? "bg-yellow-100 text-yellow-700 font-bold ring-1 ring-yellow-400"
+                                  : "bg-green-50 text-green-700 hover:bg-green-100"
+                                }`}
+                              >
+                                {row.status === "present" ? "Present ✓" : row.status === "late" ? "Late ✓" : "Check In"}
+                              </button>
+                              {absenceOptions.map((opt) => (
                                 <button
                                   key={opt.value}
                                   onClick={() => markAttendance(row.employee_id, opt.value)}
@@ -497,7 +658,6 @@ export default function StaffPage() {
               </div>
             ) : (
               attendance.map((row) => {
-                const currentStatus = statusOptions.find((s) => s.value === row.status);
                 const lateHint = isToday && !row.status && isLateHint(row.shift_start);
 
                 return (
@@ -506,26 +666,39 @@ export default function StaffPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-charcoal truncate">{row.name}</p>
                         <p className="text-xs text-gray-400">{row.phone}</p>
-                        <p className="text-xs text-gray-500 mt-1">Shift: {row.shift_start}{row.check_in_time && ` · In: ${row.check_in_time}`}</p>
+                        <p className="text-xs text-gray-500 mt-1">Shift: {format12(row.shift_start)}{row.check_in_time && ` · In: ${format12(row.check_in_time)}`}</p>
                       </div>
                       <div className="flex-shrink-0">
-                        {currentStatus ? (
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${currentStatus.color}`}>
-                            {currentStatus.label}
+                        {row.status ? (
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[row.status] || "bg-gray-100 text-gray-600"}`}>
+                            {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
                           </span>
                         ) : (
                           <span className="text-xs text-gray-400">
-                            {lateHint ? (
-                              <span className="text-yellow-600 font-medium">Late</span>
-                            ) : (
-                              "—"
-                            )}
+                            {lateHint ? <span className="text-yellow-600 font-medium">Late</span> : "—"}
                           </span>
                         )}
                       </div>
                     </div>
-                    <div className="grid grid-cols-5 gap-1">
-                      {statusOptions.map((opt) => (
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="text-xs text-gray-400 flex-shrink-0">Time in:</label>
+                      <TimeInput12
+                        value={checkInTimes[row.employee_id] || ""}
+                        onChange={(v) => setCheckInTimes((prev) => ({ ...prev, [row.employee_id]: v }))}
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      <button
+                        onClick={() => markAttendance(row.employee_id, determineStatus(checkInTimes[row.employee_id] || "", row.shift_start))}
+                        className={`text-[11px] px-1 py-1.5 rounded transition-colors text-center ${
+                          row.status === "present" ? "bg-green-100 text-green-700 font-bold ring-1 ring-green-400"
+                          : row.status === "late" ? "bg-yellow-100 text-yellow-700 font-bold ring-1 ring-yellow-400"
+                          : "bg-green-50 text-green-700 hover:bg-green-100"
+                        }`}
+                      >
+                        {row.status === "present" ? "Present ✓" : row.status === "late" ? "Late ✓" : "Check In"}
+                      </button>
+                      {absenceOptions.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => markAttendance(row.employee_id, opt.value)}
@@ -627,13 +800,20 @@ export default function StaffPage() {
                       <tr key={emp.id} className={`hover:bg-gray-50 ${!emp.active ? "opacity-50" : ""}`}>
                         <td className="px-6 py-4 text-sm font-medium text-charcoal">{emp.name}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{emp.phone}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{emp.shift_start}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{format12(emp.shift_start)}</td>
                         <td className="px-6 py-4">
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                            emp.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"
-                          }`}>
-                            {emp.active ? "Active" : "Inactive"}
-                          </span>
+                          <div className="flex gap-1.5 flex-wrap">
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                              emp.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"
+                            }`}>
+                              {emp.active ? "Active" : "Inactive"}
+                            </span>
+                            {!emp.bonus_eligible && (
+                              <span className="text-xs font-medium px-2 py-1 rounded-full bg-orange-100 text-orange-600">
+                                No Bonus
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
@@ -681,13 +861,20 @@ export default function StaffPage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-charcoal truncate">{emp.name}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{emp.phone}</p>
-                      <p className="text-xs text-gray-400 mt-1">Shift: {emp.shift_start}</p>
+                      <p className="text-xs text-gray-400 mt-1">Shift: {format12(emp.shift_start)}</p>
                     </div>
-                    <span className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-full ${
-                      emp.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"
-                    }`}>
-                      {emp.active ? "Active" : "Inactive"}
-                    </span>
+                    <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        emp.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"
+                      }`}>
+                        {emp.active ? "Active" : "Inactive"}
+                      </span>
+                      {!emp.bonus_eligible && (
+                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-orange-100 text-orange-600">
+                          No Bonus
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-3 pt-2 border-t border-gray-100">
                     <button
@@ -715,9 +902,168 @@ export default function StaffPage() {
         </>
       )}
 
+      {/* ===== PAY TAB ===== */}
+      {tab === "pay" && (
+        <>
+          {!payUnlocked ? (
+            /* ── PIN gate ── */
+            <div className="flex items-center justify-center py-16">
+              <div className="bg-white rounded-xl shadow-md border border-gray-100 p-8 w-full max-w-xs text-center">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${payPinError ? "bg-red-100" : "bg-gold/10"}`}>
+                  <svg className={`w-7 h-7 transition-colors ${payPinError ? "text-red-500" : "text-gold"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                </div>
+                <h3 className="font-heading text-lg font-semibold text-charcoal mb-1">Finance — Restricted</h3>
+                <p className="text-xs text-gray-400 mb-6">Enter the access code to view salaries & bonuses</p>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={payPinInput}
+                  onChange={(e) => setPayPinInput(e.target.value.replace(/\D/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && submitPin()}
+                  placeholder="••••"
+                  className={`w-full text-center text-xl tracking-[0.5em] px-4 py-3 rounded-lg border text-charcoal outline-none mb-4 transition-colors ${
+                    payPinError ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-gold"
+                  }`}
+                />
+                {payPinError && (
+                  <p className="text-xs text-red-500 mb-3">Incorrect code. Try again.</p>
+                )}
+                <button
+                  onClick={submitPin}
+                  className="btn-gold w-full py-2.5 text-sm"
+                >
+                  Unlock
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* ── Pay content (unlocked) ── */
+            <>
+              {/* Header with lock button */}
+              <div className="bg-white rounded-lg border border-gray-100 p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-charcoal">Staff Salaries</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Monthly payroll: <span className="font-medium text-charcoal">
+                      Rs. {employees.filter(e => e.active).reduce((s, e) => s + (e.salary || 0), 0).toLocaleString()}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setPayUnlocked(false); setTab("attendance"); }}
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-500 transition-colors border border-gray-200 rounded-md px-3 py-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                  Lock
+                </button>
+              </div>
+
+              {/* Salary cards */}
+              {employees.filter(e => e.active).length === 0 ? (
+                <div className="bg-white rounded-lg border border-gray-100 px-4 py-12 text-center text-gray-400 text-sm">
+                  No active employees. Add staff in the Team tab first.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {employees.filter(e => e.active).map((emp) => (
+                    <div key={emp.id} className="bg-white rounded-lg border border-gray-100 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-charcoal">{emp.name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{emp.phone} · {emp.role}</p>
+                        </div>
+
+                        {editingSalaryId === emp.id ? (
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-sm text-gray-500">Rs.</span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={salaryInput}
+                              onChange={(e) => setSalaryInput(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && saveSalary(emp)}
+                              autoFocus
+                              className="w-28 px-3 py-1.5 rounded-md border border-gold text-sm outline-none text-charcoal"
+                            />
+                            <button onClick={() => saveSalary(emp)} className="text-xs bg-gold text-white px-3 py-1.5 rounded-md font-medium hover:bg-gold/90">
+                              Save
+                            </button>
+                            <button onClick={() => setEditingSalaryId(null)} className="text-xs text-gray-400 hover:text-gray-600">
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <p className="text-base font-bold text-charcoal">
+                              {emp.salary ? `Rs. ${emp.salary.toLocaleString()}` : <span className="text-gray-400 font-normal text-sm">Not set</span>}
+                            </p>
+                            <button
+                              onClick={() => { setEditingSalaryId(emp.id); setSalaryInput(String(emp.salary || "")); }}
+                              className="text-xs text-gold hover:text-gold-dark font-medium border border-gold/30 rounded px-2 py-1"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Total */}
+                  <div className="bg-gold/10 border border-gold/20 rounded-lg p-4 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-charcoal">Total Monthly Payroll</p>
+                    <p className="text-xl font-bold text-gold">
+                      Rs. {employees.filter(e => e.active).reduce((s, e) => s + (e.salary || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+
       {/* ===== BONUSES TAB ===== */}
       {tab === "bonuses" && (
         <>
+          {!payUnlocked ? (
+            /* ── PIN gate (shared with Pay) ── */
+            <div className="flex items-center justify-center py-16">
+              <div className="bg-white rounded-xl shadow-md border border-gray-100 p-8 w-full max-w-xs text-center">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${payPinError ? "bg-red-100" : "bg-gold/10"}`}>
+                  <svg className={`w-7 h-7 transition-colors ${payPinError ? "text-red-500" : "text-gold"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                </div>
+                <h3 className="font-heading text-lg font-semibold text-charcoal mb-1">Finance — Restricted</h3>
+                <p className="text-xs text-gray-400 mb-6">Enter the access code to view salaries & bonuses</p>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={payPinInput}
+                  onChange={(e) => setPayPinInput(e.target.value.replace(/\D/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && submitPin()}
+                  placeholder="••••"
+                  className={`w-full text-center text-xl tracking-[0.5em] px-4 py-3 rounded-lg border text-charcoal outline-none mb-4 transition-colors ${
+                    payPinError ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-gold"
+                  }`}
+                />
+                {payPinError && (
+                  <p className="text-xs text-red-500 mb-3">Incorrect code. Try again.</p>
+                )}
+                <button onClick={submitPin} className="btn-gold w-full py-2.5 text-sm">
+                  Unlock
+                </button>
+              </div>
+            </div>
+          ) : (
+          <>
           <ConfirmDialog
             open={confirmPayout}
             title="Pay Out & Reset Month"
@@ -751,6 +1097,15 @@ export default function StaffPage() {
                   ✓ Paid Out
                 </span>
               )}
+              <button
+                onClick={() => { setPayUnlocked(false); setTab("attendance"); }}
+                className="ml-auto flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-500 transition-colors border border-gray-200 rounded-md px-3 py-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                Lock
+              </button>
             </div>
             <p className="text-xs text-gray-400 mt-2">
               Bonus pool = total eyebrow service charges that day. Only employees marked <span className="text-green-600 font-medium">Present</span> share that day's pool.
@@ -934,6 +1289,8 @@ export default function StaffPage() {
               </table>
             </div>
           </div>
+          </>
+          )}
         </>
       )}
     </div>

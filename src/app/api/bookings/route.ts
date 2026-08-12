@@ -3,36 +3,66 @@ import getDb from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+function parseGroupedRows(rows: Record<string, unknown>[]) {
+  return rows.map((r) => {
+    const servicesRaw = String(r.services_raw || "");
+    const services = servicesRaw
+      .split("|||")
+      .filter(Boolean)
+      .map((part) => {
+        const [id, name, price, category] = part.split("~~");
+        return { id: Number(id), name: name || "", price: Number(price) || 0, category: category || "" };
+      });
+    const total = Number(r.total) || 0;
+    const discount = Number(r.discount) || 0;
+    return {
+      id: Number(r.group_id), // kept for badge-count compat in layout
+      group_id: Number(r.group_id),
+      customer_name: String(r.customer_name || ""),
+      customer_phone: String(r.customer_phone || ""),
+      date: String(r.date || ""),
+      time: String(r.time || ""),
+      notes: r.notes ? String(r.notes) : "",
+      status: String(r.status || "pending"),
+      discount,
+      services,
+      total,
+      final_total: total - discount,
+    };
+  });
+}
+
 export async function GET(req: NextRequest) {
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
   const status = searchParams.get("status");
 
-  let query = `
-    SELECT b.*, s.name as service_name, s.price as service_price, s.category
+  const whereClause = date ? "WHERE b.date = ?" : "";
+  const havingClause = status ? "HAVING MAX(b.status) = ?" : "";
+  const args: (string)[] = [...(date ? [date] : []), ...(status ? [status] : [])];
+
+  const query = `
+    SELECT
+      COALESCE(b.booking_group_id, b.id) as group_id,
+      b.customer_name,
+      b.customer_phone,
+      b.date,
+      b.time,
+      b.notes,
+      MAX(b.status) as status,
+      MAX(COALESCE(b.discount, 0)) as discount,
+      GROUP_CONCAT(b.id || '~~' || s.name || '~~' || s.price || '~~' || COALESCE(s.category,''), '|||') as services_raw,
+      SUM(s.price) as total
     FROM bookings b
     JOIN services s ON b.service_id = s.id
+    ${whereClause}
+    GROUP BY COALESCE(b.booking_group_id, b.id), b.customer_name, b.customer_phone, b.date, b.time, b.notes
+    ${havingClause}
+    ORDER BY group_id DESC
   `;
-  const conditions: string[] = [];
-  const params: (string | number)[] = [];
-
-  if (date) {
-    conditions.push("b.date = ?");
-    params.push(date);
-  }
-  if (status) {
-    conditions.push("b.status = ?");
-    params.push(status);
-  }
-
-  if (conditions.length > 0) {
-    query += " WHERE " + conditions.join(" AND ");
-  }
-  query += " ORDER BY b.date DESC, b.time DESC";
-
-  const { rows } = await db.execute({ sql: query, args: params });
-  return NextResponse.json(rows);
+  const { rows } = await db.execute({ sql: query, args });
+  return NextResponse.json(parseGroupedRows(rows as Record<string, unknown>[]));
 }
 
 export async function POST(req: NextRequest) {
@@ -67,7 +97,7 @@ export async function POST(req: NextRequest) {
     customerId = Number(result.lastInsertRowid);
   }
 
-  // Create a booking for each selected service
+  // Insert all bookings; first ID becomes the group_id for the whole batch
   const ids: number[] = [];
   for (const sid of serviceIds) {
     const result = await db.execute({
@@ -77,35 +107,47 @@ export async function POST(req: NextRequest) {
     ids.push(Number(result.lastInsertRowid));
   }
 
-  return NextResponse.json({
-    ids,
-    message: `${ids.length} booking${ids.length > 1 ? "s" : ""} created`,
-  });
+  // Assign group_id = first booking's id for all bookings in this batch
+  if (ids.length > 0) {
+    const groupId = ids[0];
+    for (const bookingId of ids) {
+      await db.execute({
+        sql: "UPDATE bookings SET booking_group_id = ? WHERE id = ?",
+        args: [groupId, bookingId],
+      });
+    }
+  }
+
+  return NextResponse.json({ ids, message: `${ids.length} booking${ids.length > 1 ? "s" : ""} created` });
 }
 
 export async function PATCH(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { id, status, date, time, notes } = body;
+  // group_id is COALESCE(booking_group_id, id) — updates all bookings in the group
+  const { group_id, status, date, time, discount } = body;
 
-  if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (!group_id) {
+    return NextResponse.json({ error: "Missing group_id" }, { status: 400 });
   }
 
-  // Build dynamic update
   const sets: string[] = [];
   const args: (string | number | null)[] = [];
 
-  if (status) { sets.push("status = ?"); args.push(status); }
-  if (date) { sets.push("date = ?"); args.push(date); }
-  if (time) { sets.push("time = ?"); args.push(time); }
-  if (notes !== undefined) { sets.push("notes = ?"); args.push(notes || null); }
+  if (status !== undefined) { sets.push("status = ?"); args.push(status); }
+  if (date !== undefined) { sets.push("date = ?"); args.push(date); }
+  if (time !== undefined) { sets.push("time = ?"); args.push(time); }
+  if (discount !== undefined) { sets.push("discount = ?"); args.push(discount); }
 
   if (sets.length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
-  args.push(id);
-  await db.execute({ sql: `UPDATE bookings SET ${sets.join(", ")} WHERE id = ?`, args });
+  args.push(group_id);
+  await db.execute({
+    sql: `UPDATE bookings SET ${sets.join(", ")} WHERE COALESCE(booking_group_id, id) = ?`,
+    args,
+  });
+
   return NextResponse.json({ message: "Booking updated" });
 }

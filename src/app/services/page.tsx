@@ -8,6 +8,7 @@ interface Service {
   name: string;
   category: string;
   price: number;
+  price_max?: number;
   duration: number;
   description: string;
 }
@@ -22,6 +23,7 @@ export default async function ServicesPage() {
     name: r.name as string,
     category: r.category as string,
     price: r.price as number,
+    price_max: r.price_max ? (r.price_max as number) : undefined,
     duration: r.duration as number,
     description: r.description as string,
   }));

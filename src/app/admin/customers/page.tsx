@@ -7,7 +7,11 @@ interface Customer {
   id: number;
   name: string;
   phone: string;
-  email: string;
+  email: string | null;
+  surname: string | null;
+  house_no: string | null;
+  society: string | null;
+  notes: string | null;
   created_at: string;
 }
 
@@ -21,6 +25,15 @@ interface CustomerDetail {
     total: number;
     payment_method: string;
     created_at: string;
+  }>;
+  bookingHistory: Array<{
+    group_id: number;
+    date: string;
+    time: string;
+    status: string;
+    service_names: string;
+    total: number;
+    discount: number;
   }>;
   stats: {
     totalSpent: number;
@@ -37,6 +50,9 @@ export default function CustomersPage() {
   const [form, setForm] = useState({ name: "", phone: "", email: "" });
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", surname: "", house_no: "", society: "", notes: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
   const { toast } = useToast();
 
   const loadCustomers = async () => {
@@ -69,6 +85,7 @@ export default function CustomersPage() {
 
   const viewCustomer = async (id: number) => {
     setLoadingDetail(true);
+    setEditingCustomer(false);
     const res = await fetch(`/api/customers/${id}`);
     if (res.ok) {
       const data = await res.json();
@@ -77,6 +94,27 @@ export default function CustomersPage() {
       toast("Failed to load customer details", "error");
     }
     setLoadingDetail(false);
+  };
+
+  const saveEditCustomer = async () => {
+    if (!selectedCustomer) return;
+    setSavingEdit(true);
+    const res = await fetch(`/api/customers/${selectedCustomer.customer.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    });
+    if (res.ok) {
+      toast("Customer updated");
+      setEditingCustomer(false);
+      setSelectedCustomer((prev) =>
+        prev ? { ...prev, customer: { ...prev.customer, ...editForm } } : null
+      );
+      loadCustomers();
+    } else {
+      toast("Failed to update", "error");
+    }
+    setSavingEdit(false);
   };
 
   return (
@@ -89,17 +127,96 @@ export default function CustomersPage() {
             <div className="p-4 sm:p-6 border-b border-gray-100">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-charcoal truncate">
-                    {selectedCustomer.customer.name}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                    {selectedCustomer.customer.phone}
-                    {selectedCustomer.customer.email && ` • ${selectedCustomer.customer.email}`}
-                  </p>
+                  {editingCustomer ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-400 uppercase mb-1">First Name</label>
+                          <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            className="w-full px-3 py-2 rounded border border-gray-200 text-sm focus:border-gold outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-400 uppercase mb-1">Surname</label>
+                          <input value={editForm.surname} onChange={(e) => setEditForm({ ...editForm, surname: e.target.value })}
+                            placeholder="Optional" className="w-full px-3 py-2 rounded border border-gray-200 text-sm focus:border-gold outline-none" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-400 uppercase mb-1">Phone</label>
+                          <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                            className="w-full px-3 py-2 rounded border border-gray-200 text-sm focus:border-gold outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-400 uppercase mb-1">Email</label>
+                          <input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                            placeholder="Optional" className="w-full px-3 py-2 rounded border border-gray-200 text-sm focus:border-gold outline-none" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-400 uppercase mb-1">House No.</label>
+                          <input value={editForm.house_no} onChange={(e) => setEditForm({ ...editForm, house_no: e.target.value })}
+                            placeholder="e.g. 12-B" className="w-full px-3 py-2 rounded border border-gray-200 text-sm focus:border-gold outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-400 uppercase mb-1">Society / Area</label>
+                          <input value={editForm.society} onChange={(e) => setEditForm({ ...editForm, society: e.target.value })}
+                            placeholder="e.g. Nasheman-e-Iqbal" className="w-full px-3 py-2 rounded border border-gray-200 text-sm focus:border-gold outline-none" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-medium text-gray-400 uppercase mb-1">Notes</label>
+                        <textarea value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                          placeholder="Allergies, preferences, etc." rows={2}
+                          className="w-full px-3 py-2 rounded border border-gray-200 text-sm focus:border-gold outline-none resize-none" />
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={saveEditCustomer} disabled={savingEdit} className="btn-gold text-sm py-1.5 px-4 disabled:opacity-50">
+                          {savingEdit ? "Saving…" : "Save"}
+                        </button>
+                        <button onClick={() => setEditingCustomer(false)} className="text-sm text-gray-500 hover:text-gray-700 px-3">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="font-heading text-lg sm:text-xl font-semibold text-charcoal truncate">
+                        {selectedCustomer.customer.name}{selectedCustomer.customer.surname ? ` ${selectedCustomer.customer.surname}` : ""}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                        {selectedCustomer.customer.phone}
+                        {selectedCustomer.customer.email && ` • ${selectedCustomer.customer.email}`}
+                      </p>
+                      {(selectedCustomer.customer.house_no || selectedCustomer.customer.society) && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {[selectedCustomer.customer.house_no, selectedCustomer.customer.society].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                      {selectedCustomer.customer.notes && (
+                        <p className="text-xs text-gray-400 mt-0.5 italic">{selectedCustomer.customer.notes}</p>
+                      )}
+                    </>
+                  )}
                 </div>
-                <button onClick={() => setSelectedCustomer(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none flex-shrink-0">
-                  &times;
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {!editingCustomer && (
+                    <button
+                      onClick={() => {
+                        const c = selectedCustomer.customer;
+                        setEditForm({ name: c.name, phone: c.phone, email: c.email || "", surname: c.surname || "", house_no: c.house_no || "", society: c.society || "", notes: c.notes || "" });
+                        setEditingCustomer(true);
+                      }}
+                      className="text-xs text-gold hover:text-gold-dark font-medium border border-gold/30 rounded px-2.5 py-1.5"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button onClick={() => setSelectedCustomer(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">
+                    &times;
+                  </button>
+                </div>
               </div>
 
               {/* Stats */}
@@ -125,31 +242,81 @@ export default function CustomersPage() {
             </div>
 
             {/* Transaction history */}
-            <div className="overflow-y-auto flex-1 p-4 sm:p-6">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-                Transaction History
-              </h4>
-              {selectedCustomer.bills.length === 0 ? (
-                <p className="text-sm text-gray-400 py-4 text-center">No transactions yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {selectedCustomer.bills.map((bill) => (
-                    <div key={bill.id} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-charcoal break-words">{bill.service_name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {new Date(bill.created_at).toLocaleDateString()} • {bill.payment_method}
-                        </p>
+            <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-6">
+              {/* Walk-in bills */}
+              {selectedCustomer.bills.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+                    Walk-in Bills
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedCustomer.bills.map((bill) => (
+                      <div key={bill.id} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50">
+                        <div className="min-w-0 flex-1">
+                          <div className="space-y-0.5">
+                            {bill.service_name.split("|||").map((part, i) => (
+                              <p key={i} className="text-sm font-medium text-charcoal">{part.split("~~")[0]?.trim() || part.trim()}</p>
+                            ))}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {new Date(bill.created_at).toLocaleDateString()} • {bill.payment_method}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-bold text-green-600">Rs. {bill.total.toFixed(0)}</p>
+                          {bill.discount > 0 && (
+                            <p className="text-xs text-red-400">-Rs. {bill.discount.toFixed(0)} off</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-green-600">Rs. {bill.total.toFixed(0)}</p>
-                        {bill.discount > 0 && (
-                          <p className="text-xs text-red-400">-Rs. {bill.discount.toFixed(0)} off</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {/* Appointment bookings */}
+              {selectedCustomer.bookingHistory.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+                    Appointments
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedCustomer.bookingHistory.map((bk) => {
+                      const finalTotal = bk.total - bk.discount;
+                      const statusColors: Record<string, string> = {
+                        confirmed: "text-blue-600 bg-blue-50",
+                        completed: "text-green-700 bg-green-50",
+                        cancelled: "text-red-600 bg-red-50",
+                        pending: "text-yellow-700 bg-yellow-50",
+                      };
+                      return (
+                        <div key={bk.group_id} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50">
+                          <div className="min-w-0 flex-1">
+                            <div className="space-y-0.5">
+                              {bk.service_names.split(" + ").map((s, i) => (
+                                <p key={i} className="text-sm font-medium text-charcoal">{s.trim()}</p>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">{bk.date} · {bk.time}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-sm font-bold text-charcoal">Rs. {finalTotal.toFixed(0)}</p>
+                            {bk.discount > 0 && (
+                              <p className="text-xs text-red-400">-Rs. {bk.discount.toFixed(0)} off</p>
+                            )}
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full capitalize ${statusColors[bk.status] || "text-gray-600 bg-gray-100"}`}>
+                              {bk.status}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {selectedCustomer.bills.length === 0 && selectedCustomer.bookingHistory.length === 0 && (
+                <p className="text-sm text-gray-400 py-4 text-center">No history yet</p>
               )}
             </div>
           </div>
@@ -242,7 +409,7 @@ export default function CustomersPage() {
                 customers.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-400">{c.id}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-charcoal">{c.name}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-charcoal">{c.name}{c.surname ? ` ${c.surname}` : ""}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{c.phone}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{c.email || "—"}</td>
                     <td className="px-6 py-4 text-sm text-gray-400">
@@ -281,9 +448,9 @@ export default function CustomersPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-charcoal truncate">{c.name}</p>
+                  <p className="text-sm font-medium text-charcoal truncate">{c.name}{c.surname ? ` ${c.surname}` : ""}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{c.phone}</p>
-                  {c.email && <p className="text-xs text-gray-400 mt-0.5 truncate">{c.email}</p>}
+                  {(c.house_no || c.society) && <p className="text-xs text-gray-400 mt-0.5 truncate">{[c.house_no, c.society].filter(Boolean).join(", ")}</p>}
                   <p className="text-[10px] text-gray-400 mt-1">Joined {new Date(c.created_at).toLocaleDateString()}</p>
                 </div>
                 <span className="flex-shrink-0 text-xs text-gold font-medium">View →</span>

@@ -32,8 +32,37 @@ function greet() {
   return "Good evening";
 }
 
+const REVENUE_PIN = "1122";
+
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [revenueUnlocked, setRevenueUnlocked] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
+
+  function handlePinDigit(d: string) {
+    if (pinInput.length >= 4) return;
+    const next = pinInput + d;
+    setPinInput(next);
+    setPinError(false);
+    if (next.length === 4) {
+      if (next === REVENUE_PIN) {
+        setRevenueUnlocked(true);
+        setShowPinModal(false);
+        setPinInput("");
+      } else {
+        setPinError(true);
+        setTimeout(() => { setPinInput(""); setPinError(false); }, 700);
+      }
+    }
+  }
+
+  function closePinModal() {
+    setShowPinModal(false);
+    setPinInput("");
+    setPinError(false);
+  }
 
   useEffect(() => {
     async function load() {
@@ -83,8 +112,28 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-3xl font-heading font-bold text-gold">Rs. {data.todayRevenue.toLocaleString()}</p>
-          <p className="text-xs text-gray-400 mt-0.5">today&apos;s revenue</p>
+          {revenueUnlocked ? (
+            <>
+              <p className="text-3xl font-heading font-bold text-gold">Rs. {data.todayRevenue.toLocaleString()}</p>
+              <p className="text-xs text-gray-400 mt-0.5">today&apos;s revenue</p>
+              <button
+                onClick={() => setRevenueUnlocked(false)}
+                className="text-[10px] text-gray-500 mt-1 underline"
+              >
+                lock
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setShowPinModal(true)} className="flex flex-col items-end gap-1 cursor-pointer">
+              <div className="flex items-center gap-1.5 bg-white/10 rounded-xl px-3 py-2">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <span className="text-gold text-2xl font-heading font-bold tracking-widest">••••</span>
+              </div>
+              <p className="text-[10px] text-gray-400">tap to unlock</p>
+            </button>
+          )}
         </div>
       </div>
 
@@ -143,6 +192,71 @@ export default function AdminDashboard() {
           </div>
         </Link>
       </div>
+
+      {/* PIN modal */}
+      {showPinModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+          onClick={closePinModal}
+        >
+          <div
+            className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-5">
+              <div className="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <svg className="w-7 h-7 text-gold" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
+              <h3 className="font-heading text-lg font-bold text-charcoal">Enter PIN</h3>
+              <p className="text-sm text-gray-400 mt-1">Owner access only</p>
+            </div>
+
+            {/* PIN dots */}
+            <div className="flex justify-center gap-4 mb-6">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className={`w-4 h-4 rounded-full transition-all duration-150 ${
+                    pinError
+                      ? "bg-red-400 scale-110"
+                      : i < pinInput.length
+                      ? "bg-gold scale-110"
+                      : "bg-gray-200"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Numpad */}
+            <div className="grid grid-cols-3 gap-2.5">
+              {["1","2","3","4","5","6","7","8","9","","0","⌫"].map((key, idx) => (
+                <button
+                  key={idx}
+                  disabled={key === ""}
+                  onClick={() =>
+                    key === "⌫"
+                      ? setPinInput((p) => { setPinError(false); return p.slice(0, -1); })
+                      : key
+                      ? handlePinDigit(key)
+                      : undefined
+                  }
+                  className={`h-14 rounded-2xl text-lg font-semibold transition-all active:scale-95 ${
+                    key === ""
+                      ? "invisible"
+                      : key === "⌫"
+                      ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      : "bg-gray-100 text-charcoal hover:bg-gold/10 active:bg-gold/20"
+                  }`}
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recent Bookings */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import FAQ from "@/components/FAQ";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import TestimonialGrid from "@/components/TestimonialGrid";
+import StatsCounter from "@/components/StatsCounter";
 
 const categories = [
   {
@@ -64,33 +65,21 @@ export default function Home() {
         {/* Background photo */}
         <Image
           src="/gallery/hero-salon.jpg"
-          alt="Uzay Beauty Hub bridal makeup"
+          alt="Uzay Beauty Hub bridal look"
           fill
-          className="object-cover object-[center_12%]"
+          className="object-cover"
+          style={{ objectPosition: "center 20%" }}
           priority
         />
         {/* Gradient: dark top for logo, light mid, dark bottom for text */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/10 to-black/80" />
-
-        {/* Logo */}
-        <div className="absolute top-20 sm:top-24 left-0 right-0 flex justify-center z-10">
-          <div className="bg-white rounded-2xl px-5 py-3 shadow-xl">
-            <Image
-              src="/logo.jpeg"
-              alt="Uzay Beauty Hub"
-              width={130}
-              height={85}
-              className="object-contain"
-            />
-          </div>
-        </div>
+        <div className="absolute inset-0 bg-black/70" />
 
         <div className="relative z-10 text-center px-5 pb-14 md:pb-24 w-full max-w-3xl mx-auto">
           <p className="text-gold text-xs tracking-[0.25em] uppercase font-medium mb-4 hero-animate hero-animate-1">
             Lahore&apos;s Premier Beauty Salon
           </p>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-8 leading-tight hero-animate hero-animate-2">
-            Where <span className="text-gold">Elegance</span>
+            Where <span className="text-gradient-gold">Elegance</span>
             <br />Meets Expertise
           </h1>
           <div className="flex flex-col sm:flex-row gap-3 justify-center hero-animate hero-animate-3">
@@ -106,19 +95,26 @@ export default function Home() {
 
       {/* ── Stats Bar ── */}
       <section className="bg-charcoal-dark border-t border-gold/10">
-        <div className="max-w-3xl mx-auto px-4 py-5 grid grid-cols-3 divide-x divide-gold/20">
+        <StatsCounter />
+      </section>
+
+      {/* ── Marquee Ticker ── */}
+      <div className="bg-charcoal-dark border-t border-gold/10 py-3 overflow-hidden select-none">
+        <div className="animate-marquee">
           {[
-            { stat: "158+", label: "Happy Clients" },
-            { stat: "5.0 ★", label: "Google Rating" },
-            { stat: "10+", label: "Years Experience" },
-          ].map((item) => (
-            <div key={item.label} className="text-center px-3">
-              <p className="text-gold font-heading font-bold text-xl md:text-2xl">{item.stat}</p>
-              <p className="text-gray-400 text-xs mt-0.5 uppercase tracking-wide">{item.label}</p>
-            </div>
+            "Bridal Makeup", "Keratin Treatment", "Hydra Facial", "Jelly Manicure",
+            "Eyebrow Threading", "Full Body Wax", "Blow Dry & Styling", "Korean Facial",
+            "Hair Coloring", "Whitening Polisher", "Engagement Makeup", "Mehndi Package",
+            "Bridal Makeup", "Keratin Treatment", "Hydra Facial", "Jelly Manicure",
+            "Eyebrow Threading", "Full Body Wax", "Blow Dry & Styling", "Korean Facial",
+            "Hair Coloring", "Whitening Polisher", "Engagement Makeup", "Mehndi Package",
+          ].map((item, i) => (
+            <span key={i} className="text-gold/50 text-xs font-medium tracking-[0.2em] uppercase px-6 flex-shrink-0">
+              ✦ {item}
+            </span>
           ))}
         </div>
-      </section>
+      </div>
 
       {/* ── Service Categories ── */}
       <section className="py-12 md:py-20 px-4 bg-cream">
@@ -206,6 +202,74 @@ export default function Home() {
                 </svg>
                 Follow @uzay_beautyhub
               </a>
+            </div>
+          </AnimateOnScroll>
+        </div>
+      </section>
+
+      {/* ── How It Works ── */}
+      <section className="py-12 md:py-20 px-4 bg-cream border-b border-gold/10">
+        <div className="max-w-4xl mx-auto">
+          <AnimateOnScroll animation="fade-up">
+            <div className="text-center mb-10 md:mb-14">
+              <p className="text-gold font-medium tracking-wider uppercase text-xs mb-2">Simple & Easy</p>
+              <h2 className="section-heading">Book in 3 Steps</h2>
+              <div className="w-16 h-0.5 gold-gradient mx-auto mt-3 rounded-full" />
+            </div>
+          </AnimateOnScroll>
+
+          <AnimateOnScroll staggerChildren stagger={120} className="grid grid-cols-3 gap-4 md:gap-10 relative">
+            {/* Connecting line — desktop only */}
+            <div className="absolute top-8 left-[23%] right-[23%] h-px bg-gradient-to-r from-gold/20 via-gold/40 to-gold/20 hidden md:block" />
+
+            {[
+              {
+                n: "01",
+                title: "Browse Services",
+                desc: "Explore our full menu of hair, skin, nail & bridal treatments.",
+                icon: (
+                  <svg className="w-6 h-6 text-gold" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0015.803 15.803z" />
+                  </svg>
+                ),
+              },
+              {
+                n: "02",
+                title: "Pick a Date",
+                desc: "Choose your preferred date and time — we work by appointment.",
+                icon: (
+                  <svg className="w-6 h-6 text-gold" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5m-9-6h.008v.008H12V13.5zm0 3h.008v.008H12V16.5z" />
+                  </svg>
+                ),
+              },
+              {
+                n: "03",
+                title: "Transform",
+                desc: "Arrive and let our expert team create your perfect look.",
+                icon: (
+                  <svg className="w-6 h-6 text-gold" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                  </svg>
+                ),
+              },
+            ].map((step) => (
+              <div key={step.n} className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-white border border-gold/25 shadow-sm flex items-center justify-center mb-4 relative z-10">
+                  {step.icon}
+                </div>
+                <p className="text-gold/50 font-heading text-xs font-bold tracking-widest mb-1">{step.n}</p>
+                <h3 className="font-heading text-base md:text-lg font-semibold text-charcoal mb-1.5">{step.title}</h3>
+                <p className="text-gray-500 text-xs md:text-sm leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </AnimateOnScroll>
+
+          <AnimateOnScroll animation="fade-up" delay={200}>
+            <div className="text-center mt-10">
+              <Link href="/book" className="btn-gold px-10 py-3.5 rounded-full text-sm">
+                Book Your Appointment
+              </Link>
             </div>
           </AnimateOnScroll>
         </div>

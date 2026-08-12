@@ -10,6 +10,7 @@ interface Service {
   category: string;
   price: number;
   duration: number;
+  description?: string | null;
 }
 
 export default function BookPage() {
@@ -32,7 +33,19 @@ export default function BookPage() {
       .then((data) => setServices(data));
   }, []);
 
-  const categories = ["All", ...Array.from(new Set(services.map((s) => s.category)))];
+  const CATEGORY_ORDER = [
+    "Hair", "Hair Color", "Hair Treatment", "Facials", "Cleansing", "Polisher",
+    "Body Waxing", "Face Waxing", "Manicure & Pedicure", "Makeup", "Kids",
+    "Assistant Bridal", "Signature Bridal", "Bridal", "Azaadi Deals",
+  ];
+  const categories = [
+    "All",
+    ...Array.from(new Set(services.map((s) => s.category))).sort((a, b) => {
+      const ai = CATEGORY_ORDER.indexOf(a);
+      const bi = CATEGORY_ORDER.indexOf(b);
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    }),
+  ];
   const filteredServices =
     activeCategory === "All"
       ? services
@@ -102,10 +115,10 @@ export default function BookPage() {
                 </svg>
               </div>
               <h2 className="text-2xl font-heading font-bold text-charcoal mb-2">
-                Booking Confirmed!
+                Request Received!
               </h2>
               <p className="text-gray-500 mb-6">
-                We&apos;ll contact you shortly to confirm your appointment.
+                We&apos;ll WhatsApp you shortly to confirm your appointment.
               </p>
               <button onClick={() => setSubmitted(false)} className="btn-gold">
                 Book Another
@@ -132,10 +145,15 @@ export default function BookPage() {
                       type="button"
                       onClick={() => setActiveCategory(cat)}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        activeCategory === cat
+                        cat === "Azaadi Deals"
+                          ? activeCategory === cat
+                            ? "text-white shadow-lg ring-2 ring-white ring-offset-2 ring-offset-white"
+                            : "text-white opacity-85 hover:opacity-100"
+                          : activeCategory === cat
                           ? "bg-gold text-white shadow-md"
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
+                      style={cat === "Azaadi Deals" ? { backgroundColor: "#015f2a" } : undefined}
                     >
                       {cat}
                     </button>
@@ -162,7 +180,17 @@ export default function BookPage() {
                             <p className={`font-medium text-sm ${isSelected ? "text-charcoal" : "text-gray-700"}`}>
                               {service.name}
                             </p>
-                            <div className="flex items-center gap-3 mt-1">
+                            {service.description && (
+                              <ul className="mt-1.5 space-y-0.5">
+                                {service.description.split(" · ").map((item) => (
+                                  <li key={item} className="flex items-start gap-1.5 text-xs text-gray-500">
+                                    <span className="text-gold flex-shrink-0 mt-px">✓</span>
+                                    {item}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            <div className="flex items-center gap-3 mt-2">
                               <span className="text-gold font-semibold text-sm">
                                 Rs. {service.price.toLocaleString()}
                               </span>

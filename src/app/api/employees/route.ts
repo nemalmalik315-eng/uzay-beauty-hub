@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest) {
   await ensureStaffTables();
   const db = getDb();
   const body = await req.json();
-  const { id, name, phone, role, shift_start, active } = body;
+  const { id, name, phone, role, shift_start, active, salary } = body;
 
   if (!id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -54,6 +54,7 @@ export async function PATCH(req: NextRequest) {
   if (role !== undefined) { sets.push("role = ?"); args.push(role); }
   if (shift_start !== undefined) { sets.push("shift_start = ?"); args.push(shift_start); }
   if (active !== undefined) { sets.push("active = ?"); args.push(active); }
+  if (salary !== undefined) { sets.push("salary = ?"); args.push(salary); }
 
   if (sets.length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });

@@ -39,7 +39,7 @@ export default function Navbar() {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isTransparent
           ? "bg-transparent"
-          : "bg-white/95 backdrop-blur-md shadow-sm"
+          : "bg-white/96 backdrop-blur-xl shadow-sm border-b border-gray-100"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -91,6 +91,9 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            <Link href="/deals" className="text-sm font-medium text-white px-4 py-2 rounded-full transition-colors" style={{ backgroundColor: "#015f2a" }}>
+              🇵🇰 Deals
+            </Link>
             <Link href="/book" className="btn-gold text-sm">
               Book Now
             </Link>
@@ -156,7 +159,15 @@ export default function Navbar() {
                 </Link>
               );
             })}
-            <div className="px-4 pt-2">
+            <div className="px-4 pt-2 flex flex-col gap-2">
+              <Link
+                href="/deals"
+                onClick={() => setOpen(false)}
+                className="text-sm font-medium text-white block text-center py-2.5 rounded-full"
+                style={{ backgroundColor: "#015f2a" }}
+              >
+                🇵🇰 Azaadi Deals
+              </Link>
               <Link
                 href="/book"
                 onClick={() => setOpen(false)}
