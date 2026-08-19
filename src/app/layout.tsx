@@ -36,6 +36,45 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BeautySalon",
+  name: "Uzay Beauty Hub",
+  image: "https://uzaybeautyhub.com/gallery/hero-salon.jpg",
+  url: "https://uzaybeautyhub.com",
+  telephone: "+923344198243",
+  priceRange: "$$",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "112B, Block B, Nasheman-e-Iqbal Phase 2",
+    addressLocality: "Lahore",
+    postalCode: "54000",
+    addressCountry: "PK",
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 31.4,
+    longitude: 74.2,
+  },
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Friday", "Sunday"],
+      opens: "11:00",
+      closes: "19:00",
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Tuesday", "Wednesday", "Thursday", "Saturday"],
+      opens: "11:00",
+      closes: "19:30",
+    },
+  ],
+  sameAs: [
+    "https://wa.me/923344198243",
+  ],
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -43,6 +82,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-screen bg-cream font-body antialiased">
         {children}
         <Analytics />
