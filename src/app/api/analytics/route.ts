@@ -15,10 +15,15 @@ export async function GET() {
       ORDER BY day ASC
     `),
     db.execute(`
-      SELECT service_name, COALESCE(SUM(total),0) as revenue, COUNT(*) as count
+      SELECT
+        CASE
+          WHEN service_name LIKE '%~~%' THEN TRIM(SUBSTR(service_name, 1, INSTR(service_name, '~~') - 1))
+          ELSE TRIM(service_name)
+        END as service_name,
+        COALESCE(SUM(total), 0) as revenue,
+        COUNT(*) as count
       FROM billing
-      WHERE created_at >= DATE('now','-30 days')
-      GROUP BY service_name
+      GROUP BY 1
       ORDER BY revenue DESC
       LIMIT 6
     `),
