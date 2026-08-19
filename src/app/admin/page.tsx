@@ -18,6 +18,13 @@ interface DashboardData {
   }>;
 }
 
+interface Analytics {
+  weeklyRevenue: Array<{ day: string; revenue: number; count: number }>;
+  topServices: Array<{ service_name: string; revenue: number; count: number }>;
+  staffPerformance: Array<{ name: string; revenue: number; bills: number }>;
+  monthlyRevenue: Array<{ month: string; revenue: number; count: number }>;
+}
+
 const statusStyle: Record<string, string> = {
   completed: "bg-emerald-100 text-emerald-700",
   cancelled: "bg-red-100 text-red-600",
@@ -34,12 +41,55 @@ function greet() {
 
 const REVENUE_PIN = "1122";
 
+function RevenueChart({ data }: { data: Array<{ day: string; revenue: number }> }) {
+  const days: Array<{ label: string; revenue: number; isToday: boolean }> = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+    const found = data.find((r) => r.day === dateStr);
+    days.push({
+      label: d.toLocaleDateString("en", { weekday: "short" }),
+      revenue: found ? Number(found.revenue) : 0,
+      isToday: i === 0,
+    });
+  }
+
+  const max = Math.max(...days.map((d) => d.revenue), 1);
+
+  return (
+    <div className="flex items-end justify-between gap-1.5 h-20 px-1">
+      {days.map((d, i) => {
+        const pct = d.revenue / max;
+        return (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1">
+            <div className="w-full flex items-end justify-center" style={{ height: 60 }}>
+              <div
+                className="w-full rounded-t-md transition-all duration-500"
+                style={{
+                  height: `${Math.max(pct * 100, d.revenue > 0 ? 8 : 3)}%`,
+                  backgroundColor: d.isToday ? "#b8963e" : "#e8d5a3",
+                  minHeight: 3,
+                }}
+                title={`Rs. ${Number(d.revenue).toLocaleString()}`}
+              />
+            </div>
+            <span className="text-[9px] text-gray-400">{d.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [revenueUnlocked, setRevenueUnlocked] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [analyticsTab, setAnalyticsTab] = useState<"services" | "staff">("services");
 
   function handlePinDigit(d: string) {
     if (pinInput.length >= 4) return;
@@ -66,16 +116,18 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function load() {
-      const [billingRes, bookingsRes, customersRes, stockRes] = await Promise.all([
+      const [billingRes, bookingsRes, customersRes, stockRes, analyticsRes] = await Promise.all([
         fetch("/api/billing?period=today"),
         fetch("/api/bookings"),
         fetch("/api/customers"),
         fetch("/api/stock"),
+        fetch("/api/analytics"),
       ]);
       const billing = await billingRes.json();
       const bookings = await bookingsRes.json();
       const customers = await customersRes.json();
       const stock = await stockRes.json();
+      const analyticsData = await analyticsRes.json();
 
       const todayStr = new Date().toISOString().split("T")[0];
       const todayBookings = bookings.filter((b: { date: string }) => b.date === todayStr);
@@ -87,6 +139,7 @@ export default function AdminDashboard() {
         lowStockCount: stock.lowStockCount || 0,
         recentBookings: bookings.slice(0, 5),
       });
+      setAnalytics(analyticsData);
     }
     load();
   }, []);
@@ -99,8 +152,14 @@ export default function AdminDashboard() {
     );
   }
 
+  const thisMonth = analytics?.monthlyRevenue?.[0];
+  const lastMonth = analytics?.monthlyRevenue?.[1];
+  const monthChange = thisMonth && lastMonth && Number(lastMonth.revenue) > 0
+    ? Math.round(((Number(thisMonth.revenue) - Number(lastMonth.revenue)) / Number(lastMonth.revenue)) * 100)
+    : null;
+
   return (
-    <div className="max-w-2xl lg:max-w-4xl mx-auto space-y-5">
+    <div className="max-w-2xl lg:max-w-4xl mx-auto space-y-4">
 
       {/* Greeting card */}
       <div className="bg-[#1C1C1C] rounded-2xl px-5 py-5 flex items-center gap-4">
@@ -116,12 +175,7 @@ export default function AdminDashboard() {
             <>
               <p className="text-3xl font-heading font-bold text-gold">Rs. {data.todayRevenue.toLocaleString()}</p>
               <p className="text-xs text-gray-400 mt-0.5">today&apos;s revenue</p>
-              <button
-                onClick={() => setRevenueUnlocked(false)}
-                className="text-[10px] text-gray-500 mt-1 underline"
-              >
-                lock
-              </button>
+              <button onClick={() => setRevenueUnlocked(false)} className="text-[10px] text-gray-500 mt-1 underline">lock</button>
             </>
           ) : (
             <button onClick={() => setShowPinModal(true)} className="flex flex-col items-end gap-1 cursor-pointer">
@@ -164,12 +218,98 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
+      {/* Revenue Chart */}
+      <div className="bg-white rounded-2xl shadow-sm p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-heading text-base font-semibold text-charcoal">Revenue — Last 7 Days</h2>
+            {monthChange !== null && (
+              <p className={`text-xs mt-0.5 ${monthChange >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                {monthChange >= 0 ? "▲" : "▼"} {Math.abs(monthChange)}% vs last month
+              </p>
+            )}
+          </div>
+          {thisMonth && (
+            <div className="text-right">
+              <p className="text-sm font-bold text-charcoal">Rs. {Number(thisMonth.revenue).toLocaleString()}</p>
+              <p className="text-[10px] text-gray-400">this month</p>
+            </div>
+          )}
+        </div>
+        {analytics?.weeklyRevenue ? (
+          <RevenueChart data={analytics.weeklyRevenue} />
+        ) : (
+          <div className="h-20 flex items-center justify-center text-gray-300 text-xs">Loading…</div>
+        )}
+      </div>
+
+      {/* Top Services + Staff */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="flex border-b border-gray-100">
+          {(["services", "staff"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setAnalyticsTab(tab)}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                analyticsTab === tab ? "text-gold border-b-2 border-gold" : "text-gray-400"
+              }`}
+            >
+              {tab === "services" ? "Top Services" : "Staff Performance"}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4">
+          {analyticsTab === "services" ? (
+            analytics?.topServices?.length ? (
+              <div className="space-y-3">
+                {analytics.topServices.map((s, i) => {
+                  const max = Number(analytics.topServices[0].revenue) || 1;
+                  const pct = (Number(s.revenue) / max) * 100;
+                  return (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-charcoal font-medium truncate max-w-[60%]">{s.service_name}</span>
+                        <span className="text-xs text-gray-500">Rs. {Number(s.revenue).toLocaleString()} · {s.count}x</span>
+                      </div>
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-gold/70 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-gray-400 pt-1">Last 30 days</p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 text-center py-4">No billing data yet</p>
+            )
+          ) : (
+            analytics?.staffPerformance?.length ? (
+              <div className="space-y-2">
+                {analytics.staffPerformance.map((s, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-gold">{s.name.charAt(0)}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-charcoal">{s.name}</p>
+                      <p className="text-xs text-gray-400">{s.bills} bills</p>
+                    </div>
+                    <p className="text-sm font-bold text-charcoal">Rs. {Number(s.revenue).toLocaleString()}</p>
+                  </div>
+                ))}
+                <p className="text-[10px] text-gray-400 pt-1">Last 30 days</p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 text-center py-4">No staff data yet</p>
+            )
+          )}
+        </div>
+      </div>
+
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
-        <Link
-          href="/admin/billing"
-          className="bg-gold text-white rounded-2xl p-4 flex items-center gap-3 shadow-sm hover:bg-gold-dark transition-colors active:scale-[0.98]"
-        >
+        <Link href="/admin/billing" className="bg-gold text-white rounded-2xl p-4 flex items-center gap-3 shadow-sm hover:bg-gold-dark transition-colors active:scale-[0.98]">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
           </div>
@@ -178,11 +318,7 @@ export default function AdminDashboard() {
             <p className="text-xs text-white/70">Add walk-in client</p>
           </div>
         </Link>
-
-        <Link
-          href="/admin/bookings"
-          className="bg-[#1C1C1C] text-white rounded-2xl p-4 flex items-center gap-3 shadow-sm hover:bg-[#2a2a2a] transition-colors active:scale-[0.98]"
-        >
+        <Link href="/admin/bookings" className="bg-[#1C1C1C] text-white rounded-2xl p-4 flex items-center gap-3 shadow-sm hover:bg-[#2a2a2a] transition-colors active:scale-[0.98]">
           <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
           </div>
@@ -195,14 +331,8 @@ export default function AdminDashboard() {
 
       {/* PIN modal */}
       {showPinModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
-          onClick={closePinModal}
-        >
-          <div
-            className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-10"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={closePinModal}>
+          <div className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-10" onClick={(e) => e.stopPropagation()}>
             <div className="text-center mb-5">
               <div className="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <svg className="w-7 h-7 text-gold" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -212,43 +342,18 @@ export default function AdminDashboard() {
               <h3 className="font-heading text-lg font-bold text-charcoal">Enter PIN</h3>
               <p className="text-sm text-gray-400 mt-1">Owner access only</p>
             </div>
-
-            {/* PIN dots */}
             <div className="flex justify-center gap-4 mb-6">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className={`w-4 h-4 rounded-full transition-all duration-150 ${
-                    pinError
-                      ? "bg-red-400 scale-110"
-                      : i < pinInput.length
-                      ? "bg-gold scale-110"
-                      : "bg-gray-200"
-                  }`}
-                />
+              {[0,1,2,3].map((i) => (
+                <div key={i} className={`w-4 h-4 rounded-full transition-all duration-150 ${pinError ? "bg-red-400 scale-110" : i < pinInput.length ? "bg-gold scale-110" : "bg-gray-200"}`} />
               ))}
             </div>
-
-            {/* Numpad */}
             <div className="grid grid-cols-3 gap-2.5">
               {["1","2","3","4","5","6","7","8","9","","0","⌫"].map((key, idx) => (
                 <button
                   key={idx}
                   disabled={key === ""}
-                  onClick={() =>
-                    key === "⌫"
-                      ? setPinInput((p) => { setPinError(false); return p.slice(0, -1); })
-                      : key
-                      ? handlePinDigit(key)
-                      : undefined
-                  }
-                  className={`h-14 rounded-2xl text-lg font-semibold transition-all active:scale-95 ${
-                    key === ""
-                      ? "invisible"
-                      : key === "⌫"
-                      ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      : "bg-gray-100 text-charcoal hover:bg-gold/10 active:bg-gold/20"
-                  }`}
+                  onClick={() => key === "⌫" ? setPinInput((p) => { setPinError(false); return p.slice(0,-1); }) : key ? handlePinDigit(key) : undefined}
+                  className={`h-14 rounded-2xl text-lg font-semibold transition-all active:scale-95 ${key === "" ? "invisible" : key === "⌫" ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : "bg-gray-100 text-charcoal hover:bg-gold/10 active:bg-gold/20"}`}
                 >
                   {key}
                 </button>
@@ -262,11 +367,8 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h2 className="font-heading text-base font-semibold text-charcoal">Recent Bookings</h2>
-          <Link href="/admin/bookings" className="text-xs font-medium text-gold">
-            View all →
-          </Link>
+          <Link href="/admin/bookings" className="text-xs font-medium text-gold">View all →</Link>
         </div>
-
         {data.recentBookings.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <p className="text-3xl mb-2">📅</p>
@@ -277,9 +379,7 @@ export default function AdminDashboard() {
             {data.recentBookings.map((booking) => (
               <div key={booking.id} className="flex items-center gap-3 px-5 py-3.5">
                 <div className="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm font-semibold text-gold">
-                    {booking.customer_name.charAt(0).toUpperCase()}
-                  </span>
+                  <span className="text-sm font-semibold text-gold">{booking.customer_name.charAt(0).toUpperCase()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-charcoal truncate">{booking.customer_name}</p>

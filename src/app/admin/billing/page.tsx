@@ -565,12 +565,44 @@ export default function BillingPage() {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setShowAdd(!showAdd)}
-            className="btn-gold text-sm py-2 ml-auto"
-          >
-            {showAdd ? "Cancel" : "+ Walk-in Bill"}
-          </button>
+          <div className="ml-auto flex gap-2">
+            <button
+              onClick={() => {
+                const rows = [
+                  ["Date", "Customer", "Service", "Charge", "Discount", "Total", "Payment"],
+                  ...bills.map((b) => [
+                    new Date(b.created_at).toLocaleDateString("en-PK"),
+                    b.customer_name,
+                    b.service_name.replace(/\|\|\|/g, " + ").replace(/~~\d+/g, ""),
+                    b.service_charge,
+                    b.discount,
+                    b.total,
+                    b.payment_method,
+                  ]),
+                ];
+                const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+                const blob = new Blob([csv], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `billing-${period}-${new Date().toISOString().split("T")[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="px-4 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Export CSV
+            </button>
+            <button
+              onClick={() => setShowAdd(!showAdd)}
+              className="btn-gold text-sm py-2"
+            >
+              {showAdd ? "Cancel" : "+ Walk-in Bill"}
+            </button>
+          </div>
         </div>
       </div>
 
