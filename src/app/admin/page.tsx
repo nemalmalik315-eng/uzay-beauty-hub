@@ -236,8 +236,10 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
-        {analytics?.weeklyRevenue ? (
+        {analytics?.weeklyRevenue?.length ? (
           <RevenueChart data={analytics.weeklyRevenue} />
+        ) : analytics === null ? (
+          <div className="h-20 flex items-center justify-center text-gray-300 text-xs">Could not load chart</div>
         ) : (
           <div className="h-20 flex items-center justify-center text-gray-300 text-xs">Loading…</div>
         )}
