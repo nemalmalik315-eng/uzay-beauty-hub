@@ -43,13 +43,13 @@ const REVENUE_PIN = "1122";
 
 function RevenueChart({ data }: { data: Array<{ day: string; revenue: number }> }) {
   const days: Array<{ label: string; revenue: number; isToday: boolean }> = [];
-  for (let i = 6; i >= 0; i--) {
+  for (let i = 13; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split("T")[0];
     const found = data.find((r) => r.day === dateStr);
     days.push({
-      label: d.toLocaleDateString("en", { weekday: "short" }),
+      label: d.toLocaleDateString("en", { day: "numeric" }),
       revenue: found ? Number(found.revenue) : 0,
       isToday: i === 0,
     });
@@ -222,7 +222,7 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-2xl shadow-sm p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-heading text-base font-semibold text-charcoal">Revenue — Last 7 Days</h2>
+            <h2 className="font-heading text-base font-semibold text-charcoal">Revenue — Last 14 Days</h2>
             {monthChange !== null && (
               <p className={`text-xs mt-0.5 ${monthChange >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                 {monthChange >= 0 ? "▲" : "▼"} {Math.abs(monthChange)}% vs last month
@@ -278,7 +278,7 @@ export default function AdminDashboard() {
                     </div>
                   );
                 })}
-                <p className="text-[10px] text-gray-400 pt-1">Last 30 days</p>
+                <p className="text-[10px] text-gray-400 pt-1">All time</p>
               </div>
             ) : (
               <p className="text-xs text-gray-400 text-center py-4">No billing data yet</p>

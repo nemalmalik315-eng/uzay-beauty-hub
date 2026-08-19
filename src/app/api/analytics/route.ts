@@ -10,7 +10,7 @@ export async function GET() {
     db.execute(`
       SELECT DATE(created_at) as day, COALESCE(SUM(total),0) as revenue, COUNT(*) as count
       FROM billing
-      WHERE created_at >= DATE('now','-6 days')
+      WHERE created_at >= DATE('now','-13 days')
       GROUP BY DATE(created_at)
       ORDER BY day ASC
     `),
