@@ -23,10 +23,14 @@ export async function GET() {
       LIMIT 6
     `),
     db.execute(`
-      SELECT e.name, COALESCE(SUM(b.total),0) as revenue, COUNT(*) as bills
+      SELECT e.name, COALESCE(bp.total_bonus, 0) as revenue, COALESCE(bp.bill_count, 0) as bills
       FROM employees e
-      LEFT JOIN billing b ON b.staff_name = e.name AND b.created_at >= DATE('now','-30 days')
-      GROUP BY e.name
+      LEFT JOIN (
+        SELECT employee_id, SUM(bonus_amount) as total_bonus, COUNT(*) as bill_count
+        FROM bonus_payouts
+        WHERE created_at >= DATE('now','-30 days')
+        GROUP BY employee_id
+      ) bp ON bp.employee_id = e.id
       ORDER BY revenue DESC
     `),
     db.execute(`

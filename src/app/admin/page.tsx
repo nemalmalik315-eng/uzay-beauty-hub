@@ -121,13 +121,13 @@ export default function AdminDashboard() {
         fetch("/api/bookings"),
         fetch("/api/customers"),
         fetch("/api/stock"),
-        fetch("/api/analytics"),
+        fetch("/api/analytics").catch(() => null),
       ]);
       const billing = await billingRes.json();
       const bookings = await bookingsRes.json();
       const customers = await customersRes.json();
       const stock = await stockRes.json();
-      const analyticsData = await analyticsRes.json();
+      const analyticsData = analyticsRes ? await analyticsRes.json().catch(() => null) : null;
 
       const todayStr = new Date().toISOString().split("T")[0];
       const todayBookings = bookings.filter((b: { date: string }) => b.date === todayStr);
