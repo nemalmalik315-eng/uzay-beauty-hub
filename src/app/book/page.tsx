@@ -232,9 +232,19 @@ export default function BookPage() {
                     </div>
                     <div className="space-y-1.5">
                       {selectedDetails.map((s) => (
-                        <div key={s.id} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">{s.name}</span>
-                          <span className="text-gray-500">Rs. {s.price.toLocaleString()}</span>
+                        <div key={s.id} className="flex items-center justify-between text-sm gap-2">
+                          <span className="text-gray-600 flex-1 min-w-0 truncate">{s.name}</span>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-gray-500">Rs. {s.price.toLocaleString()}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleService(s.id)}
+                              className="w-5 h-5 rounded-full bg-gray-200 hover:bg-red-100 hover:text-red-500 flex items-center justify-center text-gray-400 transition-colors"
+                              aria-label={`Remove ${s.name}`}
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
