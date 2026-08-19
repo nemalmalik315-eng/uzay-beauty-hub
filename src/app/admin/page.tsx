@@ -71,7 +71,6 @@ function RevenueChart({ data }: { data: Array<{ day: string; revenue: number }> 
                   backgroundColor: d.isToday ? "#b8963e" : "#e8d5a3",
                   minHeight: 3,
                 }}
-                title={`Rs. ${Number(d.revenue).toLocaleString()}`}
               />
             </div>
             <span className="text-[9px] text-gray-400">{d.label}</span>
@@ -222,19 +221,13 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-2xl shadow-sm p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-heading text-base font-semibold text-charcoal">Revenue — Last 14 Days</h2>
+            <h2 className="font-heading text-base font-semibold text-charcoal">Last 14 Days</h2>
             {monthChange !== null && (
               <p className={`text-xs mt-0.5 ${monthChange >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                 {monthChange >= 0 ? "▲" : "▼"} {Math.abs(monthChange)}% vs last month
               </p>
             )}
           </div>
-          {thisMonth && (
-            <div className="text-right">
-              <p className="text-sm font-bold text-charcoal">Rs. {Number(thisMonth.revenue).toLocaleString()}</p>
-              <p className="text-[10px] text-gray-400">this month</p>
-            </div>
-          )}
         </div>
         {analytics?.weeklyRevenue?.length ? (
           <RevenueChart data={analytics.weeklyRevenue} />
@@ -271,8 +264,8 @@ export default function AdminDashboard() {
                   return (
                     <div key={i}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-charcoal font-medium truncate max-w-[60%]">{s.service_name}</span>
-                        <span className="text-xs text-gray-500">Rs. {Number(s.revenue).toLocaleString()} · {s.count}x</span>
+                        <span className="text-xs text-charcoal font-medium truncate">{s.service_name}</span>
+                        <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{s.count}x</span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div className="h-full bg-gold/70 rounded-full" style={{ width: `${pct}%` }} />
