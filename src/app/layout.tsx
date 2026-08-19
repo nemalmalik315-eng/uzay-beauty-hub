@@ -34,6 +34,9 @@ export const metadata: Metadata = {
       "Premium hair, skin, nails & bridal makeup in Lahore. Book your appointment online today.",
     images: ["/gallery/hero-salon.jpg"],
   },
+  verification: {
+    google: "oF7hHFLjuEf8KugFGM09QvujFztisLX5cVegNNJLPNo",
+  },
 };
 
 const jsonLd = {
