@@ -91,9 +91,6 @@ export default function Navbar() {
                 </Link>
               );
             })}
-            <Link href="/deals" className="text-sm font-medium text-white px-4 py-2 rounded-full transition-colors" style={{ backgroundColor: "#015f2a" }}>
-              🇵🇰 Deals
-            </Link>
             <Link href="/book" className="btn-gold text-sm">
               Book Now
             </Link>
@@ -160,14 +157,6 @@ export default function Navbar() {
               );
             })}
             <div className="px-4 pt-2 flex flex-col gap-2">
-              <Link
-                href="/deals"
-                onClick={() => setOpen(false)}
-                className="text-sm font-medium text-white block text-center py-2.5 rounded-full"
-                style={{ backgroundColor: "#015f2a" }}
-              >
-                🇵🇰 Azaadi Deals
-              </Link>
               <Link
                 href="/book"
                 onClick={() => setOpen(false)}

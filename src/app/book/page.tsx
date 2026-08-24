@@ -36,7 +36,7 @@ export default function BookPage() {
   const CATEGORY_ORDER = [
     "Hair", "Hair Color", "Hair Treatment", "Facials", "Cleansing", "Polisher",
     "Body Waxing", "Face Waxing", "Manicure & Pedicure", "Makeup", "Kids",
-    "Assistant Bridal", "Signature Bridal", "Bridal", "Azaadi Deals",
+    "Assistant Bridal", "Signature Bridal", "Bridal",
   ];
   const categories = [
     "All",
