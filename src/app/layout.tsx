@@ -85,13 +85,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
+      <body className="min-h-screen bg-cream font-body antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-      </head>
-      <body className="min-h-screen bg-cream font-body antialiased">
         {children}
         <Analytics />
       </body>
