@@ -835,6 +835,7 @@ export default function StaffPage() {
                                   name: emp.name,
                                   phone: emp.phone,
                                   shift_start: emp.shift_start,
+                                  sunday_shift_start: emp.sunday_shift_start || "",
                                 });
                               }}
                               className="text-xs text-gold hover:text-gold-dark font-medium"
