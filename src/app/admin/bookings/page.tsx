@@ -186,6 +186,11 @@ function buildWaMessage(group: BookingGroup, discount: number): string {
   return `Hi ${group.customer_name}! ✨ Your appointment at Uzay Beauty Hub is confirmed.\n\nServices:\n${serviceList}${discountLine}\nTotal: Rs. ${finalTotal.toLocaleString()}\n\nDate: ${fmtDate(group.date)}\nTime: ${group.time}\n\nWe look forward to seeing you! 💛\n\n— Uzay Beauty Hub\n📍 112B, Block B, Nasheman-e-Iqbal Phase 2, Lahore`;
 }
 
+function buildReminderMessage(group: BookingGroup): string {
+  const serviceList = group.services.map((s) => `• ${s.name}`).join("\n");
+  return `Hi ${group.customer_name}! 🌸 Just a reminder that your appointment at Uzay Beauty Hub is tomorrow.\n\nDate: ${fmtDate(group.date)}\nTime: ${group.time}\n\nServices:\n${serviceList}\n\nSee you tomorrow! 💛\n\n— Uzay Beauty Hub\n📍 112B, Block B, Nasheman-e-Iqbal Phase 2, Lahore`;
+}
+
 const STATUS_STYLES: Record<string, string> = {
   completed: "bg-green-100 text-green-700",
   cancelled: "bg-red-100 text-red-700",
@@ -568,6 +573,10 @@ export default function BookingsPage() {
                               const ph = b.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
                               setWaDialog({ phone: ph, message: buildWaMessage(b, b.discount) });
                             }} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100">Message</button>
+                            <button onClick={() => {
+                              const ph = b.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
+                              setWaDialog({ phone: ph, message: buildReminderMessage(b) });
+                            }} className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded hover:bg-purple-100">Remind</button>
                           </>
                         )}
                         {(b.status === "pending" || b.status === "confirmed") && (
@@ -663,6 +672,10 @@ export default function BookingsPage() {
                       const ph = b.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
                       setWaDialog({ phone: ph, message: buildWaMessage(b, b.discount) });
                     }} className="text-xs bg-green-50 text-green-600 px-3 py-1.5 rounded hover:bg-green-100">Message</button>
+                    <button onClick={() => {
+                      const ph = b.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
+                      setWaDialog({ phone: ph, message: buildReminderMessage(b) });
+                    }} className="text-xs bg-purple-50 text-purple-600 px-3 py-1.5 rounded hover:bg-purple-100">Remind</button>
                   </>
                 )}
                 {(b.status === "pending" || b.status === "confirmed") && (
