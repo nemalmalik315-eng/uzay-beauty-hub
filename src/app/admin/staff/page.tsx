@@ -287,7 +287,7 @@ export default function StaffPage() {
     });
     if (res.ok) {
       toast("Employee added");
-      setEmpForm({ name: "", phone: "", shift_start: "11:00" });
+      setEmpForm({ name: "", phone: "", shift_start: "11:00", sunday_shift_start: "" });
       setShowAddEmployee(false);
       loadEmployees();
       loadAttendance();
@@ -740,7 +740,7 @@ export default function StaffPage() {
               <button
                 onClick={() => {
                   setShowAddEmployee(!showAddEmployee);
-                  setEmpForm({ name: "", phone: "", shift_start: "11:00" });
+                  setEmpForm({ name: "", phone: "", shift_start: "11:00", sunday_shift_start: "" });
                 }}
                 className="btn-gold text-sm py-2"
               >
