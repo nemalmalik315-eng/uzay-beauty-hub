@@ -10,6 +10,7 @@ interface Employee {
   phone: string;
   role: string;
   shift_start: string;
+  sunday_shift_start: string | null;
   active: number;
   salary: number;
   bonus_eligible: number;
@@ -165,7 +166,7 @@ export default function StaffPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deactivating, setDeactivating] = useState<Employee | null>(null);
   const [empForm, setEmpForm] = useState({
-    name: "", phone: "", shift_start: "11:00",
+    name: "", phone: "", shift_start: "11:00", sunday_shift_start: "",
   });
 
   // Attendance state
@@ -305,6 +306,7 @@ export default function StaffPage() {
         name: empForm.name,
         phone: empForm.phone,
         shift_start: empForm.shift_start,
+        sunday_shift_start: empForm.sunday_shift_start || null,
       }),
     });
     if (res.ok) {
@@ -442,11 +444,20 @@ export default function StaffPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Shift Start</label>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Shift Start (Mon–Sat)</label>
                 <input
                   type="time"
                   value={empForm.shift_start}
                   onChange={(e) => setEmpForm({ ...empForm, shift_start: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Sunday Shift (optional)</label>
+                <input
+                  type="time"
+                  value={empForm.sunday_shift_start}
+                  onChange={(e) => setEmpForm({ ...empForm, sunday_shift_start: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
                 />
               </div>
@@ -861,7 +872,7 @@ export default function StaffPage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-charcoal truncate">{emp.name}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{emp.phone}</p>
-                      <p className="text-xs text-gray-400 mt-1">Shift: {format12(emp.shift_start)}</p>
+                      <p className="text-xs text-gray-400 mt-1">Shift: {format12(emp.shift_start)}{emp.sunday_shift_start ? ` · Sun: ${format12(emp.sunday_shift_start)}` : ""}</p>
                     </div>
                     <div className="flex flex-col gap-1 items-end flex-shrink-0">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${
@@ -880,7 +891,7 @@ export default function StaffPage() {
                     <button
                       onClick={() => {
                         setEditingEmployee(emp);
-                        setEmpForm({ name: emp.name, phone: emp.phone, shift_start: emp.shift_start });
+                        setEmpForm({ name: emp.name, phone: emp.phone, shift_start: emp.shift_start, sunday_shift_start: emp.sunday_shift_start || "" });
                       }}
                       className="text-xs text-gold hover:text-gold-dark font-medium"
                     >

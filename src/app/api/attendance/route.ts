@@ -12,13 +12,15 @@ export async function GET(req: NextRequest) {
 
   // Get all active employees with their attendance for the given date
   const { rows } = await db.execute({
-    sql: `SELECT e.id as employee_id, e.name, e.phone, e.role, e.shift_start,
+    sql: `SELECT e.id as employee_id, e.name, e.phone, e.role,
+            CASE WHEN strftime('%w', ?) = '0' AND e.sunday_shift_start IS NOT NULL
+              THEN e.sunday_shift_start ELSE e.shift_start END as shift_start,
             a.id as attendance_id, a.status, a.check_in_time, a.notes
           FROM employees e
           LEFT JOIN attendance a ON e.id = a.employee_id AND a.date = ?
           WHERE e.active = 1
           ORDER BY e.name ASC`,
-    args: [date],
+    args: [date, date],
   });
 
   // Summary counts
