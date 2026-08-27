@@ -208,6 +208,9 @@ export default function BookPage() {
                               <span className="text-gold font-semibold text-sm">
                                 Rs. {service.price.toLocaleString()}
                               </span>
+                              {service.duration > 0 && (
+                                <span className="text-xs text-gray-400">{service.duration} min</span>
+                              )}
                             </div>
                           </div>
                           <div
