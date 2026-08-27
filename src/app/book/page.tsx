@@ -10,6 +10,7 @@ interface Service {
   category: string;
   price: number;
   duration: number;
+  duration_max?: number | null;
   description?: string | null;
 }
 
@@ -209,7 +210,9 @@ export default function BookPage() {
                                 Rs. {service.price.toLocaleString()}
                               </span>
                               {service.duration > 0 && (
-                                <span className="text-xs text-gray-400">{service.duration} min</span>
+                                <span className="text-xs text-gray-400">
+                                  {service.duration_max ? `${service.duration}–${service.duration_max}` : service.duration} min
+                                </span>
                               )}
                             </div>
                           </div>
