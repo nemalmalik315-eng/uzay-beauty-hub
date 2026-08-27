@@ -27,6 +27,20 @@ export default function BookPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  function getTimeSlots(dateStr: string): string[] {
+    const allSlots = [
+      "11:30 AM",
+      "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
+      "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM",
+      "4:00 PM", "4:30 PM", "5:00 PM", "5:30 PM",
+      "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
+    ];
+    if (!dateStr) return allSlots.slice(0, -1); // default: up to 7:00 PM
+    const day = new Date(dateStr + "T00:00:00").getDay(); // 0=Sun,1=Mon,...6=Sat
+    const closesAt730 = [2, 3, 4, 6].includes(day); // Tue, Wed, Thu, Sat
+    return closesAt730 ? allSlots : allSlots.slice(0, -1);
+  }
+
   useEffect(() => {
     fetch("/api/services")
       .then((r) => r.json())
@@ -321,7 +335,11 @@ export default function BookPage() {
                       required
                       min={today}
                       value={form.date}
-                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      onChange={(e) => {
+                        const newDate = e.target.value;
+                        const slots = getTimeSlots(newDate);
+                        setForm({ ...form, date: newDate, time: slots.includes(form.time) ? form.time : "" });
+                      }}
                       className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all bg-white"
                     />
                   </div>
@@ -336,13 +354,7 @@ export default function BookPage() {
                       className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all bg-white"
                     >
                       <option value="">Select time...</option>
-                      {[
-                        "11:00 AM", "11:30 AM",
-                        "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
-                        "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM",
-                        "4:00 PM", "4:30 PM", "5:00 PM", "5:30 PM",
-                        "6:00 PM", "6:30 PM", "7:00 PM",
-                      ].map((t) => (
+                      {getTimeSlots(form.date).map((t) => (
                         <option key={t} value={t}>
                           {t}
                         </option>
