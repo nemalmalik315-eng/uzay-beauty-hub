@@ -587,6 +587,10 @@ export default function BookingsPage() {
                               className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100">Cancel</button>
                           </>
                         )}
+                        {b.status === "completed" && (
+                          <button onClick={() => updateGroupStatus(b.group_id, "confirmed")}
+                            className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200">↩ Reopen</button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -685,6 +689,10 @@ export default function BookingsPage() {
                     <button onClick={() => setCancelConfirm({ group_id: b.group_id, name: b.customer_name })}
                       className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded hover:bg-red-100">Cancel</button>
                   </>
+                )}
+                {b.status === "completed" && (
+                  <button onClick={() => updateGroupStatus(b.group_id, "confirmed")}
+                    className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-200">↩ Reopen</button>
                 )}
               </div>
             </div>
