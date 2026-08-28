@@ -196,6 +196,7 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700",
   confirmed: "bg-blue-100 text-blue-700",
   pending: "bg-yellow-100 text-yellow-700",
+  no_show: "bg-gray-200 text-gray-600",
 };
 
 function to24h(t: string): string {
@@ -314,7 +315,8 @@ export default function BookingsPage() {
       });
       toast("Marked as completed & added to billing", "success");
     } else {
-      toast(status === "cancelled" ? "Booking cancelled" : status === "confirmed" ? "Booking reopened" : "Updated", status === "cancelled" ? "info" : "success");
+      const msg = status === "cancelled" ? "Booking cancelled" : status === "confirmed" ? "Booking reopened" : status === "no_show" ? "Marked as no-show" : "Updated";
+      toast(msg, status === "cancelled" ? "info" : "success");
     }
     loadBookings();
   };
@@ -518,6 +520,7 @@ export default function BookingsPage() {
               <option value="confirmed">Confirmed</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
+              <option value="no_show">No-show</option>
             </select>
           </div>
           <div className="ml-auto mt-5 text-sm text-gray-500">{bookings.length} booking(s)</div>
@@ -600,11 +603,13 @@ export default function BookingsPage() {
                           <>
                             <button onClick={() => updateGroupStatus(b.group_id, "completed", b)}
                               className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded hover:bg-purple-100">Complete</button>
+                            <button onClick={() => updateGroupStatus(b.group_id, "no_show")}
+                              className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded hover:bg-gray-200">No-show</button>
                             <button onClick={() => setCancelConfirm({ group_id: b.group_id, name: b.customer_name })}
                               className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100">Cancel</button>
                           </>
                         )}
-                        {b.status === "completed" && (
+                        {(b.status === "completed" || b.status === "no_show") && (
                           <button onClick={() => updateGroupStatus(b.group_id, "confirmed")}
                             className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200">↩ Reopen</button>
                         )}
@@ -703,11 +708,13 @@ export default function BookingsPage() {
                   <>
                     <button onClick={() => updateGroupStatus(b.group_id, "completed", b)}
                       className="text-xs bg-purple-50 text-purple-600 px-3 py-1.5 rounded hover:bg-purple-100">Complete</button>
+                    <button onClick={() => updateGroupStatus(b.group_id, "no_show")}
+                      className="text-xs bg-gray-100 text-gray-500 px-3 py-1.5 rounded hover:bg-gray-200">No-show</button>
                     <button onClick={() => setCancelConfirm({ group_id: b.group_id, name: b.customer_name })}
                       className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded hover:bg-red-100">Cancel</button>
                   </>
                 )}
-                {b.status === "completed" && (
+                {(b.status === "completed" || b.status === "no_show") && (
                   <button onClick={() => updateGroupStatus(b.group_id, "confirmed")}
                     className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-200">↩ Reopen</button>
                 )}
