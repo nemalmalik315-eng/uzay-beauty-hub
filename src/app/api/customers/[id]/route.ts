@@ -52,9 +52,10 @@ export async function GET(
     discount: Number(r.discount) || 0,
   }));
 
-  // Calculate totals (billing + confirmed/completed bookings)
+  // Calculate totals — group by date so multiple services on the same day = 1 visit
   const totalSpent = bills.reduce((sum, b) => sum + (b.total as number), 0);
-  const totalVisits = bills.length;
+  const uniqueVisitDates = new Set(bills.map((b) => (b.created_at as string).slice(0, 10)));
+  const totalVisits = uniqueVisitDates.size;
   const totalDiscount = bills.reduce((sum, b) => sum + (b.discount as number), 0);
 
   return NextResponse.json({

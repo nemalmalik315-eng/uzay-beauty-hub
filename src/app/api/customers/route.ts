@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   const query = `
     SELECT c.*,
       COALESCE(SUM(b.total), 0) as total_spent,
-      COUNT(b.id) as visit_count,
+      COUNT(DISTINCT DATE(b.created_at)) as visit_count,
       MAX(DATE(b.created_at)) as last_visit
     FROM customers c
     LEFT JOIN billing b ON b.customer_id = c.id
