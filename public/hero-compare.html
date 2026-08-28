@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hero Compare</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; font-family: Georgia, serif; }
+  .version-label {
+    color: #fff;
+    text-align: center;
+    padding: 12px;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    background: #222;
+    text-transform: uppercase;
+  }
+  .hero {
+    position: relative;
+    height: 88vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+  .hero img.bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.08) 45%, rgba(0,0,0,0.78) 100%);
+  }
+  .logo-wrap {
+    position: absolute;
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: #fff;
+    border-radius: 16px;
+    padding: 10px 18px;
+  }
+  .logo-wrap img { height: 60px; display: block; }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 0 20px 56px;
+    width: 100%;
+  }
+  .tag {
+    color: #C9A84C;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-family: sans-serif;
+  }
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 24px;
+  }
+  h1 span { color: #C9A84C; }
+  .btns { display: flex; flex-direction: column; gap: 10px; }
+  .btn-gold {
+    background: #C9A84C;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 14px;
+    font-size: 15px;
+    font-family: sans-serif;
+    font-weight: 500;
+  }
+  .btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.6);
+    border-radius: 50px;
+    padding: 13px;
+    font-size: 15px;
+    font-family: sans-serif;
+    font-weight: 400;
+  }
+  .divider { height: 6px; background: #C9A84C; }
+</style>
+</head>
+<body>
+
+<div class="version-label">— Version A: Gold Bridal Close-up —</div>
+<div class="hero">
+  <img class="bg" src="/gallery/hero-salon.jpg" style="object-position: center 25%;">
+  <div class="overlay"></div>
+  <div class="logo-wrap"><img src="/logo.jpeg" alt="Uzay Beauty Hub"></div>
+  <div class="content">
+    <p class="tag">Lahore's Premier Beauty Salon</p>
+    <h1>Where <span>Elegance</span><br>Meets Expertise</h1>
+    <div class="btns">
+      <button class="btn-gold">Book Appointment</button>
+      <button class="btn-outline">View Menu</button>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="version-label">— Version B: Blue Outfit & Flowers —</div>
+<div class="hero">
+  <img class="bg" src="/gallery/hero-salon-2.jpg" style="object-position: center 20%;">
+  <div class="overlay"></div>
+  <div class="logo-wrap"><img src="/logo.jpeg" alt="Uzay Beauty Hub"></div>
+  <div class="content">
+    <p class="tag">Lahore's Premier Beauty Salon</p>
+    <h1>Where <span>Elegance</span><br>Meets Expertise</h1>
+    <div class="btns">
+      <button class="btn-gold">Book Appointment</button>
+      <button class="btn-outline">View Menu</button>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="version-label">— Version C: Green Bridal Lehenga —</div>
+<div class="hero">
+  <img class="bg" src="/gallery/hero-salon-3.jpg" style="object-position: center 30%;">
+  <div class="overlay"></div>
+  <div class="logo-wrap"><img src="/logo.jpeg" alt="Uzay Beauty Hub"></div>
+  <div class="content">
+    <p class="tag">Lahore's Premier Beauty Salon</p>
+    <h1>Where <span>Elegance</span><br>Meets Expertise</h1>
+    <div class="btns">
+      <button class="btn-gold">Book Appointment</button>
+      <button class="btn-outline">View Menu</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

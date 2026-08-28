@@ -3,15 +3,31 @@ import getDb from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+let billingColsEnsured = false;
+async function ensureBillingColumns() {
+  if (billingColsEnsured) return;
+  const db = getDb();
+  try { await db.execute("ALTER TABLE billing ADD COLUMN payment_status TEXT DEFAULT 'paid'"); } catch { /* exists */ }
+  billingColsEnsured = true;
+}
+
 export async function GET(req: NextRequest) {
+  await ensureBillingColumns();
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period");
   const date = searchParams.get("date");
 
+  const paymentStatus = searchParams.get("payment_status");
+
   let query = "SELECT * FROM billing";
   const conditions: string[] = [];
   const params: (string | number)[] = [];
+
+  if (paymentStatus) {
+    conditions.push("payment_status = ?");
+    params.push(paymentStatus);
+  }
 
   if (period === "today" || (!period && !date)) {
     conditions.push("DATE(created_at) = DATE('now')");
@@ -57,6 +73,7 @@ export async function POST(req: NextRequest) {
     service_charge,
     discount = 0,
     payment_method = "cash",
+    payment_status = "paid",
     bill_date,
   } = body;
 
@@ -98,12 +115,12 @@ export async function POST(req: NextRequest) {
   const result = await db.execute(
     bill_date
       ? {
-          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, bill_date],
+          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, bill_date],
         }
       : {
-          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method],
+          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, payment_status],
         }
   );
 
@@ -113,21 +130,24 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { id, service_name, service_charge, discount = 0, payment_method = "cash", bill_date } = body;
+  const { id, service_name, service_charge, discount = 0, payment_method = "cash", payment_status, bill_date } = body;
 
-  if (!id || !service_name || service_charge === undefined) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  const total = service_charge - discount;
+  const sets: string[] = [];
+  const args: (string | number)[] = [];
 
-  const sets = ["service_name = ?", "service_charge = ?", "discount = ?", "total = ?", "payment_method = ?"];
-  const args: (string | number)[] = [service_name, service_charge, discount, total, payment_method];
-
-  if (bill_date) {
-    sets.push("created_at = ?");
-    args.push(bill_date);
+  if (service_name !== undefined) {
+    const total = (service_charge ?? 0) - (discount ?? 0);
+    sets.push("service_name = ?", "service_charge = ?", "discount = ?", "total = ?", "payment_method = ?");
+    args.push(service_name, service_charge ?? 0, discount ?? 0, total, payment_method);
   }
+  if (payment_status !== undefined) { sets.push("payment_status = ?"); args.push(payment_status); }
+  if (bill_date) { sets.push("created_at = ?"); args.push(bill_date); }
+
+  if (sets.length === 0) return NextResponse.json({ id: Number(id) });
 
   args.push(Number(id));
   await db.execute({ sql: `UPDATE billing SET ${sets.join(", ")} WHERE id = ?`, args });

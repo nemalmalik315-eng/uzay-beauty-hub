@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uzay Beauty Hub — Media Consent & Release Form</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans:ital,wght@0,400;0,700;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9A84C;
+    --dark-gold: #8B6914;
+    --light-gold: #FEF9EC;
+    --charcoal: #1E1E1E;
+    --gray: #555;
+    --light-gray: #F8F5EE;
+    --line: #BBBBBB;
+    --red: #C0392B;
+    --white: #fff;
+  }
+
+  body {
+    font-family: 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 8pt;
+    color: var(--charcoal);
+    background: white;
+    line-height: 1.4;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 12mm 18mm 12mm 18mm;
+    position: relative;
+  }
+
+  /* ── Print: 2 pages ──────────────────────────────────────── */
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { margin: 0; }
+    .page { page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .no-print { display: none !important; }
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .top-bar { height: 4px; background: var(--gold); margin-bottom: 4mm; }
+
+  .title-block { text-align: center; margin-bottom: 2mm; }
+  .title-block h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    color: var(--charcoal);
+    letter-spacing: 1px;
+    line-height: 1.2;
+  }
+  .subtitle-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 2mm 0 1mm;
+  }
+  .subtitle-en {
+    font-size: 11pt;
+    color: var(--dark-gold);
+  }
+  .subtitle-ur {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    font-size: 11pt;
+    color: var(--dark-gold);
+    direction: rtl;
+  }
+  .note {
+    text-align: center;
+    font-size: 7pt;
+    font-style: italic;
+    color: var(--gray);
+    margin-bottom: 2mm;
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2mm;
+    font-size: 8pt;
+  }
+  .copy-label {
+    font-weight: 700;
+    font-size: 9pt;
+    color: var(--dark-gold);
+  }
+  .gold-hr { border: none; border-top: 0.5pt solid var(--gold); margin-bottom: 2mm; }
+
+  /* ── Section headers ─────────────────────────────────────── */
+  .sec-header {
+    background: var(--gold);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 7px 4px;
+    margin-bottom: 2mm;
+    margin-top: 0;
+  }
+  .sec-en {
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: white;
+  }
+  .sec-ur {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    font-size: 8pt;
+    color: white;
+    direction: rtl;
+    text-align: right;
+  }
+
+  /* ── Form fields ─────────────────────────────────────────── */
+  .field-row {
+    display: flex;
+    gap: 8mm;
+    margin-bottom: 3mm;
+  }
+  .field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .field-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1px;
+  }
+  .field-label-en {
+    font-size: 7pt;
+    font-weight: 700;
+    color: var(--gray);
+  }
+  .field-label-ur {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    font-size: 7.5pt;
+    color: var(--gray);
+    direction: rtl;
+    text-align: right;
+  }
+  .field-line {
+    border: none;
+    border-bottom: 0.7pt solid var(--line);
+    height: 12px;
+    width: 100%;
+  }
+
+  /* ── Checkboxes ──────────────────────────────────────────── */
+  .chk-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5mm;
+  }
+  .chk-en {
+    font-size: 8pt;
+    flex: 0 0 50%;
+  }
+  .chk-ur {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    font-size: 9pt;
+    direction: rtl;
+    text-align: right;
+    flex: 0 0 48%;
+    line-height: 1.6;
+  }
+  .chk-en.red { color: var(--red); }
+  .chk-ur.red { color: var(--red); }
+
+  /* ── Bilingual clause ────────────────────────────────────── */
+  .clause { margin-bottom: 1mm; }
+  .clause-en {
+    font-size: 7.5pt;
+    text-align: justify;
+    line-height: 1.4;
+    margin-bottom: 1px;
+  }
+  .clause-ur {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    font-size: 8.5pt;
+    direction: rtl;
+    text-align: right;
+    line-height: 1.7;
+    background: var(--light-gray);
+    padding: 2px 4px;
+    margin-bottom: 1.5mm;
+  }
+
+  /* ── Guardian box ────────────────────────────────────────── */
+  .guardian-box {
+    background: var(--light-gold);
+    border: 0.7pt solid var(--gold);
+    padding: 3px 7px;
+    margin-bottom: 1.5mm;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: var(--dark-gold);
+  }
+
+  /* ── Signature area ──────────────────────────────────────── */
+  .sig-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 3mm;
+  }
+  .sig-col {
+    flex: 1;
+    text-align: center;
+    padding: 0 8px;
+  }
+  .sig-col-label {
+    font-size: 7pt;
+    font-weight: 700;
+    color: var(--charcoal);
+  }
+  .sig-col-label-ur {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    font-size: 8pt;
+    direction: rtl;
+    color: var(--charcoal);
+  }
+  .sig-line {
+    border: none;
+    border-bottom: 0.7pt solid var(--line);
+    height: 18px;
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  /* ── Witness + Thumb ─────────────────────────────────────── */
+  .bottom-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 4mm;
+    margin-bottom: 3mm;
+  }
+  .thumb-box {
+    width: 30mm;
+    min-height: 24mm;
+    border: 0.7pt solid var(--line);
+    text-align: center;
+    padding: 4px;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: var(--gray);
+    flex-shrink: 0;
+  }
+  .thumb-ur {
+    font-family: 'Noto Nastaliq Urdu', serif;
+    font-size: 9pt;
+    direction: rtl;
+    display: block;
+    margin-top: 2px;
+    line-height: 1.6;
+  }
+  .thumb-small { font-size: 6pt; font-weight: 400; display: block; margin-top: 3px; }
+  .witness-cols {
+    flex: 1;
+    display: flex;
+    gap: 0;
+  }
+
+  /* ── Footer ──────────────────────────────────────────────── */
+  .footer-hr { border: none; border-top: 0.8pt solid var(--gold); margin: 2mm 0; }
+  .footer {
+    text-align: center;
+    font-size: 6.5pt;
+    font-style: italic;
+    color: var(--gray);
+  }
+
+  /* ── Print button (screen only) ──────────────────────────── */
+  .print-btn {
+    display: block;
+    width: 200px;
+    margin: 20px auto;
+    padding: 12px 24px;
+    background: var(--gold);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14pt;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+  }
+  .print-btn:hover { background: var(--dark-gold); }
+
+  .spacer { height: 2mm; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+
+<!-- ═══════════════════════════════════════════ SALON COPY ═══ -->
+<div class="page">
+  <div class="top-bar"></div>
+
+  <div class="title-block">
+    <h1>UZAY BEAUTY HUB</h1>
+    <div class="subtitle-row">
+      <span class="subtitle-en">Media Consent &amp; Release Form</span>
+      <span class="subtitle-ur">میڈیا رضامندی اور اجازت نامہ</span>
+    </div>
+    <p class="note">Please read carefully before signing — <span style="font-family:'Noto Nastaliq Urdu',serif;direction:rtl;">دستخط کرنے سے پہلے غور سے پڑھیں</span></p>
+  </div>
+
+  <div class="meta-row">
+    <span>Form No.: _______________ &nbsp;&nbsp; Date: _______________</span>
+    <span class="copy-label">[ SALON COPY ]</span>
+  </div>
+  <hr class="gold-hr">
+
+  <!-- SECTION 1 -->
+  <div class="sec-header">
+    <span class="sec-en">SECTION 1 — TYPE OF SIGNATORY</span>
+    <span class="sec-ur">قسم ۱ — دستخط کنندہ کی قسم</span>
+  </div>
+  <div class="chk-row">
+    <span class="chk-en">[ ] &nbsp;CLIENT — I am a paying customer receiving salon services</span>
+    <span class="chk-ur">کلائنٹ — میں سیلون کی خدمات لینے والا/والی گاہک ہوں</span>
+  </div>
+  <div class="chk-row">
+    <span class="chk-en">[ ] &nbsp;COLLABORATOR — I am collaborating for content creation</span>
+    <span class="chk-ur">تعاون کنندہ — میں مواد تیار کرنے کے لیے تعاون کر رہا/رہی ہوں</span>
+  </div>
+  <div class="spacer"></div>
+
+  <!-- SECTION 2 -->
+  <div class="sec-header">
+    <span class="sec-en">SECTION 2 — PERSONAL INFORMATION</span>
+    <span class="sec-ur">قسم ۲ — ذاتی معلومات</span>
+  </div>
+  <div class="field-row">
+    <div class="field" style="flex:2.5">
+      <div class="field-labels"><span class="field-label-en">Full Name</span><span class="field-label-ur">پورا نام</span></div>
+      <div class="field-line"></div>
+    </div>
+    <div class="field" style="flex:1.5">
+      <div class="field-labels"><span class="field-label-en">Phone Number</span><span class="field-label-ur">فون نمبر</span></div>
+      <div class="field-line"></div>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field" style="flex:2.2">
+      <div class="field-labels"><span class="field-label-en">CNIC Number — Write entirely by hand</span><span class="field-label-ur">شناختی کارڈ نمبر — خود اپنے ہاتھ سے لکھیں</span></div>
+      <div class="field-line"></div>
+    </div>
+    <div class="field" style="flex:1">
+      <div class="field-labels"><span class="field-label-en">Date of Session / Collaboration</span><span class="field-label-ur">تاریخ</span></div>
+      <div class="field-line"></div>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field">
+      <div class="field-labels"><span class="field-label-en">Services Received / Nature of Collaboration</span><span class="field-label-ur">خدمات / تعاون کی نوعیت</span></div>
+      <div class="field-line"></div>
+    </div>
+  </div>
+  <div class="chk-row">
+    <span class="chk-en">[ ] &nbsp;I confirm I am 18 years of age or older</span>
+    <span class="chk-ur">میری عمر ۱۸ سال یا اس سے زیادہ ہے</span>
+  </div>
+  <div class="chk-row">
+    <span class="chk-en red">[ ] &nbsp;I am UNDER 18 — Guardian details required below</span>
+    <span class="chk-ur red">میری عمر ۱۸ سال سے کم ہے — سرپرست کی تفصیل ضروری ہے</span>
+  </div>
+  <div class="guardian-box">⚠ Guardian Details (complete only if signatory is under 18)</div>
+  <div class="field-row">
+    <div class="field" style="flex:2">
+      <div class="field-labels"><span class="field-label-en">Guardian Full Name</span><span class="field-label-ur">سرپرست کا پورا نام</span></div>
+      <div class="field-line"></div>
+    </div>
+    <div class="field" style="flex:1.5">
+      <div class="field-labels"><span class="field-label-en">Guardian CNIC</span><span class="field-label-ur">سرپرست کا شناختی کارڈ</span></div>
+      <div class="field-line"></div>
+    </div>
+    <div class="field" style="flex:1.5">
+      <div class="field-labels"><span class="field-label-en">Guardian Signature</span><span class="field-label-ur">سرپرست کے دستخط</span></div>
+      <div class="field-line"></div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="sec-header">
+    <span class="sec-en">SECTION 3 — CONSENT &amp; GRANT OF RIGHTS</span>
+    <span class="sec-ur">قسم ۳ — رضامندی اور حقوق کی منتقلی</span>
+  </div>
+  <div class="clause">
+    <div class="clause-en">I, the undersigned, grant <strong>Uzay Beauty Hub</strong> ("the Salon") the <strong>irrevocable, worldwide, perpetual, and royalty-free</strong> right and licence to:</div>
+    <div class="clause-ur">میں، دستخط کنندہ، ازے بیوٹی ہب کو درج ذیل ناقابلِ واپسی، عالمی اور مستقل اجازت دیتا/دیتی ہوں:</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">1. <strong>Record</strong> my image, likeness, voice, and appearance during my session / collaboration.</div>
+    <div class="clause-ur">۱. سیشن کے دوران میری تصویر، آواز اور شکل ریکارڈ کرنا۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">2. <strong>Use, publish, and distribute</strong> all photos, videos, reels, and any other content ("Content") on any platform — including Instagram, Facebook, TikTok, YouTube, Snapchat, website, print materials, and online / offline advertising.</div>
+    <div class="clause-ur">۲. تمام تصاویر، ویڈیوز اور ریلز کو انسٹاگرام، فیس بک، ٹک ٹاک، یوٹیوب، ویب سائٹ اور اشتہارات میں شائع کرنا۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">3. <strong>Edit, crop, filter, watermark</strong>, and create derivative or AI-enhanced works — without my prior approval.</div>
+    <div class="clause-ur">۳. میری پیشگی اجازت کے بغیر مواد میں ترمیم، واٹر مارک یا AI تبدیلیاں کرنا۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">4. Use my name, image, and/or words in <strong>testimonials and endorsements</strong>.</div>
+    <div class="clause-ur">۴. میری تصویر اور نام کو تعریف ناموں اور اشتہارات میں استعمال کرنا۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">5. <strong>License or sell</strong> the Content to third parties including brands and sponsors.</div>
+    <div class="clause-ur">۵. مواد کو برانڈز اور اسپانسرز کو فروخت یا لائسنس کرنا۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">6. Use the Content in <strong>paid social media advertising</strong> on any platform.</div>
+    <div class="clause-ur">۶. ادائیگی شدہ اشتہارات میں مواد استعمال کرنا۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">7. Use <strong>before-and-after comparisons</strong> of my appearance.</div>
+    <div class="clause-ur">۷. میری شکل کے پہلے اور بعد کے موازنے شائع کرنا۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">8. Use the Content <strong>permanently and indefinitely</strong>, even after any change in the Salon's name or ownership.</div>
+    <div class="clause-ur">۸. مواد کو ہمیشہ کے لیے استعمال کرنا، سیلون کے نام یا ملکیت میں تبدیلی کے بعد بھی۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">The Salon is the <strong>sole and exclusive owner</strong> of all intellectual property rights, including copyright, in the Content.</div>
+    <div class="clause-ur">سیلون تمام مواد کا واحد مالک اور کاپی رائٹ ہولڈر ہے۔</div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="sec-header">
+    <span class="sec-en">SECTION 4 — WAIVER OF CLAIMS</span>
+    <span class="sec-ur">قسم ۴ — دعوؤں سے دستبرداری</span>
+  </div>
+  <div class="clause">
+    <div class="clause-en">By signing this form, I <strong>irrevocably</strong> agree that:</div>
+    <div class="clause-ur">اس فارم پر دستخط کر کے، میں ناقابلِ واپسی طور پر اتفاق کرتا/کرتی ہوں:</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">1. I <strong>CANNOT revoke</strong> this consent at any time after signing.</div>
+    <div class="clause-ur">۱. دستخط کے بعد یہ رضامندی واپس نہیں لی جا سکتی۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">2. I <strong>CANNOT demand deletion</strong> or removal of any Content after it has been published.</div>
+    <div class="clause-ur">۲. شائع شدہ مواد کو ہٹانے یا حذف کرنے کا مطالبہ نہیں کر سکتا/سکتی۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">3. I <strong>CANNOT file an FIR</strong> or any complaint with FIA Cyber Crime, PTA, or any law enforcement authority in connection with the Content.</div>
+    <div class="clause-ur">۳. FIA سائبر کرائم، PTA یا کسی بھی ادارے میں FIR یا شکایت دائر نہیں کر سکتا/سکتی۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">4. I <strong>CANNOT file a complaint under PECA 2016</strong> or any other law in relation to the Content.</div>
+    <div class="clause-ur">۴. PECA 2016 یا کسی دوسرے قانون کے تحت مقدمہ دائر نہیں کر سکتا/سکتی۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">5. I <strong>CANNOT bring any civil lawsuit</strong> or claim damages from the Salon related to the Content.</div>
+    <div class="clause-ur">۵. سیلون کے خلاف کوئی دیوانی مقدمہ یا ہرجانہ کا دعویٰ نہیں کر سکتا/سکتی۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">6. I <strong>CANNOT claim defamation</strong> or allege that the Content damaged my reputation.</div>
+    <div class="clause-ur">۶. توہینِ عزت کا دعویٰ نہیں کر سکتا/سکتی۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">7. I <strong>CANNOT make adverse public statements</strong> claiming the Content was used without my consent.</div>
+    <div class="clause-ur">۷. سوشل میڈیا پر یہ نہیں کہہ سکتا/سکتی کہ مواد بغیر اجازت کے استعمال ہوا۔</div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div class="sec-header">
+    <span class="sec-en">SECTION 5 — ADDITIONAL TERMS FOR COLLABORATORS</span>
+    <span class="sec-ur">قسم ۵ — تعاون کنندگان کے لیے اضافی شرائط</span>
+  </div>
+  <p style="font-size:7pt;font-style:italic;color:var(--gray);margin-bottom:1.5mm;">
+    (Skip if Client — <span style="font-family:'Noto Nastaliq Urdu',serif;direction:rtl;">کلائنٹ ہیں تو یہ حصہ چھوڑ دیں</span>)
+  </p>
+  <div class="clause">
+    <div class="clause-en">1. <strong>NO PAYMENT OR COMPENSATION:</strong> I am not entitled to any monetary compensation, royalties, or revenue share — now or in the future — regardless of the Content's commercial success, viral performance, views, brand deals, or any other reason whatsoever.</div>
+    <div class="clause-ur">۱. کوئی معاوضہ نہیں: میں رقم، رائلٹی یا آمدنی میں حصہ مانگنے کا کسی بھی وجہ سے حق نہیں رکھتا/رکھتی، چاہے مواد وائرل ہو، برانڈ ڈیل ہو یا کوئی بھی وجہ ہو۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">2. <strong>NO EMPLOYMENT RELATIONSHIP:</strong> This collaboration does not create any employment, agency, or partnership relationship.</div>
+    <div class="clause-ur">۲. ملازمت نہیں: یہ تعاون ملازمت، ایجنسی یا شراکت داری نہیں ہے۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">3. <strong>EXCLUSIVE CONTRACTS:</strong> I confirm I have no existing exclusive agreements that would restrict this collaboration.</div>
+    <div class="clause-ur">۳. میرا کوئی ایسا معاہدہ نہیں جو اس تعاون کو روکے۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">4. <strong>THIRD PARTY RIGHTS:</strong> I confirm no third party holds any rights over my image or any content I contribute.</div>
+    <div class="clause-ur">۴. میری تصویر یا مواد پر کسی تیسرے فریق کا کوئی حق نہیں۔</div>
+  </div>
+
+  <!-- SECTION 6 -->
+  <div class="sec-header">
+    <span class="sec-en">SECTION 6 — GENERAL TERMS</span>
+    <span class="sec-ur">قسم ۶ — عمومی شرائط</span>
+  </div>
+  <div class="clause">
+    <div class="clause-en">1. <strong>VERBAL AGREEMENTS DO NOT COUNT:</strong> This signed form is the entire agreement. Any verbal promises made before or during the session are superseded by this form and have no legal effect.</div>
+    <div class="clause-ur">۱. زبانی وعدے معتبر نہیں: یہ فارم ہی مکمل معاہدہ ہے۔ زبانی وعدے کالعدم ہیں۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">2. <strong>VOLUNTARY CONSENT:</strong> I sign this form freely, without coercion or pressure.</div>
+    <div class="clause-ur">۲. رضاکارانہ: میں بغیر کسی دباؤ کے دستخط کر رہا/رہی ہوں۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">3. <strong>LANGUAGE COMPREHENSION:</strong> I confirm I have read and understood this form, or it has been explained to me in a language I understand.</div>
+    <div class="clause-ur">۳. میں نے یہ فارم پڑھا اور سمجھا ہے، یا مجھے سمجھایا گیا ہے۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">4. <strong>CONSIDERATION:</strong> Services received (clients) or mutual promotional benefit (collaborators) constitutes valid consideration under Pakistani contract law.</div>
+    <div class="clause-ur">۴. حاصل کردہ خدمات یا باہمی فائدہ پاکستانی قانون کے تحت کافی قانونی معاوضہ ہے۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">5. <strong>SEVERABILITY:</strong> If any provision is found invalid, the remaining provisions remain in full force.</div>
+    <div class="clause-ur">۵. اگر کوئی شق غیر قانونی ہو تو باقی شقیں نافذ رہیں گی۔</div>
+  </div>
+  <div class="clause">
+    <div class="clause-en">6. <strong>GOVERNING LAW:</strong> This agreement is governed by the laws of the Islamic Republic of Pakistan. Any disputes are subject to Pakistani courts.</div>
+    <div class="clause-ur">۶. یہ معاہدہ پاکستانی قوانین کے تحت ہے اور تنازعات پاکستانی عدالتوں میں ہوں گے۔</div>
+  </div>
+
+  <!-- SECTION 7 -->
+  <div class="sec-header">
+    <span class="sec-en">SECTION 7 — DECLARATION &amp; SIGNATURE</span>
+    <span class="sec-ur">قسم ۷ — اعلان اور دستخط</span>
+  </div>
+  <div class="clause">
+    <div class="clause-en"><strong>By signing below, I declare that:</strong></div>
+    <div class="clause-ur">دستخط سے پہلے، میں اعلان کرتا/کرتی ہوں:</div>
+  </div>
+  <div class="chk-row">
+    <span class="chk-en">[ ] &nbsp;I have read and fully understood all terms of this form</span>
+    <span class="chk-ur">میں نے اس فارم کی تمام شرائط پڑھ اور سمجھ لی ہیں</span>
+  </div>
+  <div class="chk-row">
+    <span class="chk-en">[ ] &nbsp;I am signing voluntarily — without any pressure or coercion</span>
+    <span class="chk-ur">میں رضاکارانہ دستخط کر رہا/رہی ہوں — کوئی دباؤ نہیں</span>
+  </div>
+  <div class="chk-row">
+    <span class="chk-en">[ ] &nbsp;All information I have provided is accurate and true</span>
+    <span class="chk-ur">میری فراہم کردہ تمام معلومات درست اور سچی ہیں</span>
+  </div>
+  <div class="spacer"></div>
+
+  <!-- Signature row -->
+  <div class="sig-row">
+    <div class="sig-col">
+      <div class="sig-col-label">Signature</div>
+      <div class="sig-col-label-ur">دستخط</div>
+      <span class="sig-line"></span>
+    </div>
+    <div class="sig-col">
+      <div class="sig-col-label">CNIC (write by hand)</div>
+      <div class="sig-col-label-ur">شناختی کارڈ نمبر</div>
+      <span class="sig-line"></span>
+    </div>
+    <div class="sig-col">
+      <div class="sig-col-label">Date</div>
+      <div class="sig-col-label-ur">تاریخ</div>
+      <span class="sig-line"></span>
+    </div>
+  </div>
+
+  <!-- Thumb + Witness -->
+  <div class="bottom-row">
+    <div class="thumb-box">
+      <strong>Thumb Impression</strong>
+      <span class="thumb-ur">انگوٹھے کا نشان</span>
+      <span class="thumb-small">(if unable to sign)</span>
+    </div>
+    <div class="witness-cols">
+      <div class="sig-col">
+        <div class="sig-col-label">Witness Name (Staff)</div>
+        <div class="sig-col-label-ur">گواہ کا نام</div>
+        <span class="sig-line"></span>
+      </div>
+      <div class="sig-col">
+        <div class="sig-col-label">Witness Signature</div>
+        <div class="sig-col-label-ur">گواہ کے دستخط</div>
+        <span class="sig-line"></span>
+      </div>
+      <div class="sig-col">
+        <div class="sig-col-label">Witness CNIC</div>
+        <div class="sig-col-label-ur">گواہ کا شناختی کارڈ</div>
+        <span class="sig-line"></span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="footer-hr">
+  <p class="footer">Uzay Beauty Hub &nbsp;•&nbsp; Contact: 0334-4198243 &nbsp;•&nbsp; This form is legally binding under the laws of the Islamic Republic of Pakistan.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════ CLIENT COPY ═══ -->
+<div class="page">
+  <div class="top-bar"></div>
+  <div class="title-block">
+    <h1>UZAY BEAUTY HUB</h1>
+    <div class="subtitle-row">
+      <span class="subtitle-en">Media Consent &amp; Release Form</span>
+      <span class="subtitle-ur">میڈیا رضامندی اور اجازت نامہ</span>
+    </div>
+    <p class="note">Please read carefully before signing — <span style="font-family:'Noto Nastaliq Urdu',serif;direction:rtl;">دستخط کرنے سے پہلے غور سے پڑھیں</span></p>
+  </div>
+  <div class="meta-row">
+    <span>Form No.: _______________ &nbsp;&nbsp; Date: _______________</span>
+    <span class="copy-label">[ CLIENT COPY ]</span>
+  </div>
+  <hr class="gold-hr">
+
+  <div class="sec-header"><span class="sec-en">SECTION 1 — TYPE OF SIGNATORY</span><span class="sec-ur">قسم ۱ — دستخط کنندہ کی قسم</span></div>
+  <div class="chk-row"><span class="chk-en">[ ] &nbsp;CLIENT — I am a paying customer receiving salon services</span><span class="chk-ur">کلائنٹ — میں سیلون کی خدمات لینے والا/والی گاہک ہوں</span></div>
+  <div class="chk-row"><span class="chk-en">[ ] &nbsp;COLLABORATOR — I am collaborating for content creation</span><span class="chk-ur">تعاون کنندہ — میں مواد تیار کرنے کے لیے تعاون کر رہا/رہی ہوں</span></div>
+  <div class="spacer"></div>
+
+  <div class="sec-header"><span class="sec-en">SECTION 2 — PERSONAL INFORMATION</span><span class="sec-ur">قسم ۲ — ذاتی معلومات</span></div>
+  <div class="field-row">
+    <div class="field" style="flex:2.5"><div class="field-labels"><span class="field-label-en">Full Name</span><span class="field-label-ur">پورا نام</span></div><div class="field-line"></div></div>
+    <div class="field" style="flex:1.5"><div class="field-labels"><span class="field-label-en">Phone Number</span><span class="field-label-ur">فون نمبر</span></div><div class="field-line"></div></div>
+  </div>
+  <div class="field-row">
+    <div class="field" style="flex:2.2"><div class="field-labels"><span class="field-label-en">CNIC Number — Write entirely by hand</span><span class="field-label-ur">شناختی کارڈ نمبر — خود اپنے ہاتھ سے لکھیں</span></div><div class="field-line"></div></div>
+    <div class="field" style="flex:1"><div class="field-labels"><span class="field-label-en">Date of Session / Collaboration</span><span class="field-label-ur">تاریخ</span></div><div class="field-line"></div></div>
+  </div>
+  <div class="field-row"><div class="field"><div class="field-labels"><span class="field-label-en">Services Received / Nature of Collaboration</span><span class="field-label-ur">خدمات / تعاون کی نوعیت</span></div><div class="field-line"></div></div></div>
+  <div class="chk-row"><span class="chk-en">[ ] &nbsp;I confirm I am 18 years of age or older</span><span class="chk-ur">میری عمر ۱۸ سال یا اس سے زیادہ ہے</span></div>
+  <div class="chk-row"><span class="chk-en red">[ ] &nbsp;I am UNDER 18 — Guardian details required below</span><span class="chk-ur red">میری عمر ۱۸ سال سے کم ہے — سرپرست کی تفصیل ضروری ہے</span></div>
+  <div class="guardian-box">⚠ Guardian Details (complete only if signatory is under 18)</div>
+  <div class="field-row">
+    <div class="field" style="flex:2"><div class="field-labels"><span class="field-label-en">Guardian Full Name</span><span class="field-label-ur">سرپرست کا پورا نام</span></div><div class="field-line"></div></div>
+    <div class="field" style="flex:1.5"><div class="field-labels"><span class="field-label-en">Guardian CNIC</span><span class="field-label-ur">سرپرست کا شناختی کارڈ</span></div><div class="field-line"></div></div>
+    <div class="field" style="flex:1.5"><div class="field-labels"><span class="field-label-en">Guardian Signature</span><span class="field-label-ur">سرپرست کے دستخط</span></div><div class="field-line"></div></div>
+  </div>
+
+  <div class="sec-header"><span class="sec-en">SECTION 3 — CONSENT &amp; GRANT OF RIGHTS</span><span class="sec-ur">قسم ۳ — رضامندی اور حقوق کی منتقلی</span></div>
+  <div class="clause"><div class="clause-en">I, the undersigned, grant <strong>Uzay Beauty Hub</strong> the <strong>irrevocable, worldwide, perpetual, and royalty-free</strong> right and licence to:</div><div class="clause-ur">میں، دستخط کنندہ، ازے بیوٹی ہب کو درج ذیل ناقابلِ واپسی، عالمی اور مستقل اجازت دیتا/دیتی ہوں:</div></div>
+  <div class="clause"><div class="clause-en">1. <strong>Record</strong> my image, likeness, voice, and appearance during my session / collaboration.</div><div class="clause-ur">۱. سیشن کے دوران میری تصویر، آواز اور شکل ریکارڈ کرنا۔</div></div>
+  <div class="clause"><div class="clause-en">2. <strong>Use, publish, and distribute</strong> all photos, videos, reels, and any other content on any platform — including Instagram, Facebook, TikTok, YouTube, Snapchat, website, print materials, and online / offline advertising.</div><div class="clause-ur">۲. تمام تصاویر، ویڈیوز اور ریلز کو انسٹاگرام، فیس بک، ٹک ٹاک، یوٹیوب، ویب سائٹ اور اشتہارات میں شائع کرنا۔</div></div>
+  <div class="clause"><div class="clause-en">3. <strong>Edit, crop, filter, watermark</strong>, and create derivative or AI-enhanced works — without my prior approval.</div><div class="clause-ur">۳. میری پیشگی اجازت کے بغیر مواد میں ترمیم، واٹر مارک یا AI تبدیلیاں کرنا۔</div></div>
+  <div class="clause"><div class="clause-en">4. Use my name, image, and/or words in <strong>testimonials and endorsements</strong>.</div><div class="clause-ur">۴. میری تصویر اور نام کو تعریف ناموں اور اشتہارات میں استعمال کرنا۔</div></div>
+  <div class="clause"><div class="clause-en">5. <strong>License or sell</strong> the Content to third parties including brands and sponsors.</div><div class="clause-ur">۵. مواد کو برانڈز اور اسپانسرز کو فروخت یا لائسنس کرنا۔</div></div>
+  <div class="clause"><div class="clause-en">6. Use the Content in <strong>paid social media advertising</strong> on any platform.</div><div class="clause-ur">۶. ادائیگی شدہ اشتہارات میں مواد استعمال کرنا۔</div></div>
+  <div class="clause"><div class="clause-en">7. Use <strong>before-and-after comparisons</strong> of my appearance.</div><div class="clause-ur">۷. میری شکل کے پہلے اور بعد کے موازنے شائع کرنا۔</div></div>
+  <div class="clause"><div class="clause-en">8. Use the Content <strong>permanently and indefinitely</strong>, even after any change in the Salon's name or ownership.</div><div class="clause-ur">۸. مواد کو ہمیشہ کے لیے استعمال کرنا، سیلون کے نام یا ملکیت میں تبدیلی کے بعد بھی۔</div></div>
+  <div class="clause"><div class="clause-en">The Salon is the <strong>sole and exclusive owner</strong> of all intellectual property rights, including copyright, in the Content.</div><div class="clause-ur">سیلون تمام مواد کا واحد مالک اور کاپی رائٹ ہولڈر ہے۔</div></div>
+
+  <div class="sec-header"><span class="sec-en">SECTION 4 — WAIVER OF CLAIMS</span><span class="sec-ur">قسم ۴ — دعوؤں سے دستبرداری</span></div>
+  <div class="clause"><div class="clause-en">By signing this form, I <strong>irrevocably</strong> agree that:</div><div class="clause-ur">اس فارم پر دستخط کر کے، میں ناقابلِ واپسی طور پر اتفاق کرتا/کرتی ہوں:</div></div>
+  <div class="clause"><div class="clause-en">1. I <strong>CANNOT revoke</strong> this consent at any time after signing.</div><div class="clause-ur">۱. دستخط کے بعد یہ رضامندی واپس نہیں لی جا سکتی۔</div></div>
+  <div class="clause"><div class="clause-en">2. I <strong>CANNOT demand deletion</strong> or removal of any Content after it has been published.</div><div class="clause-ur">۲. شائع شدہ مواد کو ہٹانے یا حذف کرنے کا مطالبہ نہیں کر سکتا/سکتی۔</div></div>
+  <div class="clause"><div class="clause-en">3. I <strong>CANNOT file an FIR</strong> or any complaint with FIA Cyber Crime, PTA, or any law enforcement authority in connection with the Content.</div><div class="clause-ur">۳. FIA سائبر کرائم، PTA یا کسی بھی ادارے میں FIR یا شکایت دائر نہیں کر سکتا/سکتی۔</div></div>
+  <div class="clause"><div class="clause-en">4. I <strong>CANNOT file a complaint under PECA 2016</strong> or any other law in relation to the Content.</div><div class="clause-ur">۴. PECA 2016 یا کسی دوسرے قانون کے تحت مقدمہ دائر نہیں کر سکتا/سکتی۔</div></div>
+  <div class="clause"><div class="clause-en">5. I <strong>CANNOT bring any civil lawsuit</strong> or claim damages from the Salon related to the Content.</div><div class="clause-ur">۵. سیلون کے خلاف کوئی دیوانی مقدمہ یا ہرجانہ کا دعویٰ نہیں کر سکتا/سکتی۔</div></div>
+  <div class="clause"><div class="clause-en">6. I <strong>CANNOT claim defamation</strong> or allege that the Content damaged my reputation.</div><div class="clause-ur">۶. توہینِ عزت کا دعویٰ نہیں کر سکتا/سکتی۔</div></div>
+  <div class="clause"><div class="clause-en">7. I <strong>CANNOT make adverse public statements</strong> claiming the Content was used without my consent.</div><div class="clause-ur">۷. سوشل میڈیا پر یہ نہیں کہہ سکتا/سکتی کہ مواد بغیر اجازت کے استعمال ہوا۔</div></div>
+
+  <div class="sec-header"><span class="sec-en">SECTION 5 — ADDITIONAL TERMS FOR COLLABORATORS</span><span class="sec-ur">قسم ۵ — تعاون کنندگان کے لیے اضافی شرائط</span></div>
+  <p style="font-size:7pt;font-style:italic;color:var(--gray);margin-bottom:1.5mm;">(Skip if Client — <span style="font-family:'Noto Nastaliq Urdu',serif;direction:rtl;">کلائنٹ ہیں تو یہ حصہ چھوڑ دیں</span>)</p>
+  <div class="clause"><div class="clause-en">1. <strong>NO PAYMENT OR COMPENSATION:</strong> I am not entitled to any monetary compensation, royalties, or revenue share — now or in the future — regardless of the Content's commercial success, viral performance, views, brand deals, or any other reason.</div><div class="clause-ur">۱. کوئی معاوضہ نہیں: میں رقم، رائلٹی یا آمدنی میں حصہ مانگنے کا کسی بھی وجہ سے حق نہیں رکھتا/رکھتی، چاہے مواد وائرل ہو، برانڈ ڈیل ہو یا کوئی بھی وجہ ہو۔</div></div>
+  <div class="clause"><div class="clause-en">2. <strong>NO EMPLOYMENT RELATIONSHIP:</strong> This collaboration does not create any employment, agency, or partnership relationship.</div><div class="clause-ur">۲. ملازمت نہیں: یہ تعاون ملازمت، ایجنسی یا شراکت داری نہیں ہے۔</div></div>
+  <div class="clause"><div class="clause-en">3. <strong>EXCLUSIVE CONTRACTS:</strong> I confirm I have no existing exclusive agreements that would restrict this collaboration.</div><div class="clause-ur">۳. میرا کوئی ایسا معاہدہ نہیں جو اس تعاون کو روکے۔</div></div>
+  <div class="clause"><div class="clause-en">4. <strong>THIRD PARTY RIGHTS:</strong> I confirm no third party holds any rights over my image or any content I contribute.</div><div class="clause-ur">۴. میری تصویر یا مواد پر کسی تیسرے فریق کا کوئی حق نہیں۔</div></div>
+
+  <div class="sec-header"><span class="sec-en">SECTION 6 — GENERAL TERMS</span><span class="sec-ur">قسم ۶ — عمومی شرائط</span></div>
+  <div class="clause"><div class="clause-en">1. <strong>VERBAL AGREEMENTS DO NOT COUNT:</strong> This signed form is the entire agreement. Any verbal promises made before or during the session are superseded by this form and have no legal effect.</div><div class="clause-ur">۱. زبانی وعدے معتبر نہیں: یہ فارم ہی مکمل معاہدہ ہے۔ زبانی وعدے کالعدم ہیں۔</div></div>
+  <div class="clause"><div class="clause-en">2. <strong>VOLUNTARY CONSENT:</strong> I sign this form freely, without coercion or pressure.</div><div class="clause-ur">۲. رضاکارانہ: میں بغیر کسی دباؤ کے دستخط کر رہا/رہی ہوں۔</div></div>
+  <div class="clause"><div class="clause-en">3. <strong>LANGUAGE COMPREHENSION:</strong> I confirm I have read and understood this form, or it has been explained to me in a language I understand.</div><div class="clause-ur">۳. میں نے یہ فارم پڑھا اور سمجھا ہے، یا مجھے سمجھایا گیا ہے۔</div></div>
+  <div class="clause"><div class="clause-en">4. <strong>CONSIDERATION:</strong> Services received (clients) or mutual promotional benefit (collaborators) constitutes valid consideration under Pakistani contract law.</div><div class="clause-ur">۴. حاصل کردہ خدمات یا باہمی فائدہ پاکستانی قانون کے تحت کافی قانونی معاوضہ ہے۔</div></div>
+  <div class="clause"><div class="clause-en">5. <strong>SEVERABILITY:</strong> If any provision is found invalid, the remaining provisions remain in full force.</div><div class="clause-ur">۵. اگر کوئی شق غیر قانونی ہو تو باقی شقیں نافذ رہیں گی۔</div></div>
+  <div class="clause"><div class="clause-en">6. <strong>GOVERNING LAW:</strong> This agreement is governed by the laws of Pakistan. Any disputes are subject to Pakistani courts.</div><div class="clause-ur">۶. یہ معاہدہ پاکستانی قوانین کے تحت ہے اور تنازعات پاکستانی عدالتوں میں ہوں گے۔</div></div>
+
+  <div class="sec-header"><span class="sec-en">SECTION 7 — DECLARATION &amp; SIGNATURE</span><span class="sec-ur">قسم ۷ — اعلان اور دستخط</span></div>
+  <div class="clause"><div class="clause-en"><strong>By signing below, I declare that:</strong></div><div class="clause-ur">دستخط سے پہلے، میں اعلان کرتا/کرتی ہوں:</div></div>
+  <div class="chk-row"><span class="chk-en">[ ] &nbsp;I have read and fully understood all terms of this form</span><span class="chk-ur">میں نے اس فارم کی تمام شرائط پڑھ اور سمجھ لی ہیں</span></div>
+  <div class="chk-row"><span class="chk-en">[ ] &nbsp;I am signing voluntarily — without any pressure or coercion</span><span class="chk-ur">میں رضاکارانہ دستخط کر رہا/رہی ہوں — کوئی دباؤ نہیں</span></div>
+  <div class="chk-row"><span class="chk-en">[ ] &nbsp;All information I have provided is accurate and true</span><span class="chk-ur">میری فراہم کردہ تمام معلومات درست اور سچی ہیں</span></div>
+  <div class="spacer"></div>
+
+  <div class="sig-row">
+    <div class="sig-col"><div class="sig-col-label">Signature</div><div class="sig-col-label-ur">دستخط</div><span class="sig-line"></span></div>
+    <div class="sig-col"><div class="sig-col-label">CNIC (write by hand)</div><div class="sig-col-label-ur">شناختی کارڈ نمبر</div><span class="sig-line"></span></div>
+    <div class="sig-col"><div class="sig-col-label">Date</div><div class="sig-col-label-ur">تاریخ</div><span class="sig-line"></span></div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="thumb-box">
+      <strong>Thumb Impression</strong>
+      <span class="thumb-ur">انگوٹھے کا نشان</span>
+      <span class="thumb-small">(if unable to sign)</span>
+    </div>
+    <div class="witness-cols">
+      <div class="sig-col"><div class="sig-col-label">Witness Name (Staff)</div><div class="sig-col-label-ur">گواہ کا نام</div><span class="sig-line"></span></div>
+      <div class="sig-col"><div class="sig-col-label">Witness Signature</div><div class="sig-col-label-ur">گواہ کے دستخط</div><span class="sig-line"></span></div>
+      <div class="sig-col"><div class="sig-col-label">Witness CNIC</div><div class="sig-col-label-ur">گواہ کا شناختی کارڈ</div><span class="sig-line"></span></div>
+    </div>
+  </div>
+
+  <hr class="footer-hr">
+  <p class="footer">Uzay Beauty Hub &nbsp;•&nbsp; Contact: 0334-4198243 &nbsp;•&nbsp; This form is legally binding under the laws of the Islamic Republic of Pakistan.</p>
+</div>
+
+</body>
+</html>
