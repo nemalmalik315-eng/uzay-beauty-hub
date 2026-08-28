@@ -64,6 +64,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  // Prevent duplicate billing for same booking group
+  if (booking_id) {
+    const { rows: existing } = await db.execute({
+      sql: "SELECT id FROM billing WHERE booking_id = ?",
+      args: [booking_id],
+    });
+    if (existing.length > 0) {
+      return NextResponse.json({ id: existing[0].id, duplicate: true });
+    }
+  }
+
   // Find or create customer if phone provided
   let resolvedCustomerId = customer_id || null;
   if (customer_phone && !resolvedCustomerId) {
@@ -95,10 +106,6 @@ export async function POST(req: NextRequest) {
           args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method],
         }
   );
-
-  if (booking_id) {
-    await db.execute({ sql: "UPDATE bookings SET status = 'completed' WHERE id = ?", args: [booking_id] });
-  }
 
   return NextResponse.json({ id: Number(result.lastInsertRowid), customer_id: resolvedCustomerId });
 }

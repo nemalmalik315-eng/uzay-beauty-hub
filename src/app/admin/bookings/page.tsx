@@ -287,19 +287,36 @@ export default function BookingsPage() {
   };
 
   // ── Complete / Cancel ────────────────────────────────────────────────────
-  const updateGroupStatus = async (group_id: number, status: string) => {
+  const updateGroupStatus = async (group_id: number, status: string, group?: BookingGroup) => {
     const res = await fetch("/api/bookings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ group_id, status }),
     });
-    if (res.ok) {
-      toast(status === "completed" ? "Marked as completed" : "Booking cancelled",
-        status === "cancelled" ? "info" : "success");
-      loadBookings();
+    if (!res.ok) { toast("Failed to update booking", "error"); return; }
+
+    // Auto-create billing record when completing
+    if (status === "completed" && group) {
+      const serviceName = group.services.map((s) => s.name).join(", ");
+      const discount = group.discount ?? 0;
+      await fetch("/api/billing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          booking_id: group_id,
+          customer_name: group.customer_name,
+          service_name: serviceName,
+          service_charge: group.total,
+          discount,
+          total: group.total - discount,
+          payment_method: "cash",
+        }),
+      });
+      toast("Marked as completed & added to billing", "success");
     } else {
-      toast("Failed to update booking", "error");
+      toast(status === "cancelled" ? "Booking cancelled" : status === "confirmed" ? "Booking reopened" : "Updated", status === "cancelled" ? "info" : "success");
     }
+    loadBookings();
   };
 
   // ── Edit (date/time) ─────────────────────────────────────────────────────
@@ -581,7 +598,7 @@ export default function BookingsPage() {
                         )}
                         {(b.status === "pending" || b.status === "confirmed") && (
                           <>
-                            <button onClick={() => updateGroupStatus(b.group_id, "completed")}
+                            <button onClick={() => updateGroupStatus(b.group_id, "completed", b)}
                               className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded hover:bg-purple-100">Complete</button>
                             <button onClick={() => setCancelConfirm({ group_id: b.group_id, name: b.customer_name })}
                               className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100">Cancel</button>
@@ -684,7 +701,7 @@ export default function BookingsPage() {
                 )}
                 {(b.status === "pending" || b.status === "confirmed") && (
                   <>
-                    <button onClick={() => updateGroupStatus(b.group_id, "completed")}
+                    <button onClick={() => updateGroupStatus(b.group_id, "completed", b)}
                       className="text-xs bg-purple-50 text-purple-600 px-3 py-1.5 rounded hover:bg-purple-100">Complete</button>
                     <button onClick={() => setCancelConfirm({ group_id: b.group_id, name: b.customer_name })}
                       className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded hover:bg-red-100">Cancel</button>
