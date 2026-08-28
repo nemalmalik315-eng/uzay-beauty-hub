@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { id, service_name, service_charge, discount = 0, payment_method = "cash" } = body;
+  const { id, service_name, service_charge, discount = 0, payment_method = "cash", bill_date } = body;
 
   if (!id || !service_name || service_charge === undefined) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -121,10 +121,16 @@ export async function PATCH(req: NextRequest) {
 
   const total = service_charge - discount;
 
-  await db.execute({
-    sql: "UPDATE billing SET service_name = ?, service_charge = ?, discount = ?, total = ?, payment_method = ? WHERE id = ?",
-    args: [service_name, service_charge, discount, total, payment_method, Number(id)],
-  });
+  const sets = ["service_name = ?", "service_charge = ?", "discount = ?", "total = ?", "payment_method = ?"];
+  const args: (string | number)[] = [service_name, service_charge, discount, total, payment_method];
+
+  if (bill_date) {
+    sets.push("created_at = ?");
+    args.push(bill_date);
+  }
+
+  args.push(Number(id));
+  await db.execute({ sql: `UPDATE billing SET ${sets.join(", ")} WHERE id = ?`, args });
 
   return NextResponse.json({ id: Number(id) });
 }

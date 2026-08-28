@@ -110,6 +110,7 @@ export default function BillingPage() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [period, setPeriod] = useState("today");
+  const [customDate, setCustomDate] = useState("");
   const [summaryUnlocked, setSummaryUnlocked] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -178,7 +179,10 @@ export default function BillingPage() {
   )].sort();
 
   const loadBills = async () => {
-    const res = await fetch(`/api/billing?period=${period}`);
+    const url = period === "custom" && customDate
+      ? `/api/billing?date=${customDate}`
+      : `/api/billing?period=${period}`;
+    const res = await fetch(url);
     const data = await res.json();
     setBills(data.bills);
     setSummary(data.summary);
@@ -189,7 +193,7 @@ export default function BillingPage() {
     fetch("/api/services")
       .then((r) => r.json())
       .then(setServices);
-  }, [period]);
+  }, [period, customDate]);
 
   // Customer lookup by phone
   useEffect(() => {
@@ -349,6 +353,7 @@ export default function BillingPage() {
             service_charge: subtotal,
             discount,
             payment_method: paymentMethod,
+            bill_date: billDate,
           }),
         });
         if (!res.ok) { toast("Failed to update bill", "error"); return; }
@@ -550,7 +555,7 @@ export default function BillingPage() {
       {/* Period filter & Add */}
       <div className="bg-white rounded-lg border border-gray-100 p-4">
         <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             {["today", "week", "month"].map((p) => (
               <button
                 key={p}
@@ -564,6 +569,26 @@ export default function BillingPage() {
                 {p === "today" ? "Today" : p === "week" ? "This Week" : "This Month"}
               </button>
             ))}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPeriod("custom")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  period === "custom"
+                    ? "bg-gold text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                By Date
+              </button>
+              {period === "custom" && (
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                  className="px-3 py-2 rounded-md border border-gold/40 text-sm focus:border-gold outline-none"
+                />
+              )}
+            </div>
           </div>
           <div className="ml-auto flex gap-2">
             <button
