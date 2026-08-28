@@ -13,6 +13,9 @@ interface Customer {
   society: string | null;
   notes: string | null;
   created_at: string;
+  total_spent?: number;
+  visit_count?: number;
+  last_visit?: string | null;
 }
 
 interface CustomerDetail {
@@ -46,6 +49,7 @@ interface CustomerDetail {
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("newest");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "" });
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetail | null>(null);
@@ -56,15 +60,17 @@ export default function CustomersPage() {
   const { toast } = useToast();
 
   const loadCustomers = async () => {
-    const url = search ? `/api/customers?search=${encodeURIComponent(search)}` : "/api/customers";
-    const res = await fetch(url);
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (sort) params.set("sort", sort);
+    const res = await fetch(`/api/customers?${params}`);
     const data = await res.json();
     setCustomers(data);
   };
 
   useEffect(() => {
     loadCustomers();
-  }, [search]);
+  }, [search, sort]);
 
   const addCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -324,7 +330,7 @@ export default function CustomersPage() {
       )}
 
       {/* Search & Add */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 space-y-3">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex-1 min-w-[200px]">
             <input
@@ -341,6 +347,29 @@ export default function CustomersPage() {
           >
             + Add Customer
           </button>
+        </div>
+        {/* Sort filters */}
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: "newest", label: "Newest" },
+            { value: "highest_spend", label: "Highest Spend" },
+            { value: "lowest_spend", label: "Lowest Spend" },
+            { value: "most_visits", label: "Most Visits" },
+            { value: "least_visits", label: "Least Visits" },
+            { value: "recent_visit", label: "Recent Visit" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setSort(opt.value)}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                sort === opt.value
+                  ? "bg-gold text-white border-gold"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gold hover:text-gold"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -393,8 +422,9 @@ export default function CustomersPage() {
                 <th className="px-6 py-3">#</th>
                 <th className="px-6 py-3">Name</th>
                 <th className="px-6 py-3">Phone</th>
-                <th className="px-6 py-3">Email</th>
-                <th className="px-6 py-3">Joined</th>
+                <th className="px-6 py-3">Total Spent</th>
+                <th className="px-6 py-3">Visits</th>
+                <th className="px-6 py-3">Last Visit</th>
                 <th className="px-6 py-3"></th>
               </tr>
             </thead>
@@ -411,9 +441,14 @@ export default function CustomersPage() {
                     <td className="px-6 py-4 text-sm text-gray-400">{c.id}</td>
                     <td className="px-6 py-4 text-sm font-medium text-charcoal">{c.name}{c.surname ? ` ${c.surname}` : ""}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{c.phone}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{c.email || "—"}</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-green-600">
+                      {c.total_spent ? `Rs. ${Number(c.total_spent).toLocaleString()}` : "—"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-blue-600 font-medium">
+                      {c.visit_count ?? 0}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-400">
-                      {new Date(c.created_at).toLocaleDateString()}
+                      {c.last_visit ? new Date(c.last_visit).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-6 py-4">
                       <button
@@ -421,7 +456,7 @@ export default function CustomersPage() {
                         disabled={loadingDetail}
                         className="text-xs text-gold hover:text-gold-dark font-medium"
                       >
-                        View History
+                        View
                       </button>
                     </td>
                   </tr>
@@ -450,8 +485,17 @@ export default function CustomersPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-charcoal truncate">{c.name}{c.surname ? ` ${c.surname}` : ""}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{c.phone}</p>
-                  {(c.house_no || c.society) && <p className="text-xs text-gray-400 mt-0.5 truncate">{[c.house_no, c.society].filter(Boolean).join(", ")}</p>}
-                  <p className="text-[10px] text-gray-400 mt-1">Joined {new Date(c.created_at).toLocaleDateString()}</p>
+                  <div className="flex gap-3 mt-1.5">
+                    {(c.total_spent ?? 0) > 0 && (
+                      <span className="text-xs font-semibold text-green-600">Rs. {Number(c.total_spent).toLocaleString()}</span>
+                    )}
+                    {(c.visit_count ?? 0) > 0 && (
+                      <span className="text-xs text-blue-500">{c.visit_count} visit{Number(c.visit_count) !== 1 ? "s" : ""}</span>
+                    )}
+                    {c.last_visit && (
+                      <span className="text-xs text-gray-400">{new Date(c.last_visit).toLocaleDateString()}</span>
+                    )}
+                  </div>
                 </div>
                 <span className="flex-shrink-0 text-xs text-gold font-medium">View →</span>
               </div>

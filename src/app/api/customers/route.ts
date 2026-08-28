@@ -18,15 +18,33 @@ export async function GET(req: NextRequest) {
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search");
+  const sort = searchParams.get("sort") || "newest";
 
-  let query = "SELECT * FROM customers";
-  const params: string[] = [];
+  const whereClause = search ? "WHERE (c.name LIKE ? OR c.phone LIKE ?)" : "";
+  const params: string[] = search ? [`%${search}%`, `%${search}%`] : [];
 
-  if (search) {
-    query += " WHERE name LIKE ? OR phone LIKE ?";
-    params.push(`%${search}%`, `%${search}%`);
-  }
-  query += " ORDER BY created_at DESC";
+  const orderMap: Record<string, string> = {
+    newest: "c.created_at DESC",
+    oldest: "c.created_at ASC",
+    highest_spend: "total_spent DESC",
+    lowest_spend: "total_spent ASC",
+    most_visits: "visit_count DESC",
+    least_visits: "visit_count ASC",
+    recent_visit: "last_visit DESC NULLS LAST",
+  };
+  const orderBy = orderMap[sort] ?? "c.created_at DESC";
+
+  const query = `
+    SELECT c.*,
+      COALESCE(SUM(b.total), 0) as total_spent,
+      COUNT(b.id) as visit_count,
+      MAX(DATE(b.created_at)) as last_visit
+    FROM customers c
+    LEFT JOIN billing b ON b.customer_id = c.id
+    ${whereClause}
+    GROUP BY c.id
+    ORDER BY ${orderBy}
+  `;
 
   const { rows } = await db.execute({ sql: query, args: params });
   return NextResponse.json(rows);
