@@ -55,6 +55,8 @@ interface SavedBillInfo {
   subtotal: number;
   discount: number;
   grandTotal: number;
+  amountPaid: number;
+  paymentStatus: string;
   paymentMethod: string;
   billDate: string;
 }
@@ -63,6 +65,24 @@ function buildWhatsAppUrl(info: SavedBillInfo): string {
   const digits = info.phone.replace(/\D/g, "");
   const waPhone = digits.startsWith("0") ? "92" + digits.slice(1)
     : digits.startsWith("92") ? digits : "92" + digits;
+  const remaining = info.grandTotal - info.amountPaid;
+  const paymentLines =
+    info.paymentStatus === "partial"
+      ? [
+          `Total: Rs. ${info.grandTotal.toLocaleString()}`,
+          `Paid now: Rs. ${info.amountPaid.toLocaleString()}`,
+          `*Remaining: Rs. ${remaining.toLocaleString()}* ⏳`,
+          `Payment: ${info.paymentMethod.charAt(0).toUpperCase() + info.paymentMethod.slice(1)}`,
+        ]
+      : info.paymentStatus === "pending"
+      ? [
+          `*Total: Rs. ${info.grandTotal.toLocaleString()}*`,
+          `Payment: UNPAID — will pay later`,
+        ]
+      : [
+          `*Total: Rs. ${info.grandTotal.toLocaleString()}* ✓`,
+          `Payment: ${info.paymentMethod.charAt(0).toUpperCase() + info.paymentMethod.slice(1)}`,
+        ];
   const lines = [
     "✨ *Uzay Beauty Hub*",
     "━━━━━━━━━━━━━━━━",
@@ -74,8 +94,7 @@ function buildWhatsAppUrl(info: SavedBillInfo): string {
     ...info.services.flatMap((s) => Array(s.qty).fill(`• ${s.name} — Rs. ${s.price.toLocaleString()}`)),
     "",
     ...(info.discount > 0 ? [`Subtotal: Rs. ${info.subtotal.toLocaleString()}`, `Discount: −Rs. ${info.discount.toLocaleString()}`] : []),
-    `*Total: Rs. ${info.grandTotal.toLocaleString()}* ✓`,
-    `Payment: ${info.paymentMethod.charAt(0).toUpperCase() + info.paymentMethod.slice(1)}`,
+    ...paymentLines,
     "━━━━━━━━━━━━━━━━",
     "Thank you for visiting Uzay Beauty Hub! 💄",
   ];
@@ -421,6 +440,8 @@ export default function BillingPage() {
         subtotal,
         discount,
         grandTotal,
+        amountPaid: paid,
+        paymentStatus,
         paymentMethod,
         billDate,
       });
@@ -483,6 +504,11 @@ export default function BillingPage() {
       <div class="row"><span>Subtotal</span><span>Rs. ${bill.service_charge.toFixed(0)}</span></div>
       ${bill.discount > 0 ? `<div class="row"><span>Discount</span><span>-Rs. ${bill.discount.toFixed(0)}</span></div>` : ""}
       <div class="row bold" style="font-size:16px;margin-top:6px;"><span>TOTAL</span><span>Rs. ${bill.total.toFixed(0)}</span></div>
+      ${bill.payment_status === "partial" ? `
+        <div class="row" style="color:#2563eb;"><span>Paid now</span><span>Rs. ${(bill.amount_paid ?? 0).toFixed(0)}</span></div>
+        <div class="row bold" style="color:#d97706;"><span>REMAINING</span><span>Rs. ${(bill.total - (bill.amount_paid ?? 0)).toFixed(0)}</span></div>
+      ` : ""}
+      ${bill.payment_status === "pending" ? `<div class="row bold" style="color:#ea580c;margin-top:4px;"><span>STATUS</span><span>UNPAID</span></div>` : ""}
       <div class="line"></div>
       <p class="center" style="font-size:11px;margin-top:15px;">Thank you for visiting Uzay Beauty Hub!</p>
       <p class="center" style="font-size:10px;">Follow us @uzay_beautyhub</p>
@@ -747,6 +773,21 @@ export default function BillingPage() {
             <div className="flex justify-between font-bold border-t border-gray-200 pt-1 mt-1">
               <span>Total</span><span>Rs. {savedBillInfo.grandTotal.toLocaleString()}</span>
             </div>
+            {savedBillInfo.paymentStatus === "partial" && (
+              <>
+                <div className="flex justify-between text-blue-600 text-sm pt-1">
+                  <span>Paid now</span><span>Rs. {savedBillInfo.amountPaid.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-amber-600 text-sm">
+                  <span>Remaining</span><span>Rs. {(savedBillInfo.grandTotal - savedBillInfo.amountPaid).toLocaleString()}</span>
+                </div>
+              </>
+            )}
+            {savedBillInfo.paymentStatus === "pending" && (
+              <div className="flex justify-between font-semibold text-orange-500 text-sm pt-1">
+                <span>Status</span><span>UNPAID — client will pay later</span>
+              </div>
+            )}
           </div>
           <div className="flex gap-3 flex-wrap">
             {savedBillInfo.phone && (
