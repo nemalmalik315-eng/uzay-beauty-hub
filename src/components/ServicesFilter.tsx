@@ -38,11 +38,13 @@ const CATEGORY_ORDER = [
 const TABS = [
   { label: "All", categories: null },
   { label: "Hair", categories: ["Hair", "Hair Color", "Hair Treatment", "Dye Application"] },
-  { label: "Waxing", categories: ["Body Waxing", "Face Waxing", "Threading"] },
+  { label: "Waxing", categories: ["Body Waxing", "Face Waxing"] },
+  { label: "Threading", categories: ["Threading"] },
   { label: "Skin & Facials", categories: ["Facials", "Cleansing", "Polisher", "Scrub & Mask"] },
   { label: "Nails", categories: ["Manicure & Pedicure"] },
   { label: "Massage", categories: ["Massage"] },
-  { label: "Bridal", categories: ["Mehndi", "Assistant Bridal", "Signature Bridal"] },
+  { label: "Mehndi", categories: ["Mehndi"] },
+  { label: "Bridal", categories: ["Assistant Bridal", "Signature Bridal"] },
   { label: "Makeup & Kids", categories: ["Makeup", "Kids"] },
 ];
 
