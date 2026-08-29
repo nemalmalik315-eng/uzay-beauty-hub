@@ -51,7 +51,11 @@ export async function GET(req: NextRequest) {
   const summaryQuery = `SELECT
     COALESCE(SUM(service_charge), 0) as total_charges,
     COALESCE(SUM(discount), 0) as total_discounts,
-    COALESCE(SUM(total), 0) as total_revenue,
+    COALESCE(SUM(CASE
+      WHEN payment_status = 'paid' THEN total
+      WHEN payment_status = 'partial' THEN COALESCE(amount_paid, 0)
+      ELSE 0
+    END), 0) as total_revenue,
     COUNT(*) as total_transactions
   FROM billing
   WHERE ${conditions.length > 0 ? conditions.join(" AND ") : "1=1"}`;

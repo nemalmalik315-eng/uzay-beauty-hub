@@ -184,6 +184,7 @@ export default function BillingPage() {
   const serviceRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  const outstandingCount = bills.filter((b) => b.payment_status !== "paid").length;
   const subtotal = selectedServices.reduce((sum, s) => sum + s.price * s.qty, 0);
   const grandTotal = Math.max(0, subtotal - discount);
 
@@ -299,9 +300,11 @@ export default function BillingPage() {
   );
 
   const CATEGORY_ORDER = [
-    "Hair", "Hair Color", "Hair Treatment", "Facials", "Cleansing", "Polisher",
-    "Body Waxing", "Face Waxing", "Manicure & Pedicure", "Makeup", "Kids",
-    "Assistant Bridal", "Signature Bridal", "Bridal", "Azaadi Deals",
+    "Hair", "Hair Color", "Hair Treatment", "Dye Application",
+    "Facials", "Cleansing", "Polisher", "Scrub & Mask",
+    "Body Waxing", "Face Waxing", "Threading",
+    "Manicure & Pedicure", "Massage", "Makeup", "Kids",
+    "Mehndi", "Assistant Bridal", "Signature Bridal", "Azaadi Deals",
   ];
 
   // Group services by category for the dropdown
@@ -661,6 +664,11 @@ export default function BillingPage() {
               }`}
             >
               {showOutstandingOnly ? "Outstanding only" : "Outstanding"}
+              {outstandingCount > 0 && (
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${showOutstandingOnly ? "bg-white text-orange-500" : "bg-orange-500 text-white"}`}>
+                  {outstandingCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => {
