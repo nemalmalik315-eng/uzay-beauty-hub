@@ -13,6 +13,7 @@ interface Bill {
   total: number;
   payment_method: string;
   payment_status: string;
+  amount_paid: number | null;
   created_at: string;
 }
 
@@ -153,8 +154,8 @@ export default function BillingPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [serviceSearch, setServiceSearch] = useState("");
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
-  const [isPending, setIsPending] = useState(false);
-  const [showUnpaidOnly, setShowUnpaidOnly] = useState(false);
+  const [amountPaidOverride, setAmountPaidOverride] = useState<number | null>(null);
+  const [showOutstandingOnly, setShowOutstandingOnly] = useState(false);
   const [saving, setSaving] = useState(false);
   const [billDate, setBillDate] = useState(new Date().toISOString().split("T")[0]);
   const [savedBillInfo, setSavedBillInfo] = useState<SavedBillInfo | null>(null);
@@ -169,7 +170,7 @@ export default function BillingPage() {
 
   // Filter bills by service name and payment status
   const filteredBills = bills.filter((b) => {
-    if (showUnpaidOnly && b.payment_status !== "pending") return false;
+    if (showOutstandingOnly && b.payment_status === "paid") return false;
     if (serviceFilter && !parseServiceItems(b.service_name).some((s) =>
       s.name.toLowerCase().includes(serviceFilter.toLowerCase())
     )) return false;
@@ -317,7 +318,9 @@ export default function BillingPage() {
     setPhone("");
     setDiscount(bill.discount);
     setPaymentMethod(bill.payment_method);
-    setIsPending(bill.payment_status === "pending");
+    if (bill.payment_status === "paid") setAmountPaidOverride(null);
+    else if (bill.payment_status === "pending") setAmountPaidOverride(0);
+    else setAmountPaidOverride(bill.amount_paid ?? null);
     setBillDate(bill.created_at.slice(0, 10));
     setEditingBillId(bill.id);
     setSavedBillInfo(null);
@@ -329,9 +332,20 @@ export default function BillingPage() {
     await fetch("/api/billing", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: bill.id, payment_status: "paid" }),
+      body: JSON.stringify({ id: bill.id, payment_status: "paid", amount_paid: bill.total }),
     });
     toast("Marked as paid", "success");
+    loadBills();
+  };
+
+  const collectRemaining = async (bill: Bill) => {
+    await fetch("/api/billing", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: bill.id, payment_status: "paid", amount_paid: bill.total }),
+    });
+    const remaining = bill.total - (bill.amount_paid ?? 0);
+    toast(`Collected Rs. ${remaining.toLocaleString()} — fully paid`, "success");
     loadBills();
   };
 
@@ -341,7 +355,7 @@ export default function BillingPage() {
     setSelectedServices([]);
     setDiscount(0);
     setPaymentMethod("cash");
-    setIsPending(false);
+    setAmountPaidOverride(null);
     setServiceSearch("");
     setBillDate(new Date().toISOString().split("T")[0]);
     setSavedBillInfo(null);
@@ -358,6 +372,9 @@ export default function BillingPage() {
       const encodedName = encodeServiceName(selectedServices);
       let savedId: number;
 
+      const paid = amountPaidOverride !== null ? amountPaidOverride : grandTotal;
+      const paymentStatus = paid >= grandTotal ? "paid" : paid === 0 ? "pending" : "partial";
+
       if (editingBillId) {
         const res = await fetch("/api/billing", {
           method: "PATCH",
@@ -368,7 +385,8 @@ export default function BillingPage() {
             service_charge: subtotal,
             discount,
             payment_method: paymentMethod,
-            payment_status: isPending ? "pending" : "paid",
+            payment_status: paymentStatus,
+            amount_paid: paid,
             bill_date: billDate,
           }),
         });
@@ -385,7 +403,8 @@ export default function BillingPage() {
             service_charge: subtotal,
             discount,
             payment_method: paymentMethod,
-            payment_status: isPending ? "pending" : "paid",
+            payment_status: paymentStatus,
+            amount_paid: paid,
             bill_date: billDate,
           }),
         });
@@ -410,6 +429,7 @@ export default function BillingPage() {
       setSelectedServices([]);
       setDiscount(0);
       setPaymentMethod("cash");
+      setAmountPaidOverride(null);
       setServiceSearch("");
       setBillDate(new Date().toISOString().split("T")[0]);
       setEditingBillId(null);
@@ -609,12 +629,12 @@ export default function BillingPage() {
           </div>
           <div className="ml-auto flex gap-2 items-center">
             <button
-              onClick={() => setShowUnpaidOnly(!showUnpaidOnly)}
+              onClick={() => setShowOutstandingOnly(!showOutstandingOnly)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                showUnpaidOnly ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                showOutstandingOnly ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-600 hover:bg-orange-100"
               }`}
             >
-              {showUnpaidOnly ? "Unpaid only" : "Unpaid"}
+              {showOutstandingOnly ? "Outstanding only" : "Outstanding"}
             </button>
             <button
               onClick={() => {
@@ -985,18 +1005,40 @@ export default function BillingPage() {
             </div>
           </div>
 
-          {/* Pending toggle */}
-          <label className="flex items-center gap-3 mb-5 cursor-pointer select-none w-fit">
-            <div
-              onClick={() => setIsPending(!isPending)}
-              className={`w-10 h-6 rounded-full transition-colors relative ${isPending ? "bg-orange-400" : "bg-gray-200"}`}
-            >
-              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${isPending ? "left-5" : "left-1"}`} />
-            </div>
-            <span className="text-sm text-gray-700">
-              {isPending ? <span className="font-semibold text-orange-500">Payment pending — client will pay later</span> : "Payment collected now"}
-            </span>
-          </label>
+          {/* Amount paid */}
+          {(() => {
+            const remaining = grandTotal - (amountPaidOverride ?? grandTotal);
+            return (
+              <div className="mb-5">
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                  Amount Paid Now (Rs.)
+                </label>
+                <input
+                  type="number"
+                  placeholder={grandTotal.toString()}
+                  min={0}
+                  max={grandTotal}
+                  value={amountPaidOverride !== null ? amountPaidOverride : ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setAmountPaidOverride(v === "" ? null : Math.max(0, parseInt(v) || 0));
+                  }}
+                  className="w-48 px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                />
+                {amountPaidOverride === null && (
+                  <p className="text-xs text-green-600 mt-1">Full payment — Rs. {grandTotal.toLocaleString()}</p>
+                )}
+                {amountPaidOverride !== null && amountPaidOverride === 0 && (
+                  <p className="text-xs text-orange-500 mt-1 font-medium">UNPAID — client will pay later</p>
+                )}
+                {amountPaidOverride !== null && amountPaidOverride > 0 && amountPaidOverride < grandTotal && (
+                  <p className="text-xs text-blue-600 mt-1 font-medium">
+                    Partial — Rs. {remaining.toLocaleString()} remaining to collect
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Submit */}
           <div className="flex gap-3">
@@ -1070,6 +1112,11 @@ export default function BillingPage() {
                         {b.payment_status === "pending" && (
                           <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 w-fit">UNPAID</span>
                         )}
+                        {b.payment_status === "partial" && (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 w-fit">
+                            PARTIAL · Rs. {(b.total - (b.amount_paid ?? 0)).toLocaleString()} left
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-400">
@@ -1080,6 +1127,11 @@ export default function BillingPage() {
                         {b.payment_status === "pending" && (
                           <button onClick={() => markPaid(b)} className="text-xs text-orange-500 hover:text-orange-700 font-semibold">
                             Mark Paid
+                          </button>
+                        )}
+                        {b.payment_status === "partial" && (
+                          <button onClick={() => collectRemaining(b)} className="text-xs text-blue-600 hover:text-blue-800 font-semibold">
+                            Collect Rs. {(b.total - (b.amount_paid ?? 0)).toLocaleString()}
                           </button>
                         )}
                         <button onClick={() => startEdit(b)} className="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
@@ -1116,6 +1168,11 @@ export default function BillingPage() {
                   {b.payment_status === "pending" && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-600">UNPAID</span>
                   )}
+                  {b.payment_status === "partial" && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-600">
+                      PARTIAL · Rs. {(b.total - (b.amount_paid ?? 0)).toLocaleString()} left
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="mb-3 space-y-0.5">
@@ -1136,6 +1193,11 @@ export default function BillingPage() {
               <div className="flex gap-3 flex-wrap">
                 {b.payment_status === "pending" && (
                   <button onClick={() => markPaid(b)} className="text-xs text-orange-500 hover:text-orange-700 font-semibold">Mark Paid</button>
+                )}
+                {b.payment_status === "partial" && (
+                  <button onClick={() => collectRemaining(b)} className="text-xs text-blue-600 hover:text-blue-800 font-semibold">
+                    Collect Rs. {(b.total - (b.amount_paid ?? 0)).toLocaleString()}
+                  </button>
                 )}
                 <button onClick={() => startEdit(b)} className="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
                 <button onClick={() => printReceipt(b)} className="text-xs text-gold hover:text-gold-dark font-medium">Print Receipt</button>
