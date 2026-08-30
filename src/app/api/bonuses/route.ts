@@ -122,12 +122,13 @@ async function computeMonthLive(month: string) {
   const grandTotal = employees.reduce((sum, e) => sum + e.total, 0);
   const totalPool = daily.reduce((sum, d) => sum + d.pool, 0);
 
-  // Ensure performed_by column exists (may not yet if billing API hasn't run)
+  // Ensure new columns exist (may not yet if billing API hasn't run first)
   try { await db.execute("ALTER TABLE billing ADD COLUMN performed_by TEXT"); } catch { /* exists */ }
+  try { await db.execute("ALTER TABLE billing ADD COLUMN billed_by TEXT"); } catch { /* exists */ }
 
   // Compute 5% service commissions (non-eyebrow services only, split by performer)
   const { rows: commissionBills } = await db.execute({
-    sql: `SELECT performed_by, service_name, total
+    sql: `SELECT id, customer_name, performed_by, service_name, DATE(created_at) as date
           FROM billing
           WHERE strftime('%Y-%m', created_at) = ?
             AND performed_by IS NOT NULL
@@ -135,17 +136,31 @@ async function computeMonthLive(month: string) {
     args: [month],
   });
 
-  const commissionTotals = new Map<string, { total: number; bills: number }>();
+  interface CommissionDetail {
+    bill_id: number;
+    customer: string;
+    date: string;
+    services: string;
+    service_amount: number;
+    performers: string;
+    commission_share: number;
+  }
+
+  const commissionTotals = new Map<string, { total: number; bills: number; details: CommissionDetail[] }>();
+
   for (const row of commissionBills) {
     const performers = String(row.performed_by).split(" + ").map((n) => n.trim()).filter(Boolean);
     if (performers.length === 0) continue;
 
     const lines = String(row.service_name).split("|||");
     let nonEyebrowTotal = 0;
+    const nonEyebrowNames: string[] = [];
     for (const line of lines) {
       const [name, priceStr] = line.split("~~");
       if (!name || name.toLowerCase().includes("eyebrow")) continue;
-      nonEyebrowTotal += parseFloat(priceStr) || 0;
+      const price = parseFloat(priceStr) || 0;
+      nonEyebrowTotal += price;
+      if (name.trim()) nonEyebrowNames.push(name.trim());
     }
 
     if (nonEyebrowTotal <= 0) continue;
@@ -154,11 +169,20 @@ async function computeMonthLive(month: string) {
 
     for (const performer of performers) {
       if (!commissionTotals.has(performer)) {
-        commissionTotals.set(performer, { total: 0, bills: 0 });
+        commissionTotals.set(performer, { total: 0, bills: 0, details: [] });
       }
       const entry = commissionTotals.get(performer)!;
       entry.total += perPerformer;
       entry.bills += 1;
+      entry.details.push({
+        bill_id: Number(row.id),
+        customer: String(row.customer_name),
+        date: String(row.date),
+        services: nonEyebrowNames.join(", "),
+        service_amount: nonEyebrowTotal,
+        performers: String(row.performed_by),
+        commission_share: Math.round(perPerformer * 100) / 100,
+      });
     }
   }
 
@@ -167,6 +191,7 @@ async function computeMonthLive(month: string) {
       name,
       total: Math.round(v.total * 100) / 100,
       bill_count: v.bills,
+      details: v.details.sort((a, b) => a.date.localeCompare(b.date)),
     }))
     .sort((a, b) => b.total - a.total);
 

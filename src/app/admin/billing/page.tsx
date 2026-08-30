@@ -16,6 +16,7 @@ interface Bill {
   amount_paid: number | null;
   created_at: string;
   performed_by?: string;
+  billed_by?: string;
 }
 
 interface StaffEmployee {
@@ -188,6 +189,7 @@ export default function BillingPage() {
   const [deletingBill, setDeletingBill] = useState<Bill | null>(null);
   const [editingBillId, setEditingBillId] = useState<number | null>(null);
   const [staffEmployees, setStaffEmployees] = useState<StaffEmployee[]>([]);
+  const [billedBy, setBilledBy] = useState("");
   const [staffOne, setStaffOne] = useState("");
   const [staffTwo, setStaffTwo] = useState("");
   const [showStaffTwo, setShowStaffTwo] = useState(false);
@@ -363,6 +365,7 @@ export default function BillingPage() {
     setBillDate(bill.created_at.slice(0, 10));
     setEditingBillId(bill.id);
     setSavedBillInfo(null);
+    setBilledBy(bill.billed_by || "");
     if (bill.performed_by) {
       const parts = bill.performed_by.split(" + ");
       setStaffOne(parts[0] || "");
@@ -407,6 +410,7 @@ export default function BillingPage() {
     setBillDate(new Date().toISOString().split("T")[0]);
     setSavedBillInfo(null);
     setEditingBillId(null);
+    setBilledBy("");
     setStaffOne("");
     setStaffTwo("");
     setShowStaffTwo(false);
@@ -443,6 +447,7 @@ export default function BillingPage() {
             amount_paid: paid,
             bill_date: billDate,
             performed_by: performedBy ?? "",
+            billed_by: billedBy || "",
           }),
         });
         if (!res.ok) { toast("Failed to update bill", "error"); return; }
@@ -462,6 +467,7 @@ export default function BillingPage() {
             amount_paid: paid,
             bill_date: billDate,
             performed_by: performedBy,
+            billed_by: billedBy || undefined,
           }),
         });
         if (!res.ok) { toast("Failed to save bill", "error"); return; }
@@ -492,6 +498,7 @@ export default function BillingPage() {
       setServiceSearch("");
       setBillDate(new Date().toISOString().split("T")[0]);
       setEditingBillId(null);
+      setBilledBy("");
       setStaffOne("");
       setStaffTwo("");
       setShowStaffTwo(false);
@@ -875,7 +882,7 @@ export default function BillingPage() {
           </h3>
 
           {/* Customer info */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5">
             <div className="relative">
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
                 Phone Number <span className="normal-case text-gray-400 font-normal">(optional)</span>
@@ -928,6 +935,21 @@ export default function BillingPage() {
                 onChange={(e) => setBillDate(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                Billed By <span className="normal-case text-gray-400 font-normal">(who made bill)</span>
+              </label>
+              <select
+                value={billedBy}
+                onChange={(e) => setBilledBy(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+              >
+                <option value="">— Select —</option>
+                {staffEmployees.map((emp) => (
+                  <option key={emp.id} value={emp.name}>{emp.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -1225,8 +1247,11 @@ export default function BillingPage() {
                     <td className="px-6 py-4 text-sm text-gray-400">{b.id}</td>
                     <td className="px-6 py-4 text-sm font-medium text-charcoal">
                       {b.customer_name}
+                      {b.billed_by && (
+                        <p className="text-[10px] text-gray-400 font-normal mt-0.5">Billed by: {b.billed_by}</p>
+                      )}
                       {b.performed_by && (
-                        <p className="text-[10px] text-gray-400 font-normal mt-0.5">{b.performed_by}</p>
+                        <p className="text-[10px] text-purple-500 font-normal mt-0.5">By: {b.performed_by}</p>
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
@@ -1300,8 +1325,11 @@ export default function BillingPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-charcoal truncate">{b.customer_name}</p>
                   <p className="text-[10px] text-gray-400">#{b.id} · {fmtBillDate(b.created_at)}</p>
+                  {b.billed_by && (
+                    <p className="text-[10px] text-gray-400">Billed by: {b.billed_by}</p>
+                  )}
                   {b.performed_by && (
-                    <p className="text-[10px] text-gray-400">{b.performed_by}</p>
+                    <p className="text-[10px] text-purple-500">By: {b.performed_by}</p>
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">

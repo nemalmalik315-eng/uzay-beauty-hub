@@ -58,10 +58,21 @@ interface BonusDaily {
   present_employee_ids: number[];
 }
 
+interface CommissionDetail {
+  bill_id: number;
+  customer: string;
+  date: string;
+  services: string;
+  service_amount: number;
+  performers: string;
+  commission_share: number;
+}
+
 interface BonusCommission {
   name: string;
   total: number;
   bill_count: number;
+  details: CommissionDetail[];
 }
 
 interface BonusMonth {
@@ -197,6 +208,7 @@ export default function StaffPage() {
   const [bonusData, setBonusData] = useState<BonusMonth | null>(null);
   const [bonusHistory, setBonusHistory] = useState<HistoryMonth[]>([]);
   const [showDaily, setShowDaily] = useState(false);
+  const [expandedCommission, setExpandedCommission] = useState<string | null>(null);
   const [confirmPayout, setConfirmPayout] = useState(false);
 
   // Load employees
@@ -1214,37 +1226,78 @@ export default function StaffPage() {
               <h3 className="font-heading text-sm font-semibold text-charcoal uppercase tracking-wider">
                 Service Commissions (5%)
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">5% of non-eyebrow service revenue earned by the staff who performed each service</p>
+              <p className="text-xs text-gray-400 mt-0.5">5% of non-eyebrow service revenue, split among the staff who performed each service. Click a name to see breakdown.</p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50/50">
-                    <th className="px-6 py-3">Staff Member</th>
-                    <th className="px-6 py-3">Bills Attributed</th>
-                    <th className="px-6 py-3 text-right">Commission (5%)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {!bonusData || (bonusData.commissions ?? []).length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-12 text-center text-gray-400">
-                        No commissions yet — add staff names to billing records to track
-                      </td>
-                    </tr>
-                  ) : (
-                    (bonusData.commissions ?? []).map((c) => (
-                      <tr key={c.name} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm font-medium text-charcoal">{c.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{c.bill_count} bill(s)</td>
-                        <td className="px-6 py-4 text-sm font-semibold text-purple-700 text-right">
+            <div>
+              {!bonusData || (bonusData.commissions ?? []).length === 0 ? (
+                <p className="px-6 py-12 text-center text-gray-400 text-sm">
+                  No commissions yet — select staff in billing records to track
+                </p>
+              ) : (
+                (bonusData.commissions ?? []).map((c) => (
+                  <div key={c.name} className="border-b border-gray-50 last:border-0">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedCommission(expandedCommission === c.name ? null : c.name)}
+                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-charcoal">{c.name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{c.bill_count} service bill(s) attributed</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-purple-700">
                           Rs. {c.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                        </span>
+                        <span className="text-xs text-gray-400">{expandedCommission === c.name ? "▲" : "▼"}</span>
+                      </div>
+                    </button>
+                    {expandedCommission === c.name && (
+                      <div className="bg-purple-50/40 px-6 pb-4 overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-left text-gray-500 uppercase tracking-wider border-b border-purple-100">
+                              <th className="py-2 pr-4">Bill #</th>
+                              <th className="py-2 pr-4">Date</th>
+                              <th className="py-2 pr-4">Customer</th>
+                              <th className="py-2 pr-4">Services Done</th>
+                              <th className="py-2 pr-4 text-right">Service Total</th>
+                              <th className="py-2 text-right">Commission</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-purple-100/50">
+                            {c.details.map((d) => (
+                              <tr key={d.bill_id} className="text-charcoal">
+                                <td className="py-2 pr-4 text-gray-400">#{d.bill_id}</td>
+                                <td className="py-2 pr-4 text-gray-500">{d.date}</td>
+                                <td className="py-2 pr-4 font-medium">{d.customer}</td>
+                                <td className="py-2 pr-4 text-gray-600">
+                                  {d.services}
+                                  {d.performers.includes(" + ") && (
+                                    <span className="text-gray-400 ml-1">(shared)</span>
+                                  )}
+                                </td>
+                                <td className="py-2 pr-4 text-right">Rs. {d.service_amount.toLocaleString()}</td>
+                                <td className="py-2 text-right font-semibold text-purple-700">
+                                  Rs. {d.commission_share.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className="border-t border-purple-200">
+                              <td colSpan={5} className="pt-2 text-right font-semibold text-gray-600">Total:</td>
+                              <td className="pt-2 text-right font-bold text-purple-700">
+                                Rs. {c.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
