@@ -445,20 +445,16 @@ export default function StaffPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Shift Start (Mon–Sat)</label>
-                <input
-                  type="time"
+                <TimeInput12
                   value={empForm.shift_start}
-                  onChange={(e) => setEmpForm({ ...empForm, shift_start: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                  onChange={(v) => setEmpForm({ ...empForm, shift_start: v })}
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Sunday Shift (optional)</label>
-                <input
-                  type="time"
+                <TimeInput12
                   value={empForm.sunday_shift_start}
-                  onChange={(e) => setEmpForm({ ...empForm, sunday_shift_start: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                  onChange={(v) => setEmpForm({ ...empForm, sunday_shift_start: v })}
                 />
               </div>
             </div>
@@ -770,11 +766,9 @@ export default function StaffPage() {
                   onChange={(e) => setEmpForm({ ...empForm, phone: e.target.value })}
                   className="px-4 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
                 />
-                <input
-                  type="time"
+                <TimeInput12
                   value={empForm.shift_start}
-                  onChange={(e) => setEmpForm({ ...empForm, shift_start: e.target.value })}
-                  className="px-4 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                  onChange={(v) => setEmpForm({ ...empForm, shift_start: v })}
                 />
               </div>
               <div className="flex gap-2 mt-4">
