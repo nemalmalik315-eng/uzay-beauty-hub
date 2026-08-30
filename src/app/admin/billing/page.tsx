@@ -15,6 +15,12 @@ interface Bill {
   payment_status: string;
   amount_paid: number | null;
   created_at: string;
+  performed_by?: string;
+}
+
+interface StaffEmployee {
+  id: number;
+  name: string;
 }
 
 interface Summary {
@@ -59,6 +65,7 @@ interface SavedBillInfo {
   paymentStatus: string;
   paymentMethod: string;
   billDate: string;
+  performedBy?: string;
 }
 
 function buildWhatsAppUrl(info: SavedBillInfo): string {
@@ -180,6 +187,10 @@ export default function BillingPage() {
   const [savedBillInfo, setSavedBillInfo] = useState<SavedBillInfo | null>(null);
   const [deletingBill, setDeletingBill] = useState<Bill | null>(null);
   const [editingBillId, setEditingBillId] = useState<number | null>(null);
+  const [staffEmployees, setStaffEmployees] = useState<StaffEmployee[]>([]);
+  const [staffOne, setStaffOne] = useState("");
+  const [staffTwo, setStaffTwo] = useState("");
+  const [showStaffTwo, setShowStaffTwo] = useState(false);
   const phoneTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const serviceRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -218,6 +229,12 @@ export default function BillingPage() {
       .then((r) => r.json())
       .then(setServices);
   }, [period, customDate]);
+
+  useEffect(() => {
+    fetch("/api/employees")
+      .then((r) => r.json())
+      .then((data: StaffEmployee[]) => setStaffEmployees(data));
+  }, []);
 
   // Customer lookup by phone
   useEffect(() => {
@@ -346,6 +363,14 @@ export default function BillingPage() {
     setBillDate(bill.created_at.slice(0, 10));
     setEditingBillId(bill.id);
     setSavedBillInfo(null);
+    if (bill.performed_by) {
+      const parts = bill.performed_by.split(" + ");
+      setStaffOne(parts[0] || "");
+      if (parts.length > 1) { setStaffTwo(parts[1]); setShowStaffTwo(true); }
+      else { setStaffTwo(""); setShowStaffTwo(false); }
+    } else {
+      setStaffOne(""); setStaffTwo(""); setShowStaffTwo(false);
+    }
     setShowAdd(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -382,6 +407,9 @@ export default function BillingPage() {
     setBillDate(new Date().toISOString().split("T")[0]);
     setSavedBillInfo(null);
     setEditingBillId(null);
+    setStaffOne("");
+    setStaffTwo("");
+    setShowStaffTwo(false);
     setShowAdd(false);
   };
 
@@ -397,6 +425,10 @@ export default function BillingPage() {
       const paid = amountPaidOverride !== null ? amountPaidOverride : grandTotal;
       const paymentStatus = paid >= grandTotal ? "paid" : paid === 0 ? "pending" : "partial";
 
+      const performedBy = staffOne
+        ? (showStaffTwo && staffTwo ? `${staffOne} + ${staffTwo}` : staffOne)
+        : undefined;
+
       if (editingBillId) {
         const res = await fetch("/api/billing", {
           method: "PATCH",
@@ -410,6 +442,7 @@ export default function BillingPage() {
             payment_status: paymentStatus,
             amount_paid: paid,
             bill_date: billDate,
+            performed_by: performedBy ?? "",
           }),
         });
         if (!res.ok) { toast("Failed to update bill", "error"); return; }
@@ -428,6 +461,7 @@ export default function BillingPage() {
             payment_status: paymentStatus,
             amount_paid: paid,
             bill_date: billDate,
+            performed_by: performedBy,
           }),
         });
         if (!res.ok) { toast("Failed to save bill", "error"); return; }
@@ -447,6 +481,7 @@ export default function BillingPage() {
         paymentStatus,
         paymentMethod,
         billDate,
+        performedBy,
       });
       setPhone("");
       setCustomerName("");
@@ -457,6 +492,9 @@ export default function BillingPage() {
       setServiceSearch("");
       setBillDate(new Date().toISOString().split("T")[0]);
       setEditingBillId(null);
+      setStaffOne("");
+      setStaffTwo("");
+      setShowStaffTwo(false);
       loadBills();
     } finally {
       setSaving(false);
@@ -1003,6 +1041,54 @@ export default function BillingPage() {
             )}
           </div>
 
+          {/* Staff who performed the service */}
+          <div className="mb-5">
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+              Performed By <span className="normal-case text-gray-400 font-normal">(optional)</span>
+            </label>
+            <div className="flex flex-wrap gap-2 items-center">
+              <select
+                value={staffOne}
+                onChange={(e) => setStaffOne(e.target.value)}
+                className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+              >
+                <option value="">— Select staff —</option>
+                {staffEmployees.map((emp) => (
+                  <option key={emp.id} value={emp.name}>{emp.name}</option>
+                ))}
+              </select>
+              {!showStaffTwo ? (
+                <button
+                  type="button"
+                  onClick={() => setShowStaffTwo(true)}
+                  className="text-xs text-gold hover:text-gold-dark font-medium px-2 py-1.5"
+                >
+                  + 2nd staff
+                </button>
+              ) : (
+                <>
+                  <select
+                    value={staffTwo}
+                    onChange={(e) => setStaffTwo(e.target.value)}
+                    className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                  >
+                    <option value="">— Select 2nd staff —</option>
+                    {staffEmployees.filter((e) => e.name !== staffOne).map((emp) => (
+                      <option key={emp.id} value={emp.name}>{emp.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => { setShowStaffTwo(false); setStaffTwo(""); }}
+                    className="text-gray-400 hover:text-red-500 text-xl leading-none"
+                  >
+                    ×
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Discount & Payment */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
             <div>
@@ -1137,7 +1223,12 @@ export default function BillingPage() {
                 filteredBills.map((b) => (
                   <tr key={b.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-400">{b.id}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-charcoal">{b.customer_name}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-charcoal">
+                      {b.customer_name}
+                      {b.performed_by && (
+                        <p className="text-[10px] text-gray-400 font-normal mt-0.5">{b.performed_by}</p>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
                       <div className="space-y-0.5">
                         {parseServiceItems(b.service_name).map((s, i) => (
@@ -1209,6 +1300,9 @@ export default function BillingPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-charcoal truncate">{b.customer_name}</p>
                   <p className="text-[10px] text-gray-400">#{b.id} · {fmtBillDate(b.created_at)}</p>
+                  {b.performed_by && (
+                    <p className="text-[10px] text-gray-400">{b.performed_by}</p>
+                  )}
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
                   <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">

@@ -9,6 +9,7 @@ async function ensureBillingColumns() {
   const db = getDb();
   try { await db.execute("ALTER TABLE billing ADD COLUMN payment_status TEXT DEFAULT 'paid'"); } catch { /* exists */ }
   try { await db.execute("ALTER TABLE billing ADD COLUMN amount_paid REAL"); } catch { /* exists */ }
+  try { await db.execute("ALTER TABLE billing ADD COLUMN performed_by TEXT"); } catch { /* exists */ }
   billingColsEnsured = true;
 }
 
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
     payment_status = "paid",
     amount_paid,
     bill_date,
+    performed_by,
   } = body;
 
   if (!customer_name || !service_name || service_charge === undefined) {
@@ -122,12 +124,12 @@ export async function POST(req: NextRequest) {
   const result = await db.execute(
     bill_date
       ? {
-          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, amount_paid, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, effectivePaid, bill_date],
+          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, amount_paid, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, effectivePaid, performed_by || null, bill_date],
         }
       : {
-          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, amount_paid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, effectivePaid],
+          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, amount_paid, performed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, effectivePaid, performed_by || null],
         }
   );
 
@@ -137,7 +139,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { id, service_name, service_charge, discount = 0, payment_method = "cash", payment_status, amount_paid, bill_date } = body;
+  const { id, service_name, service_charge, discount = 0, payment_method = "cash", payment_status, amount_paid, bill_date, performed_by } = body;
 
   if (!id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -154,6 +156,7 @@ export async function PATCH(req: NextRequest) {
   if (payment_status !== undefined) { sets.push("payment_status = ?"); args.push(payment_status); }
   if (amount_paid !== undefined) { sets.push("amount_paid = ?"); args.push(amount_paid); }
   if (bill_date) { sets.push("created_at = ?"); args.push(bill_date); }
+  if (performed_by !== undefined) { sets.push("performed_by = ?"); args.push(performed_by || null); }
 
   if (sets.length === 0) return NextResponse.json({ id: Number(id) });
 

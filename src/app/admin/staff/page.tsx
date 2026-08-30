@@ -58,6 +58,12 @@ interface BonusDaily {
   present_employee_ids: number[];
 }
 
+interface BonusCommission {
+  name: string;
+  total: number;
+  bill_count: number;
+}
+
 interface BonusMonth {
   month: string;
   paid: boolean;
@@ -67,6 +73,8 @@ interface BonusMonth {
   grand_total: number;
   total_pool: number;
   days_with_eyebrows: number;
+  commissions: BonusCommission[];
+  commission_total: number;
 }
 
 interface HistoryMonth {
@@ -1114,7 +1122,8 @@ export default function StaffPage() {
               </button>
             </div>
             <p className="text-xs text-gray-400 mt-2">
-              Bonus pool = total eyebrow service charges that day. Only employees marked <span className="text-green-600 font-medium">Present</span> share that day's pool.
+              <span className="font-medium text-gray-500">Eyebrow pool:</span> charges from eyebrow services split equally among staff marked <span className="text-green-600 font-medium">Present</span> or Leave that day. &nbsp;
+              <span className="font-medium text-gray-500">Commissions:</span> 5% of all other service revenue goes to the staff who performed it (set in billing).
             </p>
           </div>
 
@@ -1122,13 +1131,14 @@ export default function StaffPage() {
           {bonusData && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-gradient-to-br from-gold/10 to-gold/5 rounded-lg border border-gold/20 p-4">
-                <p className="text-xs text-gray-500 uppercase mb-1">Total Bonus Pool</p>
+                <p className="text-xs text-gray-500 uppercase mb-1">Eyebrow Pool</p>
                 <p className="text-2xl font-bold text-charcoal">Rs. {bonusData.grand_total.toLocaleString()}</p>
-                <p className="text-xs text-gray-400 mt-1">{formatMonth(bonusMonth)}</p>
+                <p className="text-xs text-gray-400 mt-1">{bonusData.days_with_eyebrows || 0} days</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-100 p-4">
-                <p className="text-xs text-gray-500 uppercase mb-1">Eligible Employees</p>
-                <p className="text-2xl font-bold text-charcoal">{bonusData.employees.length}</p>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 rounded-lg border border-purple-100 p-4">
+                <p className="text-xs text-gray-500 uppercase mb-1">Service Commissions</p>
+                <p className="text-2xl font-bold text-charcoal">Rs. {(bonusData.commission_total ?? 0).toLocaleString()}</p>
+                <p className="text-xs text-gray-400 mt-1">5% on non-eyebrow</p>
               </div>
               <div className="bg-white rounded-lg border border-gray-100 p-4">
                 <p className="text-xs text-gray-500 uppercase mb-1">Days With Eyebrows</p>
@@ -1158,12 +1168,13 @@ export default function StaffPage() {
             </div>
           )}
 
-          {/* Per-employee table */}
+          {/* Eyebrow Pool — per-employee table */}
           <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
             <div className="px-6 py-3 bg-gray-50 border-b border-gray-100">
               <h3 className="font-heading text-sm font-semibold text-charcoal uppercase tracking-wider">
-                {bonusData?.paid ? "Final Payouts" : "Running Tally"}
+                Eyebrow Pool — {bonusData?.paid ? "Final Payouts" : "Running Tally"}
               </h3>
+              <p className="text-xs text-gray-400 mt-0.5">Split equally among all present/leave staff on days eyebrow services were done</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -1171,14 +1182,14 @@ export default function StaffPage() {
                   <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50/50">
                     <th className="px-6 py-3">Employee</th>
                     <th className="px-6 py-3">Days Qualified</th>
-                    <th className="px-6 py-3 text-right">Bonus</th>
+                    <th className="px-6 py-3 text-right">Pool Share</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {!bonusData || bonusData.employees.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="px-6 py-12 text-center text-gray-400">
-                        No bonus earned for {formatMonth(bonusMonth)} yet
+                        No eyebrow pool earned for {formatMonth(bonusMonth)} yet
                       </td>
                     </tr>
                   ) : (
@@ -1188,6 +1199,46 @@ export default function StaffPage() {
                         <td className="px-6 py-4 text-sm text-gray-600">{emp.days_qualified} day(s)</td>
                         <td className="px-6 py-4 text-sm font-semibold text-charcoal text-right">
                           Rs. {emp.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Service Commissions — 5% per performer */}
+          <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <div className="px-6 py-3 bg-gray-50 border-b border-gray-100">
+              <h3 className="font-heading text-sm font-semibold text-charcoal uppercase tracking-wider">
+                Service Commissions (5%)
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">5% of non-eyebrow service revenue earned by the staff who performed each service</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50/50">
+                    <th className="px-6 py-3">Staff Member</th>
+                    <th className="px-6 py-3">Bills Attributed</th>
+                    <th className="px-6 py-3 text-right">Commission (5%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {!bonusData || (bonusData.commissions ?? []).length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center text-gray-400">
+                        No commissions yet — add staff names to billing records to track
+                      </td>
+                    </tr>
+                  ) : (
+                    (bonusData.commissions ?? []).map((c) => (
+                      <tr key={c.name} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm font-medium text-charcoal">{c.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{c.bill_count} bill(s)</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-purple-700 text-right">
+                          Rs. {c.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))
