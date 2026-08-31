@@ -137,13 +137,6 @@ export default function Home() {
                     fill
                     className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal-dark/90 via-charcoal-dark/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
-                    <h3 className="text-white font-heading font-semibold text-base md:text-lg leading-tight">
-                      {cat.name}
-                    </h3>
-                    <p className="text-gray-300 text-xs mt-0.5 hidden md:block">{cat.desc}</p>
-                  </div>
                 </Link>
               </AnimateOnScroll>
             ))}
@@ -181,9 +174,6 @@ export default function Home() {
                     height={500}
                     className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                    <p className="text-white text-xs font-medium p-3">{img.alt}</p>
-                  </div>
                 </div>
               ))}
             </div>
