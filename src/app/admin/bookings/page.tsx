@@ -11,6 +11,12 @@ interface BookingService {
   category: string;
 }
 
+interface MenuItem {
+  id: number;
+  name: string;
+  category: string;
+}
+
 interface BookingGroup {
   group_id: number;
   customer_name: string;
@@ -247,6 +253,8 @@ export default function BookingsPage() {
   const [waDialog, setWaDialog] = useState<{ phone: string; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const [menuServices, setMenuServices] = useState<MenuItem[]>([]);
+
   const { toast } = useToast();
 
   const loadBookings = async () => {
@@ -259,6 +267,12 @@ export default function BookingsPage() {
   };
 
   useEffect(() => { loadBookings(); }, [filter, dateFilter]);
+
+  useEffect(() => {
+    fetch("/api/services").then(r => r.json()).then((data) => {
+      if (Array.isArray(data)) setMenuServices(data.map((s: Record<string, unknown>) => ({ id: Number(s.id), name: String(s.name), category: String(s.category || "") })));
+    });
+  }, []);
 
   // ── Confirm (with discount) ──────────────────────────────────────────────
   const handleConfirmClick = (group: BookingGroup) => {
@@ -508,16 +522,23 @@ export default function BookingsPage() {
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
                   Complimentary Service <span className="normal-case text-gray-400 font-normal">(free — optional)</span>
                 </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🎁</span>
-                  <input
-                    type="text"
-                    value={editForm.complimentary_service}
-                    onChange={(e) => setEditForm({ ...editForm, complimentary_service: e.target.value })}
-                    placeholder="e.g. Head Massage, Eyebrow Threading…"
-                    className="w-full pl-9 pr-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
-                  />
-                </div>
+                <select
+                  value={editForm.complimentary_service}
+                  onChange={(e) => setEditForm({ ...editForm, complimentary_service: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none bg-white"
+                >
+                  <option value="">— None —</option>
+                  {Array.from(new Set(menuServices.map(s => s.category))).map(cat => (
+                    <optgroup key={cat} label={cat}>
+                      {menuServices.filter(s => s.category === cat).map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                {editForm.complimentary_service && (
+                  <p className="text-xs text-emerald-600 mt-1">🎁 {editForm.complimentary_service} will be added as free</p>
+                )}
               </div>
               {editingGroup.notes && (
                 <div>
