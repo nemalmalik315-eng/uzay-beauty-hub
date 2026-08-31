@@ -25,6 +25,7 @@ function parseGroupedRows(rows: Record<string, unknown>[]) {
       notes: r.notes ? String(r.notes) : "",
       status: String(r.status || "pending"),
       discount,
+      complimentary_service: r.complimentary_service ? String(r.complimentary_service) : "",
       services,
       total,
       final_total: total - discount,
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
       b.notes,
       MAX(b.status) as status,
       MAX(COALESCE(b.discount, 0)) as discount,
+      MAX(COALESCE(b.complimentary_service, '')) as complimentary_service,
       GROUP_CONCAT(b.id || '~~' || s.name || '~~' || s.price || '~~' || COALESCE(s.category,''), '|||') as services_raw,
       SUM(s.price) as total
     FROM bookings b
@@ -123,9 +125,10 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const db = getDb();
+  try { await db.execute("ALTER TABLE bookings ADD COLUMN complimentary_service TEXT"); } catch { /* exists */ }
   const body = await req.json();
   // group_id is COALESCE(booking_group_id, id) — updates all bookings in the group
-  const { group_id, status, date, time, discount } = body;
+  const { group_id, status, date, time, discount, complimentary_service } = body;
 
   if (!group_id) {
     return NextResponse.json({ error: "Missing group_id" }, { status: 400 });
@@ -138,6 +141,7 @@ export async function PATCH(req: NextRequest) {
   if (date !== undefined) { sets.push("date = ?"); args.push(date); }
   if (time !== undefined) { sets.push("time = ?"); args.push(time); }
   if (discount !== undefined) { sets.push("discount = ?"); args.push(discount); }
+  if (complimentary_service !== undefined) { sets.push("complimentary_service = ?"); args.push(complimentary_service || null); }
 
   if (sets.length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });

@@ -20,6 +20,7 @@ interface BookingGroup {
   notes: string;
   status: string;
   discount: number;
+  complimentary_service: string;
   services: BookingService[];
   total: number;
   final_total: number;
@@ -183,7 +184,8 @@ function buildWaMessage(group: BookingGroup, discount: number): string {
   const finalTotal = group.total - discount;
   const serviceList = group.services.map((s) => `• ${s.name} — Rs. ${s.price.toLocaleString()}`).join("\n");
   const discountLine = discount > 0 ? `\nDiscount: − Rs. ${discount.toLocaleString()}` : "";
-  return `Hi ${group.customer_name}! ✨ Your appointment at Uzay Beauty Hub is confirmed.\n\nServices:\n${serviceList}${discountLine}\nTotal: Rs. ${finalTotal.toLocaleString()}\n\nDate: ${fmtDate(group.date)}\nTime: ${group.time}\n\nWe look forward to seeing you! 💛\n\n— Uzay Beauty Hub\n📍 112B, Block B, Nasheman-e-Iqbal Phase 2, Lahore`;
+  const complimentaryLine = group.complimentary_service ? `\n🎁 Complimentary: ${group.complimentary_service} (free)` : "";
+  return `Hi ${group.customer_name}! ✨ Your appointment at Uzay Beauty Hub is confirmed.\n\nServices:\n${serviceList}${complimentaryLine}${discountLine}\nTotal: Rs. ${finalTotal.toLocaleString()}\n\nDate: ${fmtDate(group.date)}\nTime: ${group.time}\n\nWe look forward to seeing you! 💛\n\n— Uzay Beauty Hub\n📍 112B, Block B, Nasheman-e-Iqbal Phase 2, Lahore`;
 }
 
 function buildReminderMessage(group: BookingGroup): string {
@@ -237,9 +239,9 @@ export default function BookingsPage() {
   // Cancel confirm dialog
   const [cancelConfirm, setCancelConfirm] = useState<{ group_id: number; name: string } | null>(null);
 
-  // Edit modal (date/time/discount)
+  // Edit modal (date/time/discount/complimentary)
   const [editingGroup, setEditingGroup] = useState<BookingGroup | null>(null);
-  const [editForm, setEditForm] = useState({ date: "", time: "", discount: "" });
+  const [editForm, setEditForm] = useState({ date: "", time: "", discount: "", complimentary_service: "" });
 
   // WhatsApp dialog
   const [waDialog, setWaDialog] = useState<{ phone: string; message: string } | null>(null);
@@ -322,18 +324,19 @@ export default function BookingsPage() {
     loadBookings();
   };
 
-  // ── Edit (date/time/discount) ────────────────────────────────────────────
+  // ── Edit (date/time/discount/complimentary) ──────────────────────────────
   const saveEdit = async () => {
     if (!editingGroup) return;
     const discountVal = editForm.discount !== "" ? Math.max(0, parseInt(editForm.discount) || 0) : editingGroup.discount;
+    const compVal = editForm.complimentary_service.trim();
     const res = await fetch("/api/bookings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ group_id: editingGroup.group_id, date: editForm.date, time: to12h(editForm.time), discount: discountVal }),
+      body: JSON.stringify({ group_id: editingGroup.group_id, date: editForm.date, time: to12h(editForm.time), discount: discountVal, complimentary_service: compVal }),
     });
     if (res.ok) {
       toast("Booking updated");
-      const updatedGroup = { ...editingGroup, discount: discountVal, final_total: editingGroup.total - discountVal };
+      const updatedGroup = { ...editingGroup, discount: discountVal, complimentary_service: compVal, final_total: editingGroup.total - discountVal };
       setEditingGroup(null);
       loadBookings();
       const phone = editingGroup.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
@@ -501,6 +504,21 @@ export default function BookingsPage() {
                   </p>
                 )}
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                  Complimentary Service <span className="normal-case text-gray-400 font-normal">(free — optional)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🎁</span>
+                  <input
+                    type="text"
+                    value={editForm.complimentary_service}
+                    onChange={(e) => setEditForm({ ...editForm, complimentary_service: e.target.value })}
+                    placeholder="e.g. Head Massage, Eyebrow Threading…"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                  />
+                </div>
+              </div>
               {editingGroup.notes && (
                 <div>
                   <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Client&apos;s Request</label>
@@ -582,6 +600,9 @@ export default function BookingsPage() {
                         {b.services.map((s) => (
                           <div key={s.id} className="text-sm text-gray-600">{s.name}</div>
                         ))}
+                        {b.complimentary_service && (
+                          <div className="text-xs text-emerald-600 font-medium mt-1">🎁 {b.complimentary_service} (free)</div>
+                        )}
                         {b.notes && <p className="text-xs text-amber-600 mt-1">📝 {b.notes}</p>}
                       </div>
                     </td>
@@ -604,7 +625,7 @@ export default function BookingsPage() {
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {(b.status === "pending" || b.status === "confirmed") && (
-                          <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "" }); }}
+                          <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "", complimentary_service: b.complimentary_service || "" }); }}
                             className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded hover:bg-gray-100">Edit</button>
                         )}
                         {b.status === "pending" && (
@@ -699,6 +720,12 @@ export default function BookingsPage() {
                     <span className="text-charcoal font-semibold">Rs. {b.final_total.toLocaleString()}</span>
                   </div>
                 )}
+                {b.complimentary_service && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">🎁 Free</span>
+                    <span className="text-emerald-600 font-medium text-right ml-3 max-w-[65%]">{b.complimentary_service}</span>
+                  </div>
+                )}
                 {b.notes && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Request</span>
@@ -709,7 +736,7 @@ export default function BookingsPage() {
 
               <div className="flex flex-wrap gap-2">
                 {(b.status === "pending" || b.status === "confirmed") && (
-                  <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "" }); }}
+                  <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "", complimentary_service: b.complimentary_service || "" }); }}
                     className="text-xs bg-gray-50 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-100">Edit</button>
                 )}
                 {b.status === "pending" && (
