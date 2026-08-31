@@ -254,6 +254,7 @@ export default function BookingsPage() {
   const [copied, setCopied] = useState(false);
 
   const [menuServices, setMenuServices] = useState<MenuItem[]>([]);
+  const [showCompDropdown, setShowCompDropdown] = useState(false);
 
   const { toast } = useToast();
 
@@ -518,26 +519,44 @@ export default function BookingsPage() {
                   </p>
                 )}
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
                   Complimentary Service <span className="normal-case text-gray-400 font-normal">(free — optional)</span>
                 </label>
-                <select
-                  value={editForm.complimentary_service}
-                  onChange={(e) => setEditForm({ ...editForm, complimentary_service: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none bg-white"
-                >
-                  <option value="">— None —</option>
-                  {Array.from(new Set(menuServices.map(s => s.category))).map(cat => (
-                    <optgroup key={cat} label={cat}>
-                      {menuServices.filter(s => s.category === cat).map(s => (
-                        <option key={s.id} value={s.name}>{s.name}</option>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🎁</span>
+                  <input
+                    type="text"
+                    value={editForm.complimentary_service}
+                    onChange={(e) => { setEditForm({ ...editForm, complimentary_service: e.target.value }); setShowCompDropdown(true); }}
+                    onFocus={() => setShowCompDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowCompDropdown(false), 150)}
+                    placeholder="Type to search service…"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                  />
+                  {editForm.complimentary_service && (
+                    <button type="button" onMouseDown={() => setEditForm({ ...editForm, complimentary_service: "" })}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+                  )}
+                </div>
+                {showCompDropdown && (() => {
+                  const q = editForm.complimentary_service.toLowerCase();
+                  const filtered = q ? menuServices.filter(s => s.name.toLowerCase().includes(q)) : menuServices.slice(0, 8);
+                  return filtered.length > 0 ? (
+                    <div className="absolute z-50 left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+                      {filtered.map(s => (
+                        <button key={s.id} type="button"
+                          onMouseDown={() => { setEditForm({ ...editForm, complimentary_service: s.name }); setShowCompDropdown(false); }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gold/10 hover:text-charcoal flex justify-between items-center gap-2">
+                          <span>{s.name}</span>
+                          <span className="text-xs text-gray-400 shrink-0">{s.category}</span>
+                        </button>
                       ))}
-                    </optgroup>
-                  ))}
-                </select>
-                {editForm.complimentary_service && (
-                  <p className="text-xs text-emerald-600 mt-1">🎁 {editForm.complimentary_service} will be added as free</p>
+                    </div>
+                  ) : null;
+                })()}
+                {editForm.complimentary_service && !showCompDropdown && (
+                  <p className="text-xs text-emerald-600 mt-1">🎁 {editForm.complimentary_service} — free</p>
                 )}
               </div>
               {editingGroup.notes && (
