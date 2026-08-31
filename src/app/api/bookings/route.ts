@@ -35,6 +35,7 @@ function parseGroupedRows(rows: Record<string, unknown>[]) {
 
 export async function GET(req: NextRequest) {
   const db = getDb();
+  try { await db.execute("ALTER TABLE bookings ADD COLUMN complimentary_service TEXT"); } catch { /* exists */ }
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
   const status = searchParams.get("status");
