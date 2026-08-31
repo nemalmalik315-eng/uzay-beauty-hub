@@ -315,7 +315,9 @@ export default function BookingsPage() {
 
     // Auto-create billing record when completing
     if (status === "completed" && group) {
-      const serviceName = group.services.map((s) => `${s.name}~~${s.price}`).join("|||");
+      const serviceLines = group.services.map((s) => `${s.name}~~${s.price}`);
+      if (group.complimentary_service) serviceLines.push(`🎁 ${group.complimentary_service} (free)~~0`);
+      const serviceName = serviceLines.join("|||");
       const discount = group.discount ?? 0;
       await fetch("/api/billing", {
         method: "POST",
