@@ -237,9 +237,9 @@ export default function BookingsPage() {
   // Cancel confirm dialog
   const [cancelConfirm, setCancelConfirm] = useState<{ group_id: number; name: string } | null>(null);
 
-  // Edit modal (date/time only)
+  // Edit modal (date/time/discount)
   const [editingGroup, setEditingGroup] = useState<BookingGroup | null>(null);
-  const [editForm, setEditForm] = useState({ date: "", time: "" });
+  const [editForm, setEditForm] = useState({ date: "", time: "", discount: "" });
 
   // WhatsApp dialog
   const [waDialog, setWaDialog] = useState<{ phone: string; message: string } | null>(null);
@@ -322,18 +322,22 @@ export default function BookingsPage() {
     loadBookings();
   };
 
-  // ── Edit (date/time) ─────────────────────────────────────────────────────
+  // ── Edit (date/time/discount) ────────────────────────────────────────────
   const saveEdit = async () => {
     if (!editingGroup) return;
+    const discountVal = editForm.discount !== "" ? Math.max(0, parseInt(editForm.discount) || 0) : editingGroup.discount;
     const res = await fetch("/api/bookings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ group_id: editingGroup.group_id, date: editForm.date, time: to12h(editForm.time) }),
+      body: JSON.stringify({ group_id: editingGroup.group_id, date: editForm.date, time: to12h(editForm.time), discount: discountVal }),
     });
     if (res.ok) {
       toast("Booking updated");
+      const updatedGroup = { ...editingGroup, discount: discountVal, final_total: editingGroup.total - discountVal };
       setEditingGroup(null);
       loadBookings();
+      const phone = editingGroup.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
+      setWaDialog({ phone, message: buildWaMessage(updatedGroup, discountVal) });
     } else {
       toast("Failed to update booking", "error");
     }
@@ -476,6 +480,27 @@ export default function BookingsPage() {
                 <input type="time" value={editForm.time} onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none" />
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                  Discount <span className="normal-case text-gray-400 font-normal">(Rs.) — leave blank to keep current</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">Rs.</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editForm.discount}
+                    onChange={(e) => setEditForm({ ...editForm, discount: e.target.value })}
+                    placeholder={editingGroup.discount > 0 ? String(editingGroup.discount) : "0"}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                  />
+                </div>
+                {editForm.discount !== "" && parseInt(editForm.discount) > 0 && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Total after discount: Rs. {(editingGroup.total - (parseInt(editForm.discount) || 0)).toLocaleString()}
+                  </p>
+                )}
+              </div>
               {editingGroup.notes && (
                 <div>
                   <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Client&apos;s Request</label>
@@ -579,7 +604,7 @@ export default function BookingsPage() {
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {(b.status === "pending" || b.status === "confirmed") && (
-                          <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time) }); }}
+                          <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "" }); }}
                             className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded hover:bg-gray-100">Edit</button>
                         )}
                         {b.status === "pending" && (
@@ -684,7 +709,7 @@ export default function BookingsPage() {
 
               <div className="flex flex-wrap gap-2">
                 {(b.status === "pending" || b.status === "confirmed") && (
-                  <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time) }); }}
+                  <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "" }); }}
                     className="text-xs bg-gray-50 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-100">Edit</button>
                 )}
                 {b.status === "pending" && (
