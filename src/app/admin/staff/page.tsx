@@ -59,19 +59,16 @@ interface BonusDaily {
 }
 
 interface CommissionDetail {
-  bill_id: number;
-  customer: string;
   date: string;
-  services: string;
-  service_amount: number;
-  performers: string;
-  commission_share: number;
+  service_revenue: number;
+  pool: number;
+  per_share: number;
 }
 
 interface BonusCommission {
   name: string;
   total: number;
-  bill_count: number;
+  days_qualified: number;
   details: CommissionDetail[];
 }
 
@@ -1135,7 +1132,7 @@ export default function StaffPage() {
             </div>
             <p className="text-xs text-gray-400 mt-2">
               <span className="font-medium text-gray-500">Eyebrow pool:</span> charges from eyebrow services split equally among staff marked <span className="text-green-600 font-medium">Present</span> or Leave that day. &nbsp;
-              <span className="font-medium text-gray-500">Commissions:</span> 5% of all other service revenue goes to the staff who performed it (set in billing).
+              <span className="font-medium text-gray-500">Commissions:</span> 5% of all other service revenue split equally among all present/leave staff that day.
             </p>
           </div>
 
@@ -1220,18 +1217,18 @@ export default function StaffPage() {
             </div>
           </div>
 
-          {/* Service Commissions — 5% per performer */}
+          {/* Service Commissions — 5% split equally among all staff */}
           <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
             <div className="px-6 py-3 bg-gray-50 border-b border-gray-100">
               <h3 className="font-heading text-sm font-semibold text-charcoal uppercase tracking-wider">
                 Service Commissions (5%)
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">5% of non-eyebrow service revenue, split among the staff who performed each service. Click a name to see breakdown.</p>
+              <p className="text-xs text-gray-400 mt-0.5">5% of all non-eyebrow service revenue, split equally among all present/leave staff that day. Click a name to see breakdown.</p>
             </div>
             <div>
               {!bonusData || (bonusData.commissions ?? []).length === 0 ? (
                 <p className="px-6 py-12 text-center text-gray-400 text-sm">
-                  No commissions yet — select staff in billing records to track
+                  No service commissions for {formatMonth(bonusMonth)} yet
                 </p>
               ) : (
                 (bonusData.commissions ?? []).map((c) => (
@@ -1243,7 +1240,7 @@ export default function StaffPage() {
                     >
                       <div>
                         <p className="text-sm font-semibold text-charcoal">{c.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{c.bill_count} service bill(s) attributed</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{c.days_qualified} day(s) with service revenue</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-purple-700">
@@ -1257,36 +1254,27 @@ export default function StaffPage() {
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="text-left text-gray-500 uppercase tracking-wider border-b border-purple-100">
-                              <th className="py-2 pr-4">Bill #</th>
                               <th className="py-2 pr-4">Date</th>
-                              <th className="py-2 pr-4">Customer</th>
-                              <th className="py-2 pr-4">Services Done</th>
-                              <th className="py-2 pr-4 text-right">Service Total</th>
-                              <th className="py-2 text-right">Commission</th>
+                              <th className="py-2 pr-4 text-right">Service Revenue</th>
+                              <th className="py-2 pr-4 text-right">5% Pool</th>
+                              <th className="py-2 text-right">Their Share</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-purple-100/50">
                             {c.details.map((d) => (
-                              <tr key={d.bill_id} className="text-charcoal">
-                                <td className="py-2 pr-4 text-gray-400">#{d.bill_id}</td>
+                              <tr key={d.date} className="text-charcoal">
                                 <td className="py-2 pr-4 text-gray-500">{d.date}</td>
-                                <td className="py-2 pr-4 font-medium">{d.customer}</td>
-                                <td className="py-2 pr-4 text-gray-600">
-                                  {d.services}
-                                  {d.performers.includes(" + ") && (
-                                    <span className="text-gray-400 ml-1">(shared)</span>
-                                  )}
-                                </td>
-                                <td className="py-2 pr-4 text-right">Rs. {d.service_amount.toLocaleString()}</td>
+                                <td className="py-2 pr-4 text-right">Rs. {d.service_revenue.toLocaleString()}</td>
+                                <td className="py-2 pr-4 text-right text-gray-500">Rs. {d.pool.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 <td className="py-2 text-right font-semibold text-purple-700">
-                                  Rs. {d.commission_share.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  Rs. {d.per_share.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                               </tr>
                             ))}
                           </tbody>
                           <tfoot>
                             <tr className="border-t border-purple-200">
-                              <td colSpan={5} className="pt-2 text-right font-semibold text-gray-600">Total:</td>
+                              <td colSpan={3} className="pt-2 text-right font-semibold text-gray-600">Total:</td>
                               <td className="pt-2 text-right font-bold text-purple-700">
                                 Rs. {c.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </td>

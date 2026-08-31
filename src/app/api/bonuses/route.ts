@@ -122,66 +122,55 @@ async function computeMonthLive(month: string) {
   const grandTotal = employees.reduce((sum, e) => sum + e.total, 0);
   const totalPool = daily.reduce((sum, d) => sum + d.pool, 0);
 
-  // Ensure new columns exist (may not yet if billing API hasn't run first)
-  try { await db.execute("ALTER TABLE billing ADD COLUMN performed_by TEXT"); } catch { /* exists */ }
-  try { await db.execute("ALTER TABLE billing ADD COLUMN billed_by TEXT"); } catch { /* exists */ }
-
-  // Compute 5% service commissions (non-eyebrow services only, split by performer)
-  const { rows: commissionBills } = await db.execute({
-    sql: `SELECT id, customer_name, performed_by, service_name, DATE(created_at) as date
-          FROM billing
-          WHERE strftime('%Y-%m', created_at) = ?
-            AND performed_by IS NOT NULL
-            AND performed_by != ''`,
+  // Compute 5% service commissions (non-eyebrow revenue, split equally among all present/leave staff that day)
+  const { rows: allBills } = await db.execute({
+    sql: `SELECT service_name, DATE(created_at) as date FROM billing WHERE strftime('%Y-%m', created_at) = ?`,
     args: [month],
   });
 
-  interface CommissionDetail {
-    bill_id: number;
-    customer: string;
-    date: string;
-    services: string;
-    service_amount: number;
-    performers: string;
-    commission_share: number;
-  }
-
-  const commissionTotals = new Map<string, { total: number; bills: number; details: CommissionDetail[] }>();
-
-  for (const row of commissionBills) {
-    const performers = String(row.performed_by).split(" + ").map((n) => n.trim()).filter(Boolean);
-    if (performers.length === 0) continue;
-
-    const lines = String(row.service_name).split("|||");
+  // Daily non-eyebrow service revenue → 5% pool
+  const servicePoolByDate = new Map<string, number>();
+  for (const r of allBills) {
+    const date = String(r.date);
+    const lines = String(r.service_name).split("|||");
     let nonEyebrowTotal = 0;
-    const nonEyebrowNames: string[] = [];
     for (const line of lines) {
       const [name, priceStr] = line.split("~~");
       if (!name || name.toLowerCase().includes("eyebrow")) continue;
       const price = parseFloat(priceStr) || 0;
+      if (price <= 0) continue; // skip complimentary Rs. 0 lines
       nonEyebrowTotal += price;
-      if (name.trim()) nonEyebrowNames.push(name.trim());
     }
+    if (nonEyebrowTotal > 0) {
+      servicePoolByDate.set(date, (servicePoolByDate.get(date) || 0) + nonEyebrowTotal * 0.05);
+    }
+  }
 
-    if (nonEyebrowTotal <= 0) continue;
-    const commission = nonEyebrowTotal * 0.05;
-    const perPerformer = commission / performers.length;
+  interface CommissionDetail {
+    date: string;
+    service_revenue: number;
+    pool: number;
+    per_share: number;
+  }
 
-    for (const performer of performers) {
-      if (!commissionTotals.has(performer)) {
-        commissionTotals.set(performer, { total: 0, bills: 0, details: [] });
+  const commissionTotals = new Map<string, { total: number; days: number; details: CommissionDetail[] }>();
+
+  for (const [date, pool] of servicePoolByDate.entries()) {
+    const present = presentByDate.get(date) || [];
+    if (present.length === 0) continue;
+    const perShare = pool / present.length;
+    for (const emp of present) {
+      if (!commissionTotals.has(emp.name)) {
+        commissionTotals.set(emp.name, { total: 0, days: 0, details: [] });
       }
-      const entry = commissionTotals.get(performer)!;
-      entry.total += perPerformer;
-      entry.bills += 1;
+      const entry = commissionTotals.get(emp.name)!;
+      entry.total += perShare;
+      entry.days += 1;
       entry.details.push({
-        bill_id: Number(row.id),
-        customer: String(row.customer_name),
-        date: String(row.date),
-        services: nonEyebrowNames.join(", "),
-        service_amount: nonEyebrowTotal,
-        performers: String(row.performed_by),
-        commission_share: Math.round(perPerformer * 100) / 100,
+        date,
+        service_revenue: Math.round(pool / 0.05 * 100) / 100,
+        pool: Math.round(pool * 100) / 100,
+        per_share: Math.round(perShare * 100) / 100,
       });
     }
   }
@@ -190,7 +179,7 @@ async function computeMonthLive(month: string) {
     .map(([name, v]) => ({
       name,
       total: Math.round(v.total * 100) / 100,
-      bill_count: v.bills,
+      days_qualified: v.days,
       details: v.details.sort((a, b) => a.date.localeCompare(b.date)),
     }))
     .sort((a, b) => b.total - a.total);
