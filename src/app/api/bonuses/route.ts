@@ -55,10 +55,10 @@ async function computeMonthLive(month: string) {
     for (const line of lines) {
       const [name, priceStr] = line.split("~~");
       if (name && name.toLowerCase().includes("eyebrow")) {
-        const price = parseFloat(priceStr) || 0;
         const isWax = name.toLowerCase().includes("wax");
-        // Sep 2026 onwards: wax contributes only Rs. 100; before that: full price for both
-        eyebrowTotal += (isWax && month >= "2026-09") ? 100 : price;
+        if (isWax && month < "2026-09") continue; // wax not in pool before Sep 2026
+        const price = parseFloat(priceStr) || 0;
+        eyebrowTotal += isWax ? 100 : price; // wax: only Rs. 100 from Sep 2026 onwards
       }
     }
     if (eyebrowTotal > 0) {
