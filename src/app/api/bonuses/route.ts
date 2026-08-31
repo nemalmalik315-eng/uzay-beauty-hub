@@ -55,9 +55,10 @@ async function computeMonthLive(month: string) {
     for (const line of lines) {
       const [name, priceStr] = line.split("~~");
       if (name && name.toLowerCase().includes("eyebrow")) {
+        const isWax = name.toLowerCase().includes("wax");
+        if (isWax && month < "2026-09") continue; // wax not in pool before Sep 2026
         const price = parseFloat(priceStr) || 0;
-        // Eyebrow Wax: only Rs. 100 of the Rs. 200 charge goes to the pool
-        eyebrowTotal += name.toLowerCase().includes("wax") ? 100 : price;
+        eyebrowTotal += isWax ? 100 : price; // wax: only Rs. 100 from Sep 2026 onwards
       }
     }
     if (eyebrowTotal > 0) {
@@ -122,7 +123,21 @@ async function computeMonthLive(month: string) {
   const grandTotal = employees.reduce((sum, e) => sum + e.total, 0);
   const totalPool = daily.reduce((sum, d) => sum + d.pool, 0);
 
-  // Compute 5% service commissions (non-eyebrow revenue, split equally among all present/leave staff that day)
+  // Compute 5% service commissions — only for September 2026 onwards (pool model starts then)
+  if (month < "2026-09") {
+    return {
+      month,
+      paid: false,
+      employees,
+      daily,
+      grand_total: Math.round(grandTotal * 100) / 100,
+      total_pool: Math.round(totalPool * 100) / 100,
+      days_with_eyebrows: daily.length,
+      commissions: [],
+      commission_total: 0,
+    };
+  }
+
   const { rows: allBills } = await db.execute({
     sql: `SELECT service_name, DATE(created_at) as date FROM billing WHERE strftime('%Y-%m', created_at) = ?`,
     args: [month],
