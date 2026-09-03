@@ -179,6 +179,8 @@ export default function BillingPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [nameSuggestions, setNameSuggestions] = useState<Customer[]>([]);
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("cash");
@@ -197,6 +199,8 @@ export default function BillingPage() {
   const [compService, setCompService] = useState("");
   const [showCompDropdown, setShowCompDropdown] = useState(false);
   const phoneTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const nameTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const nameRef = useRef<HTMLDivElement>(null);
   const serviceRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -262,6 +266,22 @@ export default function BillingPage() {
     }, 300);
   }, [phone]);
 
+  // Customer lookup by name
+  useEffect(() => {
+    if (customerName.length < 2) {
+      setNameSuggestions([]);
+      setShowNameSuggestions(false);
+      return;
+    }
+    clearTimeout(nameTimeout.current);
+    nameTimeout.current = setTimeout(async () => {
+      const res = await fetch(`/api/customers?search=${encodeURIComponent(customerName)}`);
+      const data = await res.json();
+      setNameSuggestions(data);
+      setShowNameSuggestions(data.length > 0);
+    }, 300);
+  }, [customerName]);
+
   // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -277,6 +297,7 @@ export default function BillingPage() {
     setPhone(c.phone);
     setCustomerName(c.name);
     setShowSuggestions(false);
+    setShowNameSuggestions(false);
   };
 
   const addService = (service: Service) => {
@@ -414,6 +435,10 @@ export default function BillingPage() {
   const resetForm = () => {
     setPhone("");
     setCustomerName("");
+    setCustomerSuggestions([]);
+    setShowSuggestions(false);
+    setNameSuggestions([]);
+    setShowNameSuggestions(false);
     setSelectedServices([]);
     setDiscount(0);
     setPaymentMethod("cash");
@@ -951,7 +976,7 @@ export default function BillingPage() {
                 </div>
               )}
             </div>
-            <div>
+            <div className="relative" ref={nameRef}>
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
                 Customer Name *
               </label>
@@ -961,8 +986,25 @@ export default function BillingPage() {
                 required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
+                onFocus={() => nameSuggestions.length > 0 && setShowNameSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
                 className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
               />
+              {showNameSuggestions && (
+                <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                  {nameSuggestions.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onMouseDown={() => selectCustomer(c)}
+                      className="w-full px-4 py-2.5 text-left hover:bg-gold/5 text-sm flex justify-between"
+                    >
+                      <span className="font-medium">{c.name}</span>
+                      <span className="text-gray-400">{c.phone}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
