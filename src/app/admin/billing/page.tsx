@@ -67,6 +67,7 @@ interface SavedBillInfo {
   paymentMethod: string;
   billDate: string;
   performedBy?: string;
+  compService?: string;
 }
 
 function buildWhatsAppUrl(info: SavedBillInfo): string {
@@ -100,6 +101,7 @@ function buildWhatsAppUrl(info: SavedBillInfo): string {
     "",
     "*Services:*",
     ...info.services.flatMap((s) => Array(s.qty).fill(`• ${s.name} — Rs. ${s.price.toLocaleString()}`)),
+    ...(info.compService ? [`🎁 Complimentary: ${info.compService} (free)`] : []),
     "",
     ...(info.discount > 0 ? [`Subtotal: Rs. ${info.subtotal.toLocaleString()}`, `Discount: −Rs. ${info.discount.toLocaleString()}`] : []),
     ...paymentLines,
@@ -190,9 +192,9 @@ export default function BillingPage() {
   const [editingBillId, setEditingBillId] = useState<number | null>(null);
   const [staffEmployees, setStaffEmployees] = useState<StaffEmployee[]>([]);
   const [billedBy, setBilledBy] = useState("");
-  const [staffOne, setStaffOne] = useState("");
-  const [staffTwo, setStaffTwo] = useState("");
-  const [showStaffTwo, setShowStaffTwo] = useState(false);
+  const [performers, setPerformers] = useState<string[]>([""]);
+  const [compService, setCompService] = useState("");
+  const [showCompDropdown, setShowCompDropdown] = useState(false);
   const phoneTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const serviceRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -341,7 +343,12 @@ export default function BillingPage() {
   const startEdit = (bill: Bill) => {
     const items = parseServiceItems(bill.service_name);
     const rebuilt: SelectedService[] = [];
+    let parsedComp = "";
     for (const item of items) {
+      if (item.name.startsWith("🎁") || item.price === 0) {
+        parsedComp = item.name.replace(/^🎁\s*/, "").replace(/\s*\(free\)$/, "");
+        continue;
+      }
       const svc = services.find((s) => s.name === item.name);
       if (svc) {
         const existing = rebuilt.findIndex((r) => r.id === svc.id && r.price === item.price);
@@ -355,6 +362,7 @@ export default function BillingPage() {
       }
     }
     setSelectedServices(rebuilt);
+    setCompService(parsedComp);
     setCustomerName(bill.customer_name);
     setPhone("");
     setDiscount(bill.discount);
@@ -367,12 +375,10 @@ export default function BillingPage() {
     setSavedBillInfo(null);
     setBilledBy(bill.billed_by || "");
     if (bill.performed_by) {
-      const parts = bill.performed_by.split(" + ");
-      setStaffOne(parts[0] || "");
-      if (parts.length > 1) { setStaffTwo(parts[1]); setShowStaffTwo(true); }
-      else { setStaffTwo(""); setShowStaffTwo(false); }
+      const parts = bill.performed_by.split(" + ").filter(Boolean);
+      setPerformers(parts.length > 0 ? parts : [""]);
     } else {
-      setStaffOne(""); setStaffTwo(""); setShowStaffTwo(false);
+      setPerformers([""]);
     }
     setShowAdd(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -411,9 +417,9 @@ export default function BillingPage() {
     setSavedBillInfo(null);
     setEditingBillId(null);
     setBilledBy("");
-    setStaffOne("");
-    setStaffTwo("");
-    setShowStaffTwo(false);
+    setPerformers([""]);
+    setCompService("");
+    setShowCompDropdown(false);
     setShowAdd(false);
   };
 
@@ -423,15 +429,16 @@ export default function BillingPage() {
 
     setSaving(true);
     try {
-      const encodedName = encodeServiceName(selectedServices);
+      const baseEncoded = encodeServiceName(selectedServices);
+      const encodedName = compService.trim()
+        ? `${baseEncoded}|||🎁 ${compService.trim()} (free)~~0`
+        : baseEncoded;
       let savedId: number;
 
       const paid = amountPaidOverride !== null ? amountPaidOverride : grandTotal;
       const paymentStatus = paid >= grandTotal ? "paid" : paid === 0 ? "pending" : "partial";
 
-      const performedBy = staffOne
-        ? (showStaffTwo && staffTwo ? `${staffOne} + ${staffTwo}` : staffOne)
-        : undefined;
+      const performedBy = performers.filter(Boolean).join(" + ") || undefined;
 
       if (editingBillId) {
         const res = await fetch("/api/billing", {
@@ -488,6 +495,7 @@ export default function BillingPage() {
         paymentMethod,
         billDate,
         performedBy,
+        compService: compService.trim() || undefined,
       });
       setPhone("");
       setCustomerName("");
@@ -499,9 +507,9 @@ export default function BillingPage() {
       setBillDate(new Date().toISOString().split("T")[0]);
       setEditingBillId(null);
       setBilledBy("");
-      setStaffOne("");
-      setStaffTwo("");
-      setShowStaffTwo(false);
+      setPerformers([""]);
+      setCompService("");
+      setShowCompDropdown(false);
       loadBills();
     } finally {
       setSaving(false);
@@ -818,6 +826,11 @@ export default function BillingPage() {
                 <span className="text-gray-500">Rs. {(s.price * s.qty).toLocaleString()}</span>
               </div>
             ))}
+            {savedBillInfo.compService && (
+              <div className="flex justify-between text-emerald-600 text-xs pt-1">
+                <span>🎁 {savedBillInfo.compService}</span><span>Free</span>
+              </div>
+            )}
             {savedBillInfo.discount > 0 && (
               <div className="flex justify-between text-red-500 border-t border-gray-200 pt-1 mt-1">
                 <span>Discount</span><span>−Rs. {savedBillInfo.discount.toLocaleString()}</span>
@@ -1066,49 +1079,97 @@ export default function BillingPage() {
           {/* Staff who performed the service */}
           <div className="mb-5">
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
-              Performed By <span className="normal-case text-gray-400 font-normal">(optional)</span>
+              Performed By <span className="normal-case text-gray-400 font-normal">(optional — up to 4 staff)</span>
             </label>
-            <div className="flex flex-wrap gap-2 items-center">
-              <select
-                value={staffOne}
-                onChange={(e) => setStaffOne(e.target.value)}
-                className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
-              >
-                <option value="">— Select staff —</option>
-                {staffEmployees.map((emp) => (
-                  <option key={emp.id} value={emp.name}>{emp.name}</option>
-                ))}
-              </select>
-              {!showStaffTwo ? (
+            <div className="flex flex-col gap-2">
+              {performers.map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <select
+                    value={p}
+                    onChange={(e) => {
+                      const updated = [...performers];
+                      updated[i] = e.target.value;
+                      setPerformers(updated);
+                    }}
+                    className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none flex-1 max-w-xs"
+                  >
+                    <option value="">{i === 0 ? "— Select staff —" : `— Staff ${i + 1} —`}</option>
+                    {staffEmployees
+                      .filter((emp) => !performers.includes(emp.name) || emp.name === p)
+                      .map((emp) => (
+                        <option key={emp.id} value={emp.name}>{emp.name}</option>
+                      ))}
+                  </select>
+                  {i > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPerformers(performers.filter((_, idx) => idx !== i))}
+                      className="text-gray-400 hover:text-red-500 text-xl leading-none"
+                    >×</button>
+                  )}
+                </div>
+              ))}
+              {performers.length < 4 && (
                 <button
                   type="button"
-                  onClick={() => setShowStaffTwo(true)}
-                  className="text-xs text-gold hover:text-gold-dark font-medium px-2 py-1.5"
+                  onClick={() => setPerformers([...performers, ""])}
+                  className="text-xs text-gold hover:text-gold-dark font-medium self-start px-2 py-1.5"
                 >
-                  + 2nd staff
+                  + Add staff
                 </button>
-              ) : (
-                <>
-                  <select
-                    value={staffTwo}
-                    onChange={(e) => setStaffTwo(e.target.value)}
-                    className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
-                  >
-                    <option value="">— Select 2nd staff —</option>
-                    {staffEmployees.filter((e) => e.name !== staffOne).map((emp) => (
-                      <option key={emp.id} value={emp.name}>{emp.name}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => { setShowStaffTwo(false); setStaffTwo(""); }}
-                    className="text-gray-400 hover:text-red-500 text-xl leading-none"
-                  >
-                    ×
-                  </button>
-                </>
               )}
             </div>
+          </div>
+
+          {/* Complimentary service */}
+          <div className="mb-5">
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+              Complimentary Service <span className="normal-case text-gray-400 font-normal">(optional — added free)</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Type to search services..."
+                value={compService}
+                onChange={(e) => { setCompService(e.target.value); setShowCompDropdown(true); }}
+                onFocus={() => setShowCompDropdown(true)}
+                onBlur={() => setTimeout(() => setShowCompDropdown(false), 150)}
+                className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-emerald-400 outline-none pr-8"
+              />
+              {compService && (
+                <button
+                  type="button"
+                  onMouseDown={() => setCompService("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none"
+                >×</button>
+              )}
+              {showCompDropdown && (
+                <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {(() => {
+                    const q = compService.toLowerCase();
+                    const filtered = services.filter((s) =>
+                      s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)
+                    ).slice(0, 8);
+                    return filtered.length === 0 ? (
+                      <p className="px-4 py-3 text-sm text-gray-400">No services found</p>
+                    ) : filtered.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onMouseDown={() => { setCompService(s.name); setShowCompDropdown(false); }}
+                        className="w-full px-4 py-2.5 text-left hover:bg-emerald-50 text-sm flex justify-between"
+                      >
+                        <span>{s.name}</span>
+                        <span className="text-gray-400 text-xs">{s.category}</span>
+                      </button>
+                    ));
+                  })()}
+                </div>
+              )}
+            </div>
+            {compService && !showCompDropdown && (
+              <p className="text-xs text-emerald-600 mt-1">🎁 {compService} — free</p>
+            )}
           </div>
 
           {/* Discount & Payment */}
@@ -1257,9 +1318,9 @@ export default function BillingPage() {
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
                       <div className="space-y-0.5">
                         {parseServiceItems(b.service_name).map((s, i) => (
-                          <div key={i} className="flex justify-between gap-4">
+                          <div key={i} className={`flex justify-between gap-4 ${s.price === 0 ? "text-emerald-600" : ""}`}>
                             <span>{s.name}</span>
-                            {s.price > 0 && <span className="text-gray-400 shrink-0">Rs. {s.price.toLocaleString()}</span>}
+                            <span className="shrink-0">{s.price > 0 ? `Rs. ${s.price.toLocaleString()}` : "Free"}</span>
                           </div>
                         ))}
                       </div>
@@ -1348,9 +1409,9 @@ export default function BillingPage() {
               </div>
               <div className="mb-3 space-y-0.5">
                 {parseServiceItems(b.service_name).map((s, i) => (
-                  <div key={i} className="flex justify-between text-xs">
-                    <span className="text-gray-600">{s.name}</span>
-                    {s.price > 0 && <span className="text-gray-400">Rs. {s.price.toLocaleString()}</span>}
+                  <div key={i} className={`flex justify-between text-xs ${s.price === 0 ? "text-emerald-600" : ""}`}>
+                    <span className={s.price === 0 ? "" : "text-gray-600"}>{s.name}</span>
+                    <span className={s.price === 0 ? "" : "text-gray-400"}>{s.price > 0 ? `Rs. ${s.price.toLocaleString()}` : "Free"}</span>
                   </div>
                 ))}
               </div>

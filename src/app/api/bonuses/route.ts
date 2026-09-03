@@ -23,6 +23,18 @@ interface EmployeeBonus {
 async function computeMonthLive(month: string) {
   const db = getDb();
 
+  // Monthly revenue and salary totals
+  const { rows: revRows } = await db.execute({
+    sql: `SELECT COALESCE(SUM(total), 0) as revenue FROM billing WHERE strftime('%Y-%m', created_at) = ?`,
+    args: [month],
+  });
+  const monthRevenue = Math.round((Number(revRows[0]?.revenue) || 0) * 100) / 100;
+
+  const { rows: salRows } = await db.execute({
+    sql: `SELECT COALESCE(SUM(salary), 0) as total FROM employees WHERE active = 1`,
+  });
+  const totalSalaries = Math.round((Number(salRows[0]?.total) || 0) * 100) / 100;
+
   // Fetch bills that contain any eyebrow service, then parse line-by-line
   // service_name format: "ServiceName~~price|||ServiceName~~price"
   const { rows: billRows } = await db.execute({
@@ -135,31 +147,19 @@ async function computeMonthLive(month: string) {
       days_with_eyebrows: daily.length,
       commissions: [],
       commission_total: 0,
+      month_revenue: monthRevenue,
+      total_salaries: totalSalaries,
     };
   }
 
-  const { rows: allBills } = await db.execute({
-    sql: `SELECT service_name, DATE(created_at) as date FROM billing WHERE strftime('%Y-%m', created_at) = ?`,
+  // Per-performer commission: 5% of each bill's non-eyebrow revenue, split among performers
+  const { rows: commissionBills } = await db.execute({
+    sql: `SELECT performed_by, service_name, DATE(created_at) as date
+          FROM billing
+          WHERE strftime('%Y-%m', created_at) = ?
+            AND performed_by IS NOT NULL AND performed_by != ''`,
     args: [month],
   });
-
-  // Daily non-eyebrow service revenue → 5% pool
-  const servicePoolByDate = new Map<string, number>();
-  for (const r of allBills) {
-    const date = String(r.date);
-    const lines = String(r.service_name).split("|||");
-    let nonEyebrowTotal = 0;
-    for (const line of lines) {
-      const [name, priceStr] = line.split("~~");
-      if (!name || name.toLowerCase().includes("eyebrow")) continue;
-      const price = parseFloat(priceStr) || 0;
-      if (price <= 0) continue; // skip complimentary Rs. 0 lines
-      nonEyebrowTotal += price;
-    }
-    if (nonEyebrowTotal > 0) {
-      servicePoolByDate.set(date, (servicePoolByDate.get(date) || 0) + nonEyebrowTotal * 0.05);
-    }
-  }
 
   interface CommissionDetail {
     date: string;
@@ -168,25 +168,41 @@ async function computeMonthLive(month: string) {
     per_share: number;
   }
 
-  const commissionTotals = new Map<string, { total: number; days: number; details: CommissionDetail[] }>();
+  const commissionTotals = new Map<string, { total: number; details: CommissionDetail[] }>();
 
-  for (const [date, pool] of servicePoolByDate.entries()) {
-    const present = presentByDate.get(date) || [];
-    if (present.length === 0) continue;
-    const perShare = pool / present.length;
-    for (const emp of present) {
-      if (!commissionTotals.has(emp.name)) {
-        commissionTotals.set(emp.name, { total: 0, days: 0, details: [] });
+  for (const row of commissionBills) {
+    const performers = String(row.performed_by).split(" + ").map((n) => n.trim()).filter(Boolean);
+    if (performers.length === 0) continue;
+
+    const lines = String(row.service_name).split("|||");
+    let nonEyebrowTotal = 0;
+    for (const line of lines) {
+      const [name, priceStr] = line.split("~~");
+      if (!name || name.toLowerCase().includes("eyebrow")) continue;
+      const price = parseFloat(priceStr) || 0;
+      if (price <= 0) continue;
+      nonEyebrowTotal += price;
+    }
+    if (nonEyebrowTotal <= 0) continue;
+
+    const commission = nonEyebrowTotal * 0.05;
+    const perShare = commission / performers.length;
+    const date = String(row.date);
+
+    for (const performer of performers) {
+      if (!commissionTotals.has(performer)) {
+        commissionTotals.set(performer, { total: 0, details: [] });
       }
-      const entry = commissionTotals.get(emp.name)!;
+      const entry = commissionTotals.get(performer)!;
       entry.total += perShare;
-      entry.days += 1;
-      entry.details.push({
-        date,
-        service_revenue: Math.round(pool / 0.05 * 100) / 100,
-        pool: Math.round(pool * 100) / 100,
-        per_share: Math.round(perShare * 100) / 100,
-      });
+      const existing = entry.details.find((d) => d.date === date);
+      if (existing) {
+        existing.service_revenue += nonEyebrowTotal;
+        existing.pool += commission;
+        existing.per_share += perShare;
+      } else {
+        entry.details.push({ date, service_revenue: nonEyebrowTotal, pool: commission, per_share: perShare });
+      }
     }
   }
 
@@ -194,8 +210,15 @@ async function computeMonthLive(month: string) {
     .map(([name, v]) => ({
       name,
       total: Math.round(v.total * 100) / 100,
-      days_qualified: v.days,
-      details: v.details.sort((a, b) => a.date.localeCompare(b.date)),
+      days_qualified: v.details.length,
+      details: v.details
+        .map((d) => ({
+          date: d.date,
+          service_revenue: Math.round(d.service_revenue * 100) / 100,
+          pool: Math.round(d.pool * 100) / 100,
+          per_share: Math.round(d.per_share * 100) / 100,
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
     }))
     .sort((a, b) => b.total - a.total);
 
@@ -211,6 +234,8 @@ async function computeMonthLive(month: string) {
     days_with_eyebrows: daily.length,
     commissions,
     commission_total: commissionGrandTotal,
+    month_revenue: monthRevenue,
+    total_salaries: totalSalaries,
   };
 }
 
@@ -237,6 +262,16 @@ async function getFrozenMonth(month: string) {
 
   const grandTotal = employees.reduce((sum, e) => sum + e.total, 0);
 
+  const { rows: revRows } = await db.execute({
+    sql: `SELECT COALESCE(SUM(total), 0) as revenue FROM billing WHERE strftime('%Y-%m', created_at) = ?`,
+    args: [month],
+  });
+  const { rows: salRows } = await db.execute({
+    sql: `SELECT COALESCE(SUM(salary), 0) as total FROM employees WHERE active = 1`,
+  });
+  const monthRevenue = Math.round((Number(revRows[0]?.revenue) || 0) * 100) / 100;
+  const totalSalaries = Math.round((Number(salRows[0]?.total) || 0) * 100) / 100;
+
   return {
     month,
     paid: true,
@@ -248,6 +283,8 @@ async function getFrozenMonth(month: string) {
     days_with_eyebrows: 0,
     commissions: [],
     commission_total: 0,
+    month_revenue: monthRevenue,
+    total_salaries: totalSalaries,
   };
 }
 

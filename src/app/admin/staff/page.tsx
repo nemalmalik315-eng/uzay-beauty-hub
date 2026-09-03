@@ -83,6 +83,8 @@ interface BonusMonth {
   days_with_eyebrows: number;
   commissions: BonusCommission[];
   commission_total: number;
+  month_revenue: number;
+  total_salaries: number;
 }
 
 interface HistoryMonth {
@@ -1174,6 +1176,41 @@ export default function StaffPage() {
                   <p className="text-xs text-gray-400 text-center">No bonus to pay</p>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Net Profit Summary */}
+          {bonusData && (bonusData.month_revenue > 0 || bonusData.total_salaries > 0) && (
+            <div className="bg-white rounded-lg border border-gray-100 p-5">
+              <h4 className="text-sm font-semibold text-charcoal mb-3">Monthly Net Estimate</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Revenue</span>
+                  <span className="font-medium text-green-600">Rs. {(bonusData.month_revenue ?? 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">− Salaries</span>
+                  <span className="text-red-500">Rs. {(bonusData.total_salaries ?? 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">− Eyebrow Bonuses</span>
+                  <span className="text-red-500">Rs. {(bonusData.grand_total ?? 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">− Service Commissions</span>
+                  <span className="text-red-500">Rs. {(bonusData.commission_total ?? 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-2 mt-2">
+                  <span className="text-charcoal">Net (before other costs)</span>
+                  <span className={
+                    (bonusData.month_revenue - bonusData.total_salaries - bonusData.grand_total - (bonusData.commission_total ?? 0)) >= 0
+                      ? "text-green-600" : "text-red-600"
+                  }>
+                    Rs. {(bonusData.month_revenue - bonusData.total_salaries - bonusData.grand_total - (bonusData.commission_total ?? 0)).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-400 mt-3">Excludes rent, products, and other expenses not tracked here.</p>
             </div>
           )}
 
