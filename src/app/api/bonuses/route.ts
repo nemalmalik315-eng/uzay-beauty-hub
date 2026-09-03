@@ -186,7 +186,8 @@ async function computeMonthLive(month: string) {
       const price = parseFloat(priceStr) || 0;
       if (price <= 0) continue; // skip complimentary/free
       allServicesTotal += price;
-      if (!name || name.toLowerCase().includes("eyebrow")) continue;
+      const nameLower = name?.toLowerCase() || "";
+      if (nameLower.includes("eyebrow") || nameLower.includes("haircut")) continue;
       nonEyebrowTotal += price;
       nonEyebrowServiceNames.push(name.replace(/^🎁\s*/, ""));
     }
