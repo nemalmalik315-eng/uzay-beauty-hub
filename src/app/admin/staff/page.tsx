@@ -60,8 +60,10 @@ interface BonusDaily {
 
 interface CommissionDetail {
   date: string;
-  service_revenue: number;
-  pool: number;
+  services: string;
+  bill_total: number;
+  commission: number;
+  performers: number;
   per_share: number;
 }
 
@@ -1292,18 +1294,22 @@ export default function StaffPage() {
                           <thead>
                             <tr className="text-left text-gray-500 uppercase tracking-wider border-b border-purple-100">
                               <th className="py-2 pr-4">Date</th>
-                              <th className="py-2 pr-4 text-right">Service Revenue</th>
-                              <th className="py-2 pr-4 text-right">5% Pool</th>
+                              <th className="py-2 pr-4">Services</th>
+                              <th className="py-2 pr-4 text-right">Bill Total</th>
+                              <th className="py-2 pr-4 text-right">5% Commission</th>
+                              <th className="py-2 pr-4 text-right">Split</th>
                               <th className="py-2 text-right">Their Share</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-purple-100/50">
-                            {c.details.map((d) => (
-                              <tr key={d.date} className="text-charcoal">
-                                <td className="py-2 pr-4 text-gray-500">{d.date}</td>
-                                <td className="py-2 pr-4 text-right">Rs. {d.service_revenue.toLocaleString()}</td>
-                                <td className="py-2 pr-4 text-right text-gray-500">Rs. {d.pool.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td className="py-2 text-right font-semibold text-purple-700">
+                            {c.details.map((d, i) => (
+                              <tr key={i} className="text-charcoal">
+                                <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{d.date}</td>
+                                <td className="py-2 pr-4 text-gray-600">{d.services}</td>
+                                <td className="py-2 pr-4 text-right whitespace-nowrap">Rs. {d.bill_total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td className="py-2 pr-4 text-right text-gray-500 whitespace-nowrap">Rs. {d.commission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td className="py-2 pr-4 text-right text-gray-400 whitespace-nowrap">{d.performers > 1 ? `÷${d.performers}` : "—"}</td>
+                                <td className="py-2 text-right font-semibold text-purple-700 whitespace-nowrap">
                                   Rs. {d.per_share.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                               </tr>
@@ -1311,7 +1317,7 @@ export default function StaffPage() {
                           </tbody>
                           <tfoot>
                             <tr className="border-t border-purple-200">
-                              <td colSpan={3} className="pt-2 text-right font-semibold text-gray-600">Total:</td>
+                              <td colSpan={5} className="pt-2 text-right font-semibold text-gray-600">Total:</td>
                               <td className="pt-2 text-right font-bold text-purple-700">
                                 Rs. {c.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </td>

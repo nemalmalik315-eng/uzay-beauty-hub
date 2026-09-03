@@ -152,9 +152,9 @@ async function computeMonthLive(month: string) {
     };
   }
 
-  // Per-performer commission: 5% of each bill's non-eyebrow revenue, split among performers
+  // Per-performer commission: 5% of each bill's non-eyebrow revenue AFTER discount, split among performers
   const { rows: commissionBills } = await db.execute({
-    sql: `SELECT performed_by, service_name, DATE(created_at) as date
+    sql: `SELECT performed_by, service_name, service_charge, discount, total, DATE(created_at) as date
           FROM billing
           WHERE strftime('%Y-%m', created_at) = ?
             AND performed_by IS NOT NULL AND performed_by != ''`,
@@ -163,8 +163,10 @@ async function computeMonthLive(month: string) {
 
   interface CommissionDetail {
     date: string;
-    service_revenue: number;
-    pool: number;
+    services: string;
+    bill_total: number;
+    commission: number;
+    performers: number;
     per_share: number;
   }
 
@@ -176,16 +178,28 @@ async function computeMonthLive(month: string) {
 
     const lines = String(row.service_name).split("|||");
     let nonEyebrowTotal = 0;
+    let allServicesTotal = 0;
+    const nonEyebrowServiceNames: string[] = [];
+
     for (const line of lines) {
       const [name, priceStr] = line.split("~~");
-      if (!name || name.toLowerCase().includes("eyebrow")) continue;
       const price = parseFloat(priceStr) || 0;
-      if (price <= 0) continue;
+      if (price <= 0) continue; // skip complimentary/free
+      allServicesTotal += price;
+      if (!name || name.toLowerCase().includes("eyebrow")) continue;
       nonEyebrowTotal += price;
+      nonEyebrowServiceNames.push(name.replace(/^🎁\s*/, ""));
     }
+
     if (nonEyebrowTotal <= 0) continue;
 
-    const commission = nonEyebrowTotal * 0.05;
+    // Discount applies entirely to non-eyebrow services
+    const discount = Number(row.discount) || 0;
+    const nonEyebrowAfterDiscount = Math.max(0, nonEyebrowTotal - discount);
+
+    if (nonEyebrowAfterDiscount <= 0) continue;
+
+    const commission = nonEyebrowAfterDiscount * 0.05;
     const perShare = commission / performers.length;
     const date = String(row.date);
 
@@ -195,14 +209,14 @@ async function computeMonthLive(month: string) {
       }
       const entry = commissionTotals.get(performer)!;
       entry.total += perShare;
-      const existing = entry.details.find((d) => d.date === date);
-      if (existing) {
-        existing.service_revenue += nonEyebrowTotal;
-        existing.pool += commission;
-        existing.per_share += perShare;
-      } else {
-        entry.details.push({ date, service_revenue: nonEyebrowTotal, pool: commission, per_share: perShare });
-      }
+      entry.details.push({
+        date,
+        services: nonEyebrowServiceNames.join(", "),
+        bill_total: Math.round(nonEyebrowAfterDiscount * 100) / 100,
+        commission: Math.round(commission * 100) / 100,
+        performers: performers.length,
+        per_share: Math.round(perShare * 100) / 100,
+      });
     }
   }
 
@@ -210,15 +224,8 @@ async function computeMonthLive(month: string) {
     .map(([name, v]) => ({
       name,
       total: Math.round(v.total * 100) / 100,
-      days_qualified: v.details.length,
-      details: v.details
-        .map((d) => ({
-          date: d.date,
-          service_revenue: Math.round(d.service_revenue * 100) / 100,
-          pool: Math.round(d.pool * 100) / 100,
-          per_share: Math.round(d.per_share * 100) / 100,
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date)),
+      days_qualified: [...new Set(v.details.map((d) => d.date))].length,
+      details: v.details.sort((a, b) => a.date.localeCompare(b.date)),
     }))
     .sort((a, b) => b.total - a.total);
 
