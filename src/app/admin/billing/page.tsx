@@ -142,6 +142,7 @@ export default function BillingPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [period, setPeriod] = useState("today");
   const [customDate, setCustomDate] = useState("");
+  const [customMonth, setCustomMonth] = useState("");
   const [summaryUnlocked, setSummaryUnlocked] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -218,9 +219,14 @@ export default function BillingPage() {
   )].sort();
 
   const loadBills = async () => {
-    const url = period === "custom" && customDate
-      ? `/api/billing?date=${customDate}`
-      : `/api/billing?period=${period}`;
+    let url: string;
+    if (period === "custom" && customDate) {
+      url = `/api/billing?date=${customDate}`;
+    } else if (period === "month-pick" && customMonth) {
+      url = `/api/billing?month=${customMonth}`;
+    } else {
+      url = `/api/billing?period=${period}`;
+    }
     const res = await fetch(url);
     const data = await res.json();
     setBills(data.bills);
@@ -232,7 +238,7 @@ export default function BillingPage() {
     fetch("/api/services")
       .then((r) => r.json())
       .then(setServices);
-  }, [period, customDate]);
+  }, [period, customDate, customMonth]);
 
   useEffect(() => {
     fetch("/api/employees")
@@ -704,6 +710,26 @@ export default function BillingPage() {
                   type="date"
                   value={customDate}
                   onChange={(e) => setCustomDate(e.target.value)}
+                  className="px-3 py-2 rounded-md border border-gold/40 text-sm focus:border-gold outline-none"
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPeriod("month-pick")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  period === "month-pick"
+                    ? "bg-gold text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                By Month
+              </button>
+              {period === "month-pick" && (
+                <input
+                  type="month"
+                  value={customMonth}
+                  onChange={(e) => setCustomMonth(e.target.value)}
                   className="px-3 py-2 rounded-md border border-gold/40 text-sm focus:border-gold outline-none"
                 />
               )}

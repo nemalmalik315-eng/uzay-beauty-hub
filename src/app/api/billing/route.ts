@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period");
   const date = searchParams.get("date");
+  const month = searchParams.get("month"); // YYYY-MM format for past months
 
   const paymentStatus = searchParams.get("payment_status");
 
@@ -32,7 +33,10 @@ export async function GET(req: NextRequest) {
     params.push(paymentStatus);
   }
 
-  if (period === "today" || (!period && !date)) {
+  if (month) {
+    conditions.push("strftime('%Y-%m', created_at) = ?");
+    params.push(month);
+  } else if (period === "today" || (!period && !date)) {
     conditions.push("DATE(created_at) = DATE('now')");
   } else if (period === "week") {
     conditions.push("strftime('%Y-%W', created_at) = strftime('%Y-%W', 'now')");
