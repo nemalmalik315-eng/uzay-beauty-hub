@@ -158,7 +158,7 @@ export async function PATCH(req: NextRequest) {
 
   // If phone is provided and this bill has no customer yet, link or create a customer record
   if (customer_phone) {
-    const { rows: existing } = await db.execute({ sql: "SELECT id FROM billing WHERE id = ?", args: [Number(id)] });
+    const { rows: existing } = await db.execute({ sql: "SELECT customer_id FROM billing WHERE id = ?", args: [Number(id)] });
     const billRow = existing[0] as Record<string, unknown> | undefined;
     if (billRow && !billRow.customer_id) {
       const { rows: custRows } = await db.execute({ sql: "SELECT id FROM customers WHERE phone = ?", args: [customer_phone] });

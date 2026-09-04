@@ -112,7 +112,8 @@ export default function CustomersPage() {
       setShowAdd(false);
       loadCustomers();
     } else {
-      toast("Failed to add customer", "error");
+      const errData = await res.json().catch(() => ({}));
+      toast(errData.error || "Failed to add customer", "error");
     }
   };
 

@@ -60,6 +60,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Name and phone required" }, { status: 400 });
   }
 
+  const { rows: dup } = await db.execute({ sql: "SELECT id FROM customers WHERE phone = ?", args: [phone] });
+  if (dup.length > 0) {
+    return NextResponse.json({ error: "A customer with this phone number already exists" }, { status: 409 });
+  }
+
   const result = await db.execute({
     sql: "INSERT INTO customers (name, phone, email) VALUES (?, ?, ?)",
     args: [name, phone, email || null],

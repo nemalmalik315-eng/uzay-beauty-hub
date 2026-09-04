@@ -237,8 +237,8 @@ export default function BillingPage() {
     }
     const res = await fetch(url);
     const data = await res.json();
-    setBills(data.bills);
-    setSummary(data.summary);
+    setBills(Array.isArray(data.bills) ? data.bills : []);
+    setSummary(data.summary ?? null);
   };
 
   useEffect(() => {
@@ -805,7 +805,7 @@ export default function BillingPage() {
               onClick={() => {
                 const rows = [
                   ["Date", "Customer", "Service", "Charge", "Discount", "Total", "Payment"],
-                  ...bills.map((b) => [
+                  ...filteredBills.map((b) => [
                     new Date(b.created_at).toLocaleDateString("en-PK"),
                     b.customer_name,
                     b.service_name.replace(/\|\|\|/g, " + ").replace(/~~\d+/g, ""),
