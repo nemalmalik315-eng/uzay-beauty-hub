@@ -278,6 +278,20 @@ async function getFrozenMonth(month: string) {
   const monthRevenue = Math.round((Number(revRows[0]?.revenue) || 0) * 100) / 100;
   const totalSalaries = Math.round((Number(salRows[0]?.total) || 0) * 100) / 100;
 
+  // Load frozen commissions from snapshot table
+  const { rows: snapRows } = await db.execute({
+    sql: `SELECT performer_name, total, days_qualified, details_json FROM commission_snapshots WHERE month = ? ORDER BY total DESC`,
+    args: [month],
+  });
+
+  const commissions = snapRows.map((r) => ({
+    name: String(r.performer_name),
+    total: Number(r.total),
+    days_qualified: Number(r.days_qualified),
+    details: r.details_json ? JSON.parse(String(r.details_json)) : [],
+  }));
+  const commissionTotal = Math.round(commissions.reduce((sum, c) => sum + c.total, 0) * 100) / 100;
+
   return {
     month,
     paid: true,
@@ -287,8 +301,8 @@ async function getFrozenMonth(month: string) {
     grand_total: Math.round(grandTotal * 100) / 100,
     total_pool: Math.round(grandTotal * 100) / 100,
     days_with_eyebrows: 0,
-    commissions: [],
-    commission_total: 0,
+    commissions,
+    commission_total: commissionTotal,
     month_revenue: monthRevenue,
     total_salaries: totalSalaries,
   };
@@ -360,6 +374,17 @@ export async function POST(req: NextRequest) {
             VALUES (?, ?, ?, ?, ?)`,
       args: [emp.employee_id, month, emp.total, emp.days_qualified, notes || null],
     });
+  }
+
+  // Snapshot commission data so it survives the payout lock
+  if (live.commissions && live.commissions.length > 0) {
+    for (const c of live.commissions) {
+      await db.execute({
+        sql: `INSERT INTO commission_snapshots (month, performer_name, total, days_qualified, details_json)
+              VALUES (?, ?, ?, ?, ?)`,
+        args: [month, c.name, c.total, c.days_qualified, JSON.stringify(c.details)],
+      });
+    }
   }
 
   return NextResponse.json({

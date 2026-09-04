@@ -24,33 +24,33 @@ export async function GET(req: NextRequest) {
 
   const paymentStatus = searchParams.get("payment_status");
 
-  let query = "SELECT * FROM billing";
+  let query = "SELECT b.*, COALESCE(c.phone, '') as customer_phone FROM billing b LEFT JOIN customers c ON c.id = b.customer_id";
   const conditions: string[] = [];
   const params: (string | number)[] = [];
 
   if (paymentStatus) {
-    conditions.push("payment_status = ?");
+    conditions.push("b.payment_status = ?");
     params.push(paymentStatus);
   }
 
   if (month) {
-    conditions.push("strftime('%Y-%m', created_at) = ?");
+    conditions.push("strftime('%Y-%m', b.created_at) = ?");
     params.push(month);
   } else if (period === "today" || (!period && !date)) {
-    conditions.push("DATE(created_at) = DATE('now')");
+    conditions.push("DATE(b.created_at) = DATE('now')");
   } else if (period === "week") {
-    conditions.push("strftime('%Y-%W', created_at) = strftime('%Y-%W', 'now')");
+    conditions.push("strftime('%Y-%W', b.created_at) = strftime('%Y-%W', 'now')");
   } else if (period === "month") {
-    conditions.push("strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
+    conditions.push("strftime('%Y-%m', b.created_at) = strftime('%Y-%m', 'now')");
   } else if (date) {
-    conditions.push("DATE(created_at) = ?");
+    conditions.push("DATE(b.created_at) = ?");
     params.push(date);
   }
 
   if (conditions.length > 0) {
     query += " WHERE " + conditions.join(" AND ");
   }
-  query += " ORDER BY created_at DESC";
+  query += " ORDER BY b.created_at DESC";
 
   const { rows: bills } = await db.execute({ sql: query, args: params });
 
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     END), 0) as total_revenue,
     COUNT(*) as total_transactions
   FROM billing
-  WHERE ${conditions.length > 0 ? conditions.join(" AND ") : "1=1"}`;
+  WHERE ${conditions.length > 0 ? conditions.map(c => c.replace(/^b\./, "")).join(" AND ") : "1=1"}`;
 
   const { rows: summaryRows } = await db.execute({ sql: summaryQuery, args: params });
   const summary = summaryRows[0];

@@ -1136,7 +1136,7 @@ export default function StaffPage() {
             </div>
             <p className="text-xs text-gray-400 mt-2">
               <span className="font-medium text-gray-500">Eyebrow pool:</span> charges from eyebrow services split equally among staff marked <span className="text-green-600 font-medium">Present</span> or Leave that day. &nbsp;
-              <span className="font-medium text-gray-500">Commissions:</span> 5% of all other service revenue split equally among all present/leave staff that day.
+              <span className="font-medium text-gray-500">Commissions:</span> 5% of non-eyebrow/non-haircut service revenue (after discount), split among the bill&apos;s performers.
             </p>
           </div>
 
@@ -1151,7 +1151,7 @@ export default function StaffPage() {
               <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 rounded-lg border border-purple-100 p-4">
                 <p className="text-xs text-gray-500 uppercase mb-1">Service Commissions</p>
                 <p className="text-2xl font-bold text-charcoal">Rs. {(bonusData.commission_total ?? 0).toLocaleString()}</p>
-                <p className="text-xs text-gray-400 mt-1">5% on non-eyebrow</p>
+                <p className="text-xs text-gray-400 mt-1">5% on non-eyebrow/haircut</p>
               </div>
               <div className="bg-white rounded-lg border border-gray-100 p-4">
                 <p className="text-xs text-gray-500 uppercase mb-1">Days With Eyebrows</p>

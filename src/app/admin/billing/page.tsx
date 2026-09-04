@@ -7,6 +7,7 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 interface Bill {
   id: number;
   customer_name: string;
+  customer_phone?: string;
   service_name: string;
   service_charge: number;
   discount: number;
@@ -173,6 +174,7 @@ export default function BillingPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [serviceFilter, setServiceFilter] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
 
   // Walk-in form state
   const [phone, setPhone] = useState("");
@@ -209,12 +211,13 @@ export default function BillingPage() {
   const subtotal = selectedServices.reduce((sum, s) => sum + s.price * s.qty, 0);
   const grandTotal = Math.max(0, subtotal - discount);
 
-  // Filter bills by service name and payment status
+  // Filter bills by service name, customer name, and payment status
   const filteredBills = bills.filter((b) => {
     if (showOutstandingOnly && b.payment_status === "paid") return false;
     if (serviceFilter && !parseServiceItems(b.service_name).some((s) =>
       s.name.toLowerCase().includes(serviceFilter.toLowerCase())
     )) return false;
+    if (nameFilter && !b.customer_name.toLowerCase().includes(nameFilter.toLowerCase())) return false;
     return true;
   });
 
@@ -401,7 +404,7 @@ export default function BillingPage() {
     setSelectedServices(rebuilt);
     setCompService(parsedComp);
     setCustomerName(bill.customer_name);
-    setPhone("");
+    setPhone(bill.customer_phone || "");
     setDiscount(bill.discount);
     setPaymentMethod(bill.payment_method);
     if (bill.payment_status === "paid") setAmountPaidOverride(null);
@@ -594,6 +597,7 @@ export default function BillingPage() {
       <div class="row"><span>Date</span><span>${new Date(bill.created_at).toLocaleString()}</span></div>
       <div class="row"><span>Customer</span><span class="bold">${bill.customer_name}</span></div>
       <div class="row"><span>Payment</span><span>${bill.payment_method.toUpperCase()}</span></div>
+      ${bill.performed_by ? `<div class="row"><span>Staff</span><span>${bill.performed_by}</span></div>` : ""}
       <div class="line"></div>
       <p class="bold">Services:</p>
       ${services.map(s => `<div class="row"><span>${s.name}</span><span>${s.price ? "Rs. " + s.price.toFixed(0) : "—"}</span></div>`).join("")}
@@ -751,7 +755,14 @@ export default function BillingPage() {
             </div>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setPeriod("month-pick")}
+                onClick={() => {
+                  if (!customMonth) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() - 1);
+                    setCustomMonth(d.toISOString().slice(0, 7));
+                  }
+                  setPeriod("month-pick");
+                }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   period === "month-pick"
                     ? "bg-gold text-white"
@@ -824,16 +835,27 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Service filter */}
+      {/* Service / name filter */}
       {bills.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-100 p-4">
           <div className="flex flex-wrap gap-2 items-center">
             <input
               type="text"
+              placeholder="Filter by customer name..."
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+              className="px-3 py-1.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none w-48"
+            />
+            {nameFilter && (
+              <button onClick={() => setNameFilter("")} className="text-xs text-gold hover:text-gold-dark">Clear</button>
+            )}
+            <span className="text-gray-300 text-xs">|</span>
+            <input
+              type="text"
               placeholder="Filter by service..."
               value={serviceFilter}
               onChange={(e) => setServiceFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none w-48"
+              className="px-3 py-1.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none w-44"
             />
             {serviceFilter && (
               <button
@@ -1317,7 +1339,7 @@ export default function BillingPage() {
                   value={amountPaidOverride !== null ? amountPaidOverride : ""}
                   onChange={(e) => {
                     const v = e.target.value;
-                    setAmountPaidOverride(v === "" ? null : Math.max(0, parseInt(v) || 0));
+                    setAmountPaidOverride(v === "" ? null : Math.min(grandTotal, Math.max(0, parseInt(v) || 0)));
                   }}
                   className="w-48 px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
                 />
@@ -1377,7 +1399,7 @@ export default function BillingPage() {
               {filteredBills.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-6 py-12 text-center text-gray-400">
-                    {serviceFilter ? `No bills matching "${serviceFilter}"` : "No bills for this period"}
+                    {nameFilter ? `No bills for "${nameFilter}"` : serviceFilter ? `No bills matching "${serviceFilter}"` : "No bills for this period"}
                   </td>
                 </tr>
               ) : (
@@ -1455,7 +1477,7 @@ export default function BillingPage() {
       <div className="md:hidden space-y-3">
         {filteredBills.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-100 px-4 py-12 text-center text-gray-400 text-sm">
-            {serviceFilter ? `No bills matching "${serviceFilter}"` : "No bills for this period"}
+            {nameFilter ? `No bills for "${nameFilter}"` : serviceFilter ? `No bills matching "${serviceFilter}"` : "No bills for this period"}
           </div>
         ) : (
           filteredBills.map((b) => (

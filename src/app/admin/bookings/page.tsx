@@ -27,6 +27,7 @@ interface BookingGroup {
   status: string;
   discount: number;
   complimentary_service: string;
+  performed_by: string;
   services: BookingService[];
   total: number;
   final_total: number;
@@ -247,7 +248,7 @@ export default function BookingsPage() {
 
   // Edit modal (date/time/discount/complimentary)
   const [editingGroup, setEditingGroup] = useState<BookingGroup | null>(null);
-  const [editForm, setEditForm] = useState({ date: "", time: "", discount: "", complimentary_service: "" });
+  const [editForm, setEditForm] = useState({ date: "", time: "", discount: "", complimentary_service: "", performed_by: "" });
 
   // WhatsApp dialog
   const [waDialog, setWaDialog] = useState<{ phone: string; message: string } | null>(null);
@@ -331,6 +332,7 @@ export default function BookingsPage() {
           discount,
           total: group.total - discount,
           payment_method: "cash",
+          performed_by: group.performed_by || undefined,
         }),
       });
       toast("Marked as completed & added to billing", "success");
@@ -346,14 +348,15 @@ export default function BookingsPage() {
     if (!editingGroup) return;
     const discountVal = editForm.discount !== "" ? Math.max(0, parseInt(editForm.discount) || 0) : editingGroup.discount;
     const compVal = editForm.complimentary_service.trim();
+    const performedByVal = editForm.performed_by.trim();
     const res = await fetch("/api/bookings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ group_id: editingGroup.group_id, date: editForm.date, time: to12h(editForm.time), discount: discountVal, complimentary_service: compVal }),
+      body: JSON.stringify({ group_id: editingGroup.group_id, date: editForm.date, time: to12h(editForm.time), discount: discountVal, complimentary_service: compVal, performed_by: performedByVal }),
     });
     if (res.ok) {
       toast("Booking updated");
-      const updatedGroup = { ...editingGroup, discount: discountVal, complimentary_service: compVal, final_total: editingGroup.total - discountVal };
+      const updatedGroup = { ...editingGroup, discount: discountVal, complimentary_service: compVal, performed_by: performedByVal, final_total: editingGroup.total - discountVal };
       setEditingGroup(null);
       loadBookings();
       const phone = editingGroup.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
@@ -561,6 +564,18 @@ export default function BookingsPage() {
                   <p className="text-xs text-emerald-600 mt-1">🎁 {editForm.complimentary_service} — free</p>
                 )}
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                  Performed By <span className="normal-case text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editForm.performed_by}
+                  onChange={(e) => setEditForm({ ...editForm, performed_by: e.target.value })}
+                  placeholder="Staff name(s), e.g. Uzay + Nida"
+                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                />
+              </div>
               {editingGroup.notes && (
                 <div>
                   <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">Client&apos;s Request</label>
@@ -667,7 +682,7 @@ export default function BookingsPage() {
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {(b.status === "pending" || b.status === "confirmed") && (
-                          <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "", complimentary_service: b.complimentary_service || "" }); }}
+                          <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "", complimentary_service: b.complimentary_service || "", performed_by: b.performed_by || "" }); }}
                             className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded hover:bg-gray-100">Edit</button>
                         )}
                         {b.status === "pending" && (
@@ -778,7 +793,7 @@ export default function BookingsPage() {
 
               <div className="flex flex-wrap gap-2">
                 {(b.status === "pending" || b.status === "confirmed") && (
-                  <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "", complimentary_service: b.complimentary_service || "" }); }}
+                  <button onClick={() => { setEditingGroup(b); setEditForm({ date: b.date, time: to24h(b.time), discount: b.discount > 0 ? String(b.discount) : "", complimentary_service: b.complimentary_service || "", performed_by: b.performed_by || "" }); }}
                     className="text-xs bg-gray-50 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-100">Edit</button>
                 )}
                 {b.status === "pending" && (

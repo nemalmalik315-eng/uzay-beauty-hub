@@ -40,6 +40,16 @@ export async function ensureStaffTables() {
       FOREIGN KEY (employee_id) REFERENCES employees(id),
       UNIQUE(employee_id, month)
     );
+
+    CREATE TABLE IF NOT EXISTS commission_snapshots (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      month TEXT NOT NULL,
+      performer_name TEXT NOT NULL,
+      total REAL NOT NULL,
+      days_qualified INTEGER NOT NULL DEFAULT 0,
+      details_json TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
   initialized = true;
 }
