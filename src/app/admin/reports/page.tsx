@@ -66,7 +66,7 @@ export default function ReportsPage() {
   useEffect(() => {
     fetch(`/api/reports?type=${type}`)
       .then((r) => r.json())
-      .then((res) => { setData(res.data); setToday(res.today); });
+      .then((res) => { setData(res.data ?? []); setToday(res.today ?? null); });
   }, [type]);
 
   useEffect(() => {

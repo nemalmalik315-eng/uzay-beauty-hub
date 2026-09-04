@@ -35,8 +35,8 @@ export default function StockPage() {
     const url = showLow ? "/api/stock?low_stock=true" : "/api/stock";
     const res = await fetch(url);
     const data = await res.json();
-    setItems(data.items);
-    setLowStockCount(data.lowStockCount);
+    setItems(Array.isArray(data.items) ? data.items : []);
+    setLowStockCount(data.lowStockCount ?? 0);
   };
 
   useEffect(() => {

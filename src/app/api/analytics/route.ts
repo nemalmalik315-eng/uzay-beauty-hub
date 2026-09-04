@@ -40,7 +40,7 @@ export async function GET() {
       SELECT e.name, COALESCE(bp.total_bonus, 0) as revenue, COALESCE(bp.bill_count, 0) as bills
       FROM employees e
       LEFT JOIN (
-        SELECT employee_id, SUM(bonus_amount) as total_bonus, COUNT(*) as bill_count
+        SELECT employee_id, SUM(amount) as total_bonus, COUNT(*) as bill_count
         FROM bonus_payouts
         WHERE created_at >= DATE('now','-30 days')
         GROUP BY employee_id

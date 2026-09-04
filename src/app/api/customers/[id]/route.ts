@@ -80,6 +80,16 @@ export async function PATCH(
   const body = await req.json();
   const { name, phone, email, surname, house_no, society, notes } = body;
 
+  if (phone) {
+    const { rows: dup } = await db.execute({
+      sql: "SELECT id FROM customers WHERE phone = ? AND id != ?",
+      args: [phone, Number(id)],
+    });
+    if (dup.length > 0) {
+      return NextResponse.json({ error: "Another customer already has this phone number" }, { status: 409 });
+    }
+  }
+
   await db.execute({
     sql: `UPDATE customers SET
             name    = COALESCE(?, name),

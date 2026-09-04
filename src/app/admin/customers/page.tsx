@@ -146,7 +146,8 @@ export default function CustomersPage() {
       );
       loadCustomers();
     } else {
-      toast("Failed to update", "error");
+      const errData = await res.json().catch(() => ({}));
+      toast(errData.error || "Failed to update", "error");
     }
     setSavingEdit(false);
   };

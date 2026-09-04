@@ -122,21 +122,23 @@ export default function AdminDashboard() {
         fetch("/api/stock"),
         fetch("/api/analytics").catch(() => null),
       ]);
-      const billing = await billingRes.json();
-      const bookings = await bookingsRes.json();
-      const customers = await customersRes.json();
-      const stock = await stockRes.json();
+      const billing = await billingRes.json().catch(() => ({}));
+      const bookings = await bookingsRes.json().catch(() => []);
+      const customers = await customersRes.json().catch(() => []);
+      const stock = await stockRes.json().catch(() => ({}));
       const analyticsData = analyticsRes ? await analyticsRes.json().catch(() => null) : null;
 
       const todayStr = new Date().toISOString().split("T")[0];
-      const todayBookings = bookings.filter((b: { date: string }) => b.date === todayStr);
+      const bookingsArr = Array.isArray(bookings) ? bookings : [];
+      const customersArr = Array.isArray(customers) ? customers : [];
+      const todayBookings = bookingsArr.filter((b: { date: string }) => b.date === todayStr);
 
       setData({
         todayRevenue: billing.summary?.total_revenue || 0,
         todayBookings: todayBookings.length,
-        totalCustomers: customers.length,
+        totalCustomers: customersArr.length,
         lowStockCount: stock.lowStockCount || 0,
-        recentBookings: bookings.slice(0, 5),
+        recentBookings: bookingsArr.slice(0, 5),
       });
       setAnalytics(analyticsData);
     }
