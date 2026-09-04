@@ -178,14 +178,12 @@ async function computeMonthLive(month: string) {
 
     const lines = String(row.service_name).split("|||");
     let nonEyebrowTotal = 0;
-    let allServicesTotal = 0;
     const nonEyebrowServiceNames: string[] = [];
 
     for (const line of lines) {
       const [name, priceStr] = line.split("~~");
       const price = parseFloat(priceStr) || 0;
       if (price <= 0) continue; // skip complimentary/free
-      allServicesTotal += price;
       const nameLower = name?.toLowerCase() || "";
       if (nameLower.includes("eyebrow") || nameLower.includes("haircut")) continue;
       nonEyebrowTotal += price;

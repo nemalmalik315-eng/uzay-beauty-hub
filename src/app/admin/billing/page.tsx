@@ -200,6 +200,7 @@ export default function BillingPage() {
   const [showCompDropdown, setShowCompDropdown] = useState(false);
   const phoneTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const nameTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const justSelectedCustomer = useRef(false);
   const nameRef = useRef<HTMLDivElement>(null);
   const serviceRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -268,6 +269,10 @@ export default function BillingPage() {
 
   // Customer lookup by name
   useEffect(() => {
+    if (justSelectedCustomer.current) {
+      justSelectedCustomer.current = false;
+      return;
+    }
     if (customerName.length < 2) {
       setNameSuggestions([]);
       setShowNameSuggestions(false);
@@ -288,15 +293,20 @@ export default function BillingPage() {
       if (serviceRef.current && !serviceRef.current.contains(e.target as Node)) {
         setShowServiceDropdown(false);
       }
+      if (nameRef.current && !nameRef.current.contains(e.target as Node)) {
+        setShowNameSuggestions(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const selectCustomer = (c: Customer) => {
+    justSelectedCustomer.current = true;
     setPhone(c.phone);
     setCustomerName(c.name);
     setShowSuggestions(false);
+    setNameSuggestions([]);
     setShowNameSuggestions(false);
   };
 
