@@ -51,5 +51,16 @@ export async function ensureStaffTables() {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+  // Add columns that may not exist on older installs
+  for (const col of [
+    "salary REAL NOT NULL DEFAULT 0",
+    "bonus_eligible INTEGER NOT NULL DEFAULT 1",
+    "sunday_shift_start TEXT",
+    "shift_change_date TEXT",
+    "shift_start_before TEXT",
+  ]) {
+    try { await db.execute(`ALTER TABLE employees ADD COLUMN ${col}`); } catch { /* exists */ }
+  }
+
   initialized = true;
 }

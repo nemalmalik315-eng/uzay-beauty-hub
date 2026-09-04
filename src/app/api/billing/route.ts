@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     END), 0) as total_revenue,
     COUNT(*) as total_transactions
   FROM billing
-  WHERE ${conditions.length > 0 ? conditions.map(c => c.replace(/^b\./, "")).join(" AND ") : "1=1"}`;
+  WHERE ${conditions.length > 0 ? conditions.map(c => c.replace(/\bb\./g, "")).join(" AND ") : "1=1"}`;
 
   const { rows: summaryRows } = await db.execute({ sql: summaryQuery, args: params });
   const summary = summaryRows[0];
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { id, service_name, service_charge, discount = 0, payment_method = "cash", payment_status, amount_paid, bill_date, performed_by, billed_by } = body;
+  const { id, customer_name, service_name, service_charge, discount = 0, payment_method = "cash", payment_status, amount_paid, bill_date, performed_by, billed_by } = body;
 
   if (!id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -154,6 +154,7 @@ export async function PATCH(req: NextRequest) {
   const sets: string[] = [];
   const args: (string | number)[] = [];
 
+  if (customer_name !== undefined) { sets.push("customer_name = ?"); args.push(customer_name); }
   if (service_name !== undefined) {
     const total = (service_charge ?? 0) - (discount ?? 0);
     sets.push("service_name = ?", "service_charge = ?", "discount = ?", "total = ?", "payment_method = ?");

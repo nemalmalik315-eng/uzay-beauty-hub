@@ -1256,13 +1256,13 @@ export default function StaffPage() {
             </div>
           </div>
 
-          {/* Service Commissions — 5% split equally among all staff */}
+          {/* Service Commissions — 5% per performer */}
           <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
             <div className="px-6 py-3 bg-gray-50 border-b border-gray-100">
               <h3 className="font-heading text-sm font-semibold text-charcoal uppercase tracking-wider">
                 Service Commissions (5%)
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">5% of all non-eyebrow service revenue, split equally among all present/leave staff that day. Click a name to see breakdown.</p>
+              <p className="text-xs text-gray-400 mt-0.5">5% of non-eyebrow/non-haircut revenue per bill (after discount), split among the bill&apos;s performers. Click a name to see breakdown.</p>
             </div>
             <div>
               {!bonusData || (bonusData.commissions ?? []).length === 0 ? (

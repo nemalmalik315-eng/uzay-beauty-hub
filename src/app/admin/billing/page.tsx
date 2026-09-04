@@ -490,6 +490,7 @@ export default function BillingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: editingBillId,
+            customer_name: customerName.trim(),
             service_name: encodedName,
             service_charge: subtotal,
             discount,
