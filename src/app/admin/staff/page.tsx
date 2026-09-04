@@ -186,7 +186,7 @@ export default function StaffPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deactivating, setDeactivating] = useState<Employee | null>(null);
   const [empForm, setEmpForm] = useState({
-    name: "", phone: "", shift_start: "11:00", sunday_shift_start: "",
+    name: "", phone: "", shift_start: "11:00", sunday_shift_start: "", bonus_eligible: true,
   });
 
   // Attendance state
@@ -216,21 +216,21 @@ export default function StaffPage() {
   const loadEmployees = async () => {
     const res = await fetch("/api/employees?all=true");
     const data = await res.json();
-    setEmployees(data);
+    setEmployees(Array.isArray(data) ? data : []);
   };
 
   // Load attendance
   const loadAttendance = async () => {
     const res = await fetch(`/api/attendance?date=${attendanceDate}`);
     const data = await res.json();
-    setAttendance(data.attendance);
-    setSummary(data.summary);
-    // Pre-fill time inputs: use existing check_in_time if already marked, else current time
+    const rows: AttendanceRow[] = Array.isArray(data.attendance) ? data.attendance : [];
+    setAttendance(rows);
+    setSummary(data.summary ?? null);
     const now = new Date();
     const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     setCheckInTimes((prev) => {
       const next = { ...prev };
-      (data.attendance as AttendanceRow[]).forEach((row) => {
+      rows.forEach((row) => {
         next[row.employee_id] = row.check_in_time || next[row.employee_id] || nowStr;
       });
       return next;
@@ -249,7 +249,7 @@ export default function StaffPage() {
   const loadBonus = async () => {
     const res = await fetch(`/api/bonuses?month=${bonusMonth}`);
     const data = await res.json();
-    setBonusData(data);
+    setBonusData(Array.isArray(data.employees) ? data : null);
   };
 
   // Load history of paid months
@@ -328,6 +328,7 @@ export default function StaffPage() {
         phone: empForm.phone,
         shift_start: empForm.shift_start,
         sunday_shift_start: empForm.sunday_shift_start || null,
+        bonus_eligible: empForm.bonus_eligible ? 1 : 0,
       }),
     });
     if (res.ok) {
@@ -477,6 +478,17 @@ export default function StaffPage() {
                   value={empForm.sunday_shift_start}
                   onChange={(v) => setEmpForm({ ...empForm, sunday_shift_start: v })}
                 />
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">Bonus Eligible</label>
+                <button
+                  type="button"
+                  onClick={() => setEmpForm({ ...empForm, bonus_eligible: !empForm.bonus_eligible })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${empForm.bonus_eligible ? "bg-gold" : "bg-gray-300"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${empForm.bonus_eligible ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+                <span className="text-xs text-gray-500">{empForm.bonus_eligible ? "Included in eyebrow pool" : "Excluded from pool"}</span>
               </div>
             </div>
             <div className="flex gap-3 justify-end mt-5">
@@ -851,6 +863,7 @@ export default function StaffPage() {
                                   phone: emp.phone,
                                   shift_start: emp.shift_start,
                                   sunday_shift_start: emp.sunday_shift_start || "",
+                                  bonus_eligible: !!emp.bonus_eligible,
                                 });
                               }}
                               className="text-xs text-gold hover:text-gold-dark font-medium"

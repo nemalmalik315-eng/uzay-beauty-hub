@@ -80,7 +80,7 @@ export default function CustomersPage() {
     if (sort) params.set("sort", sort);
     const res = await fetch(`/api/customers?${params}`);
     const data = await res.json();
-    setCustomers(data);
+    setCustomers(Array.isArray(data) ? data : []);
   };
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function CustomersPage() {
     setLoadingReengage(true);
     const res = await fetch("/api/customers/reengagement");
     const data = await res.json();
-    setReengagementClients(data);
+    setReengagementClients(Array.isArray(data) ? data : []);
     setLoadingReengage(false);
   };
 

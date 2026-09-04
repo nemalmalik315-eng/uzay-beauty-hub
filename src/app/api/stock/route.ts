@@ -81,6 +81,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  await db.execute({ sql: "DELETE FROM stock WHERE id = ?", args: [id] });
+  await db.execute({ sql: "DELETE FROM stock WHERE id = ?", args: [Number(id)] });
   return NextResponse.json({ message: "Stock deleted" });
 }

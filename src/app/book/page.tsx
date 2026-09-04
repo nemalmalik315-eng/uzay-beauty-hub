@@ -45,7 +45,7 @@ export default function BookPage() {
   useEffect(() => {
     fetch("/api/services")
       .then((r) => r.json())
-      .then((data) => setServices(data));
+      .then((data) => setServices(Array.isArray(data) ? data : []));
   }, []);
 
   const CATEGORY_ORDER = [
@@ -92,6 +92,9 @@ export default function BookPage() {
         setSubmitted(true);
         setForm({ name: "", phone: "", date: "", time: "", notes: "" });
         setSelectedServices([]);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Booking failed. Please try again or contact us via WhatsApp.");
       }
     } catch {
       alert("Something went wrong. Please try again.");
