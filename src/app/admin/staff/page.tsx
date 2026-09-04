@@ -308,7 +308,7 @@ export default function StaffPage() {
     });
     if (res.ok) {
       toast("Employee added");
-      setEmpForm({ name: "", phone: "", shift_start: "11:00", sunday_shift_start: "" });
+      setEmpForm({ name: "", phone: "", shift_start: "11:00", sunday_shift_start: "", bonus_eligible: true });
       setShowAddEmployee(false);
       loadEmployees();
       loadAttendance();
@@ -370,11 +370,12 @@ export default function StaffPage() {
 
   const saveSalary = async (emp: Employee) => {
     const salary = parseInt(salaryInput) || 0;
-    await fetch("/api/employees", {
+    const res = await fetch("/api/employees", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: emp.id, salary }),
     });
+    if (!res.ok) { toast("Failed to update salary", "error"); return; }
     toast(`Salary updated for ${emp.name}`);
     setEditingSalaryId(null);
     loadEmployees();
