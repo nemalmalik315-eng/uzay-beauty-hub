@@ -284,7 +284,7 @@ export default function BookingsPage() {
 
   const handleConfirmWithDiscount = async () => {
     if (!confirmModal) return;
-    const discount = parseInt(discountInput) || 0;
+    const discount = Math.max(0, Math.min(parseInt(discountInput) || 0, confirmModal.total));
     const group = confirmModal;
 
     const res = await fetch("/api/bookings", {
@@ -320,7 +320,7 @@ export default function BookingsPage() {
       if (group.complimentary_service) serviceLines.push(`🎁 ${group.complimentary_service} (free)~~0`);
       const serviceName = serviceLines.join("|||");
       const discount = group.discount ?? 0;
-      await fetch("/api/billing", {
+      const billingRes = await fetch("/api/billing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -335,7 +335,12 @@ export default function BookingsPage() {
           performed_by: group.performed_by || undefined,
         }),
       });
-      toast("Marked as completed & added to billing", "success");
+      const billingData = await billingRes.json();
+      if (!billingRes.ok && !billingData.duplicate) {
+        toast("Completed — but billing failed. Add the bill manually.", "error");
+      } else {
+        toast("Marked as completed & added to billing", "success");
+      }
     } else {
       const msg = status === "cancelled" ? "Booking cancelled" : status === "confirmed" ? "Booking reopened" : status === "no_show" ? "Marked as no-show" : "Updated";
       toast(msg, status === "cancelled" ? "info" : "success");
@@ -787,6 +792,12 @@ export default function BookingsPage() {
                   <div className="flex justify-between">
                     <span className="text-gray-400">Request</span>
                     <span className="text-amber-600 text-right ml-3 max-w-[65%]">{b.notes}</span>
+                  </div>
+                )}
+                {b.performed_by && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Staff</span>
+                    <span className="text-gray-700 text-right ml-3 max-w-[65%]">{b.performed_by}</span>
                   </div>
                 )}
               </div>

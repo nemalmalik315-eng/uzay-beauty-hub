@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const total = service_charge - discount;
+  const total = Math.max(0, service_charge - discount);
 
   const effectivePaid = amount_paid ?? total;
   const result = await db.execute(
@@ -145,18 +145,36 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { id, customer_name, service_name, service_charge, discount = 0, payment_method = "cash", payment_status, amount_paid, bill_date, performed_by, billed_by } = body;
+  const { id, customer_name, customer_phone, service_name, service_charge, discount = 0, payment_method = "cash", payment_status, amount_paid, bill_date, performed_by, billed_by } = body;
 
   if (!id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
   const sets: string[] = [];
-  const args: (string | number)[] = [];
+  const args: (string | number | null)[] = [];
 
   if (customer_name !== undefined) { sets.push("customer_name = ?"); args.push(customer_name); }
+
+  // If phone is provided and this bill has no customer yet, link or create a customer record
+  if (customer_phone) {
+    const { rows: existing } = await db.execute({ sql: "SELECT id FROM billing WHERE id = ?", args: [Number(id)] });
+    const billRow = existing[0] as Record<string, unknown> | undefined;
+    if (billRow && !billRow.customer_id) {
+      const { rows: custRows } = await db.execute({ sql: "SELECT id FROM customers WHERE phone = ?", args: [customer_phone] });
+      let custId: number;
+      if (custRows.length > 0) {
+        custId = Number(custRows[0].id);
+      } else {
+        const r = await db.execute({ sql: "INSERT INTO customers (name, phone) VALUES (?, ?)", args: [customer_name || "", customer_phone] });
+        custId = Number(r.lastInsertRowid);
+      }
+      sets.push("customer_id = ?"); args.push(custId);
+    }
+  }
+
   if (service_name !== undefined) {
-    const total = (service_charge ?? 0) - (discount ?? 0);
+    const total = Math.max(0, (service_charge ?? 0) - (discount ?? 0));
     sets.push("service_name = ?", "service_charge = ?", "discount = ?", "total = ?", "payment_method = ?");
     args.push(service_name, service_charge ?? 0, discount ?? 0, total, payment_method);
   }

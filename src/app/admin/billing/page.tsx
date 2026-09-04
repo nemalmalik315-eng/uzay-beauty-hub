@@ -425,21 +425,23 @@ export default function BillingPage() {
   };
 
   const markPaid = async (bill: Bill) => {
-    await fetch("/api/billing", {
+    const res = await fetch("/api/billing", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: bill.id, payment_status: "paid", amount_paid: bill.total }),
     });
+    if (!res.ok) { toast("Failed to update payment", "error"); return; }
     toast("Marked as paid", "success");
     loadBills();
   };
 
   const collectRemaining = async (bill: Bill) => {
-    await fetch("/api/billing", {
+    const res = await fetch("/api/billing", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: bill.id, payment_status: "paid", amount_paid: bill.total }),
     });
+    if (!res.ok) { toast("Failed to collect payment", "error"); return; }
     const remaining = bill.total - (bill.amount_paid ?? 0);
     toast(`Collected Rs. ${remaining.toLocaleString()} — fully paid`, "success");
     loadBills();
@@ -464,6 +466,8 @@ export default function BillingPage() {
     setPerformers([""]);
     setCompService("");
     setShowCompDropdown(false);
+    setNameFilter("");
+    setServiceFilter("");
     setShowAdd(false);
   };
 
@@ -491,6 +495,7 @@ export default function BillingPage() {
           body: JSON.stringify({
             id: editingBillId,
             customer_name: customerName.trim(),
+            customer_phone: phone.trim() || undefined,
             service_name: encodedName,
             service_charge: subtotal,
             discount,
