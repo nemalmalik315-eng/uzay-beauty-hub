@@ -245,13 +245,13 @@ export default function BillingPage() {
     loadBills();
     fetch("/api/services")
       .then((r) => r.json())
-      .then(setServices);
+      .then((data) => setServices(Array.isArray(data) ? data : []));
   }, [period, customDate, customMonth]);
 
   useEffect(() => {
     fetch("/api/employees")
       .then((r) => r.json())
-      .then((data: StaffEmployee[]) => setStaffEmployees(data));
+      .then((data) => setStaffEmployees(Array.isArray(data) ? data : []));
   }, []);
 
   // Customer lookup by phone
@@ -265,8 +265,9 @@ export default function BillingPage() {
     phoneTimeout.current = setTimeout(async () => {
       const res = await fetch(`/api/customers?search=${encodeURIComponent(phone)}`);
       const data = await res.json();
-      setCustomerSuggestions(data);
-      setShowSuggestions(data.length > 0);
+      const arr = Array.isArray(data) ? data : [];
+      setCustomerSuggestions(arr);
+      setShowSuggestions(arr.length > 0);
     }, 300);
   }, [phone]);
 
@@ -285,8 +286,9 @@ export default function BillingPage() {
     nameTimeout.current = setTimeout(async () => {
       const res = await fetch(`/api/customers?search=${encodeURIComponent(customerName)}`);
       const data = await res.json();
-      setNameSuggestions(data);
-      setShowNameSuggestions(data.length > 0);
+      const arr = Array.isArray(data) ? data : [];
+      setNameSuggestions(arr);
+      setShowNameSuggestions(arr.length > 0);
     }, 300);
   }, [customerName]);
 

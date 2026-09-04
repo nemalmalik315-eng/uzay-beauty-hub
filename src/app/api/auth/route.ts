@@ -55,7 +55,14 @@ export async function GET(req: NextRequest) {
     const decoded = Buffer.from(token, "base64").toString();
     const [id, username] = decoded.split(":");
     if (id && username) {
-      return NextResponse.json({ authenticated: true, username });
+      const db = getDb();
+      const { rows } = await db.execute({
+        sql: "SELECT id FROM admin_users WHERE id = ? AND username = ?",
+        args: [Number(id), username],
+      });
+      if (rows.length > 0) {
+        return NextResponse.json({ authenticated: true, username });
+      }
     }
   } catch {
     // invalid token
