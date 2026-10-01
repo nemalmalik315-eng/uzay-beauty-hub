@@ -710,7 +710,7 @@ export default function BookingsPage() {
                           <button onClick={() => handleConfirmClick(b)}
                             className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">Confirm</button>
                         )}
-                        {(b.status === "pending" || b.status === "confirmed" || b.status === "completed") && (
+                        {(b.status === "pending" || b.status === "confirmed") && (
                           <button onClick={() => handleCheckIn(b)}
                             className="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-100 font-medium">✓ Check In</button>
                         )}
