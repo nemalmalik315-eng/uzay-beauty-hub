@@ -770,7 +770,7 @@ export default function StaffPage() {
               <button
                 onClick={() => {
                   setShowAddEmployee(!showAddEmployee);
-                  setEmpForm({ name: "", phone: "", shift_start: "11:00", sunday_shift_start: "" });
+                  setEmpForm({ name: "", phone: "", shift_start: "11:00", sunday_shift_start: "", bonus_eligible: false });
                 }}
                 className="btn-gold text-sm py-2"
               >
@@ -921,7 +921,7 @@ export default function StaffPage() {
                     <button
                       onClick={() => {
                         setEditingEmployee(emp);
-                        setEmpForm({ name: emp.name, phone: emp.phone, shift_start: emp.shift_start, sunday_shift_start: emp.sunday_shift_start || "" });
+                        setEmpForm({ name: emp.name, phone: emp.phone, shift_start: emp.shift_start, sunday_shift_start: emp.sunday_shift_start || "", bonus_eligible: Boolean(emp.bonus_eligible) });
                       }}
                       className="text-xs text-gold hover:text-gold-dark font-medium"
                     >
