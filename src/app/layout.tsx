@@ -4,6 +4,12 @@ import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://uzaybeautyhub.com"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Uzay Beauty",
+  },
   title: "Uzay Beauty Hub | Premium Salon Services",
   description:
     "Uzay Beauty Hub — Premium hair, skin, nails & bridal makeup in Lahore. Book your appointment online today.",
@@ -88,6 +94,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="theme-color" content="#C9A84C" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      </head>
       <body className="min-h-screen bg-cream font-body antialiased">
         <script
           type="application/ld+json"

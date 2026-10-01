@@ -172,6 +172,7 @@ export default function BillingPage() {
     setPinError(false);
   }
   const [showAdd, setShowAdd] = useState(false);
+  const [checkinBanner, setCheckinBanner] = useState<{ group_id: number; name: string } | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [serviceFilter, setServiceFilter] = useState("");
   const [nameFilter, setNameFilter] = useState("");
@@ -185,6 +186,8 @@ export default function BillingPage() {
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
   const [discount, setDiscount] = useState(0);
+  const [discountMode, setDiscountMode] = useState<"amount" | "percent">("amount");
+  const [discountPercent, setDiscountPercent] = useState<number | "">(0);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [serviceSearch, setServiceSearch] = useState("");
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
@@ -252,6 +255,37 @@ export default function BillingPage() {
     fetch("/api/employees")
       .then((r) => r.json())
       .then((data) => setStaffEmployees(Array.isArray(data) ? data : []));
+  }, []);
+
+  // Pre-fill from Check In (bookings page passes data via localStorage)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("checkin_booking");
+      if (!raw) return;
+      localStorage.removeItem("checkin_booking");
+      const booking = JSON.parse(raw) as {
+        group_id: number;
+        customer_name: string;
+        customer_phone: string;
+        services: { id: number; name: string; price: number }[];
+        notes: string;
+      };
+      setCustomerName(booking.customer_name);
+      setPhone(booking.customer_phone || "");
+      setSelectedServices(
+        booking.services.map((s) => ({
+          id: s.id,
+          name: s.name,
+          price: s.price,
+          priceMin: s.price,
+          priceMax: null,
+          qty: 1,
+        }))
+      );
+      setCheckinBanner({ group_id: booking.group_id, name: booking.customer_name });
+      setShowAdd(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch { /* ignore */ }
   }, []);
 
   // Customer lookup by phone
@@ -408,6 +442,8 @@ export default function BillingPage() {
     setCustomerName(bill.customer_name);
     setPhone(bill.customer_phone || "");
     setDiscount(bill.discount);
+    setDiscountMode("amount");
+    setDiscountPercent(0);
     setPaymentMethod(bill.payment_method);
     if (bill.payment_status === "paid") setAmountPaidOverride(null);
     else if (bill.payment_status === "pending") setAmountPaidOverride(0);
@@ -458,12 +494,15 @@ export default function BillingPage() {
     setShowNameSuggestions(false);
     setSelectedServices([]);
     setDiscount(0);
+    setDiscountMode("amount");
+    setDiscountPercent(0);
     setPaymentMethod("cash");
     setAmountPaidOverride(null);
     setServiceSearch("");
     setBillDate(new Date().toISOString().split("T")[0]);
     setSavedBillInfo(null);
     setEditingBillId(null);
+    setCheckinBanner(null);
     setBilledBy("");
     setPerformers([""]);
     setCompService("");
@@ -553,6 +592,8 @@ export default function BillingPage() {
       setCustomerName("");
       setSelectedServices([]);
       setDiscount(0);
+      setDiscountMode("amount");
+      setDiscountPercent(0);
       setPaymentMethod("cash");
       setAmountPaidOverride(null);
       setServiceSearch("");
@@ -981,8 +1022,20 @@ export default function BillingPage() {
       {/* Walk-in bill form */}
       {showAdd && !savedBillInfo && (
         <form onSubmit={saveBill} className="bg-white rounded-lg border border-gray-100 p-6">
+          {checkinBanner && (
+            <div className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 mb-5">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-600 text-sm">✓</span>
+                <p className="text-sm text-emerald-800 font-medium">
+                  Checked in from booking — <span className="font-semibold">{checkinBanner.name}</span>
+                  <span className="font-normal text-emerald-600"> · Booking #{checkinBanner.group_id}</span>
+                </p>
+              </div>
+              <p className="text-xs text-emerald-600 flex-shrink-0">Add or remove services below</p>
+            </div>
+          )}
           <h3 className="font-heading text-lg font-semibold mb-5">
-            {editingBillId ? `Edit Bill #${editingBillId}` : "New Walk-in Bill"}
+            {editingBillId ? `Edit Bill #${editingBillId}` : checkinBanner ? `Check In — ${checkinBanner.name}` : "New Walk-in Bill"}
           </h3>
 
           {/* Customer info */}
@@ -1284,16 +1337,72 @@ export default function BillingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
             <div>
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
-                Discount (Rs.)
+                Discount
               </label>
-              <input
-                type="number"
-                placeholder="0"
-                min={0}
-                value={discount || ""}
-                onChange={(e) => setDiscount(parseInt(e.target.value) || 0)}
-                className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
-              />
+              {/* Mode toggle */}
+              <div className="flex rounded-md border border-gray-200 overflow-hidden mb-2 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => { setDiscountMode("amount"); }}
+                  className={`flex-1 py-1.5 transition-colors ${discountMode === "amount" ? "bg-charcoal text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
+                >
+                  Rs. Amount
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDiscountMode("percent"); }}
+                  className={`flex-1 py-1.5 transition-colors ${discountMode === "percent" ? "bg-charcoal text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
+                >
+                  % Off
+                </button>
+              </div>
+
+              {discountMode === "amount" ? (
+                <input
+                  type="number"
+                  placeholder="0"
+                  min={0}
+                  value={discount || ""}
+                  onChange={(e) => setDiscount(parseInt(e.target.value) || 0)}
+                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                />
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {/* Preset % buttons */}
+                  <div className="flex gap-1.5 flex-wrap">
+                    {[10, 15, 20, 25, 50].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => {
+                          setDiscountPercent(pct);
+                          setDiscount(Math.round(subtotal * pct / 100));
+                        }}
+                        className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${discountPercent === pct ? "bg-gold border-gold text-white" : "border-gray-200 text-gray-600 hover:border-gold hover:text-gold"}`}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+                  {/* Custom % input */}
+                  <input
+                    type="number"
+                    placeholder="Custom %"
+                    min={0}
+                    max={100}
+                    value={discountPercent || ""}
+                    onChange={(e) => {
+                      const pct = Math.min(100, parseInt(e.target.value) || 0);
+                      setDiscountPercent(pct);
+                      setDiscount(Math.round(subtotal * pct / 100));
+                    }}
+                    className="w-full px-4 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                  />
+                  {discount > 0 && (
+                    <p className="text-xs text-gray-400">= Rs. {discount.toLocaleString()} off</p>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">

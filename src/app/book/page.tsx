@@ -16,7 +16,7 @@ interface Service {
 
 export default function BookPage() {
   const [services, setServices] = useState<Service[]>([]);
-  const [selectedServices, setSelectedServices] = useState<number[]>([]);
+  const [selectedServices, setSelectedServices] = useState<Record<number, number>>({});
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [form, setForm] = useState({
     name: "",
@@ -66,18 +66,37 @@ export default function BookPage() {
       ? services
       : services.filter((s) => s.category === activeCategory);
 
-  const toggleService = (id: number) => {
-    setSelectedServices((prev) =>
-      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
-    );
+  const addService = (id: number) => {
+    setSelectedServices((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
   };
 
-  const selectedDetails = services.filter((s) => selectedServices.includes(s.id));
-  const totalPrice = selectedDetails.reduce((sum, s) => sum + s.price, 0);
+  const removeOne = (id: number) => {
+    setSelectedServices((prev) => {
+      const qty = prev[id] || 0;
+      if (qty <= 1) {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      return { ...prev, [id]: qty - 1 };
+    });
+  };
+
+  const selectedDetails = Object.entries(selectedServices)
+    .map(([id, qty]) => {
+      const svc = services.find((s) => s.id === Number(id));
+      return svc ? { ...svc, qty } : null;
+    })
+    .filter(Boolean) as (Service & { qty: number })[];
+
+  const totalPrice = selectedDetails.reduce((sum, s) => sum + s.price * s.qty, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedServices.length === 0) return;
+    const serviceIds = Object.entries(selectedServices).flatMap(([id, qty]) =>
+      Array(qty).fill(Number(id))
+    );
+    if (serviceIds.length === 0) return;
     setLoading(true);
     try {
       const res = await fetch("/api/bookings", {
@@ -85,13 +104,13 @@ export default function BookPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          service_ids: selectedServices,
+          service_ids: serviceIds,
         }),
       });
       if (res.ok) {
         setSubmitted(true);
         setForm({ name: "", phone: "", date: "", time: "", notes: "" });
-        setSelectedServices([]);
+        setSelectedServices({});
       } else {
         const err = await res.json().catch(() => ({}));
         alert(err.error || "Booking failed. Please try again or contact us via WhatsApp.");
@@ -181,12 +200,11 @@ export default function BookPage() {
                 {/* Service Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {filteredServices.map((service) => {
-                    const isSelected = selectedServices.includes(service.id);
+                    const qty = selectedServices[service.id] || 0;
+                    const isSelected = qty > 0;
                     return (
-                      <button
+                      <div
                         key={service.id}
-                        type="button"
-                        onClick={() => toggleService(service.id)}
                         className={`relative text-left p-4 rounded-lg border transition-all ${
                           isSelected
                             ? "border-gold bg-gold/5 shadow-sm"
@@ -194,7 +212,10 @@ export default function BookPage() {
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
+                          <div
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => addService(service.id)}
+                          >
                             <p className={`font-medium text-sm ${isSelected ? "text-charcoal" : "text-gray-700"}`}>
                               {service.name}
                             </p>
@@ -219,21 +240,37 @@ export default function BookPage() {
                               )}
                             </div>
                           </div>
-                          <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                              isSelected
-                                ? "border-gold bg-gold"
-                                : "border-gray-300"
-                            }`}
-                          >
-                            {isSelected && (
-                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
+                          {isSelected ? (
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => removeOne(service.id)}
+                                className="w-7 h-7 rounded-full border border-gold text-gold flex items-center justify-center text-lg leading-none hover:bg-gold hover:text-white transition-colors"
+                              >
+                                −
+                              </button>
+                              <span className="w-6 text-center text-sm font-bold text-charcoal tabular-nums">
+                                {qty}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => addService(service.id)}
+                                className="w-7 h-7 rounded-full bg-gold text-white flex items-center justify-center text-lg leading-none hover:bg-gold/80 transition-colors"
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => addService(service.id)}
+                              className="w-7 h-7 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0 text-gray-300 hover:border-gold hover:text-gold transition-colors text-xl leading-none"
+                            >
+                              +
+                            </button>
+                          )}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -243,11 +280,11 @@ export default function BookPage() {
                   <div className="mt-6 p-4 bg-gold/5 border border-gold/20 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm font-medium text-charcoal">
-                        {selectedDetails.length} service{selectedDetails.length > 1 ? "s" : ""} selected
+                        {selectedDetails.reduce((n, s) => n + s.qty, 0)} service{selectedDetails.reduce((n, s) => n + s.qty, 0) !== 1 ? "s" : ""} selected
                       </p>
                       <button
                         type="button"
-                        onClick={() => setSelectedServices([])}
+                        onClick={() => setSelectedServices({})}
                         className="text-xs text-gray-400 hover:text-red-500 transition-colors"
                       >
                         Clear all
@@ -256,14 +293,16 @@ export default function BookPage() {
                     <div className="space-y-1.5">
                       {selectedDetails.map((s) => (
                         <div key={s.id} className="flex items-center justify-between text-sm gap-2">
-                          <span className="text-gray-600 flex-1 min-w-0 truncate">{s.name}</span>
+                          <span className="text-gray-600 flex-1 min-w-0 truncate">
+                            {s.name}{s.qty > 1 && <span className="ml-1 text-gold font-medium">×{s.qty}</span>}
+                          </span>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-gray-500">Rs. {s.price.toLocaleString()}</span>
+                            <span className="text-gray-500">Rs. {(s.price * s.qty).toLocaleString()}</span>
                             <button
                               type="button"
-                              onClick={() => toggleService(s.id)}
+                              onClick={() => removeOne(s.id)}
                               className="w-5 h-5 rounded-full bg-gray-200 hover:bg-red-100 hover:text-red-500 flex items-center justify-center text-gray-400 transition-colors"
-                              aria-label={`Remove ${s.name}`}
+                              aria-label={`Remove one ${s.name}`}
                             >
                               ×
                             </button>
@@ -390,12 +429,12 @@ export default function BookPage() {
 
                 <button
                   type="submit"
-                  disabled={loading || selectedServices.length === 0}
+                  disabled={loading || Object.keys(selectedServices).length === 0}
                   className="btn-gold w-full text-base sm:text-lg py-4 mt-4 disabled:opacity-50"
                 >
                   {loading ? (
                     "Booking..."
-                  ) : selectedServices.length === 0 ? (
+                  ) : Object.keys(selectedServices).length === 0 ? (
                     "Select at least one service"
                   ) : (
                     <>

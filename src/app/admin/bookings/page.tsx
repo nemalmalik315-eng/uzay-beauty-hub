@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/admin/Toast";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 
@@ -235,6 +236,7 @@ function to12h(t: string): string {
 const today = new Date().toISOString().split("T")[0];
 
 export default function BookingsPage() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<BookingGroup[]>([]);
   const [filter, setFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
@@ -346,6 +348,20 @@ export default function BookingsPage() {
       toast(msg, status === "cancelled" ? "info" : "success");
     }
     loadBookings();
+  };
+
+  // ── Check In → Billing ──────────────────────────────────────────────────
+  const handleCheckIn = (b: BookingGroup) => {
+    try {
+      localStorage.setItem("checkin_booking", JSON.stringify({
+        group_id: b.group_id,
+        customer_name: b.customer_name,
+        customer_phone: b.customer_phone,
+        services: b.services,
+        notes: b.notes,
+      }));
+    } catch { /* localStorage unavailable */ }
+    router.push("/admin/billing");
   };
 
   // ── Edit (date/time/discount/complimentary) ──────────────────────────────
@@ -694,6 +710,10 @@ export default function BookingsPage() {
                           <button onClick={() => handleConfirmClick(b)}
                             className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">Confirm</button>
                         )}
+                        {(b.status === "pending" || b.status === "confirmed") && (
+                          <button onClick={() => handleCheckIn(b)}
+                            className="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-100 font-medium">✓ Check In</button>
+                        )}
                         {b.status === "confirmed" && (
                           <>
                             <button onClick={() => generateReceiptPdf(b, b.discount)}
@@ -702,10 +722,6 @@ export default function BookingsPage() {
                               const ph = b.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
                               setWaDialog({ phone: ph, message: buildWaMessage(b, b.discount) });
                             }} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100">Message</button>
-                            <button onClick={() => {
-                              const ph = b.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
-                              setWaDialog({ phone: ph, message: buildReminderMessage(b) });
-                            }} className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded hover:bg-purple-100">Remind</button>
                           </>
                         )}
                         {(b.status === "pending" || b.status === "confirmed") && (
