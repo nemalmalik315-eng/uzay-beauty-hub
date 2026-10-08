@@ -827,6 +827,10 @@ export default function BookingsPage() {
                   <button onClick={() => handleConfirmClick(b)}
                     className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded hover:bg-blue-100">Confirm</button>
                 )}
+                {(b.status === "pending" || b.status === "confirmed") && (
+                  <button onClick={() => handleCheckIn(b)}
+                    className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded hover:bg-emerald-100 font-medium">✓ Check In</button>
+                )}
                 {b.status === "confirmed" && (
                   <>
                     <button onClick={() => generateReceiptPdf(b, b.discount)}
@@ -835,10 +839,6 @@ export default function BookingsPage() {
                       const ph = b.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
                       setWaDialog({ phone: ph, message: buildWaMessage(b, b.discount) });
                     }} className="text-xs bg-green-50 text-green-600 px-3 py-1.5 rounded hover:bg-green-100">Message</button>
-                    <button onClick={() => {
-                      const ph = b.customer_phone.replace(/\D/g, "").replace(/^0/, "92");
-                      setWaDialog({ phone: ph, message: buildReminderMessage(b) });
-                    }} className="text-xs bg-purple-50 text-purple-600 px-3 py-1.5 rounded hover:bg-purple-100">Remind</button>
                   </>
                 )}
                 {(b.status === "pending" || b.status === "confirmed") && (

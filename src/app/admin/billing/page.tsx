@@ -555,6 +555,7 @@ export default function BillingPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            booking_id: checkinBanner?.group_id || undefined,
             customer_name: customerName.trim(),
             customer_phone: phone.trim() || undefined,
             service_name: encodedName,
