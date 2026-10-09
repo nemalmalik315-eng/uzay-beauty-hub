@@ -3,7 +3,7 @@ import getDb from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export const OCTOBER_DEALS = [
+const OCTOBER_DEALS = [
   {
     name: "October Deal 01",
     services: ["Face Cleansing", "Skin Polish with Deep Neck", "Scrubbing", "Hand & Feet Polisher", "Shoulder Massage"],
