@@ -156,38 +156,52 @@ export default function BookPage() {
 
       {/* October Deals Banner */}
       {deals.length > 0 && (
-        <section className="py-12 px-4 bg-white border-b border-gray-100">
+        <section className="py-14 px-4 bg-charcoal-dark">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-2xl">🎁</span>
-              <div>
-                <h2 className="text-xl font-heading font-bold text-charcoal">October Special Deals</h2>
-                <p className="text-sm text-gray-500">Exclusive packages available this month only — expires October 31</p>
-              </div>
+            {/* Header */}
+            <div className="text-center mb-10">
+              <span className="inline-flex items-center gap-2 bg-gold/20 text-gold text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-5">
+                🎁 Limited Time Offer — Expires October 31
+              </span>
+              <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mb-2">
+                October Special Deals
+              </h2>
+              <p className="text-gray-400 text-base">
+                Exclusive beauty packages at unbeatable prices — this month only
+              </p>
             </div>
-            <p className="text-xs text-gray-400 mb-6 ml-10">Select a deal below to book it as a package at a special price</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            {/* Deal Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {deals.map((deal) => {
                 const isSelected = (selectedServices[deal.id] ?? 0) > 0;
                 return (
                   <div
                     key={deal.id}
-                    className="rounded-xl p-5 transition-all"
+                    className="rounded-2xl p-6 transition-all"
                     style={{
-                      border: `2px solid ${deal.color}`,
-                      backgroundColor: isSelected ? deal.color + "18" : "white",
+                      background: `linear-gradient(135deg, ${deal.color}28, ${deal.color}10)`,
+                      border: `1.5px solid ${deal.color}55`,
+                      boxShadow: isSelected ? `0 0 0 3px ${deal.color}88, 0 8px 24px ${deal.color}22` : "none",
                     }}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-heading font-bold text-charcoal text-base">{deal.name}</h3>
-                      <span className="font-bold text-lg ml-3 flex-shrink-0" style={{ color: deal.color }}>
-                        Rs. {deal.price.toLocaleString()}
+                    <div className="flex items-start justify-between mb-1">
+                      <span className="text-xs font-bold tracking-widest uppercase" style={{ color: deal.color }}>
+                        {deal.name}
                       </span>
+                      {isSelected && (
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: deal.color }}>
+                          ✓ Selected
+                        </span>
+                      )}
                     </div>
-                    <ul className="space-y-1 mb-4">
+                    <p className="text-2xl font-bold text-white mb-4">
+                      Rs. {deal.price.toLocaleString()}
+                    </p>
+                    <ul className="space-y-1.5 mb-5">
                       {deal.services.map((svc) => (
-                        <li key={svc} className="flex items-center gap-1.5 text-sm text-gray-600">
-                          <span className="flex-shrink-0" style={{ color: deal.color }}>✓</span>
+                        <li key={svc} className="flex items-center gap-2 text-sm text-gray-300">
+                          <span className="flex-shrink-0 text-xs" style={{ color: deal.color }}>✓</span>
                           {svc}
                         </li>
                       ))}
@@ -210,10 +224,10 @@ export default function BookPage() {
                           });
                         }
                       }}
-                      className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all"
+                      className="w-full py-3 rounded-xl text-sm font-bold tracking-wide transition-all"
                       style={
                         isSelected
-                          ? { backgroundColor: "white", color: deal.color, border: `2px solid ${deal.color}` }
+                          ? { backgroundColor: "transparent", color: deal.color, border: `2px solid ${deal.color}` }
                           : { backgroundColor: deal.color, color: "white", border: `2px solid ${deal.color}` }
                       }
                     >
@@ -223,6 +237,10 @@ export default function BookPage() {
                 );
               })}
             </div>
+
+            <p className="text-center text-gray-500 text-xs mt-8">
+              Select a deal above, then fill in your details below to confirm
+            </p>
           </div>
         </section>
       )}
