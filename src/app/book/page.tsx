@@ -14,8 +14,17 @@ interface Service {
   description?: string | null;
 }
 
+interface Deal {
+  id: number;
+  name: string;
+  price: number;
+  color: string;
+  services: string[];
+}
+
 export default function BookPage() {
   const [services, setServices] = useState<Service[]>([]);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedServices, setSelectedServices] = useState<Record<number, number>>({});
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [form, setForm] = useState({
@@ -46,6 +55,9 @@ export default function BookPage() {
     fetch("/api/services")
       .then((r) => r.json())
       .then((data) => setServices(Array.isArray(data) ? data : []));
+    fetch("/api/deals")
+      .then((r) => r.json())
+      .then((data) => setDeals(Array.isArray(data) ? data : []));
   }, []);
 
   const CATEGORY_ORDER = [
@@ -141,6 +153,79 @@ export default function BookPage() {
           </p>
         </div>
       </section>
+
+      {/* October Deals Banner */}
+      {deals.length > 0 && (
+        <section className="py-12 px-4 bg-white border-b border-gray-100">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-2xl">🎁</span>
+              <div>
+                <h2 className="text-xl font-heading font-bold text-charcoal">October Special Deals</h2>
+                <p className="text-sm text-gray-500">Exclusive packages available this month only — expires October 31</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mb-6 ml-10">Select a deal below to book it as a package at a special price</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {deals.map((deal) => {
+                const isSelected = (selectedServices[deal.id] ?? 0) > 0;
+                return (
+                  <div
+                    key={deal.id}
+                    className="rounded-xl p-5 transition-all"
+                    style={{
+                      border: `2px solid ${deal.color}`,
+                      backgroundColor: isSelected ? deal.color + "18" : "white",
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="font-heading font-bold text-charcoal text-base">{deal.name}</h3>
+                      <span className="font-bold text-lg ml-3 flex-shrink-0" style={{ color: deal.color }}>
+                        Rs. {deal.price.toLocaleString()}
+                      </span>
+                    </div>
+                    <ul className="space-y-1 mb-4">
+                      {deal.services.map((svc) => (
+                        <li key={svc} className="flex items-center gap-1.5 text-sm text-gray-600">
+                          <span className="flex-shrink-0" style={{ color: deal.color }}>✓</span>
+                          {svc}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedServices((prev) => {
+                            const next = { ...prev };
+                            delete next[deal.id];
+                            return next;
+                          });
+                        } else {
+                          setSelectedServices((prev) => {
+                            const next = { ...prev };
+                            deals.forEach((d) => delete next[d.id]);
+                            next[deal.id] = 1;
+                            return next;
+                          });
+                        }
+                      }}
+                      className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all"
+                      style={
+                        isSelected
+                          ? { backgroundColor: "white", color: deal.color, border: `2px solid ${deal.color}` }
+                          : { backgroundColor: deal.color, color: "white", border: `2px solid ${deal.color}` }
+                      }
+                    >
+                      {isSelected ? "✓ Selected — tap to remove" : "Book This Deal"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="py-16 px-4 bg-cream">
         <div className="max-w-4xl mx-auto">

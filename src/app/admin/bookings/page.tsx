@@ -259,6 +259,14 @@ export default function BookingsPage() {
   const [menuServices, setMenuServices] = useState<MenuItem[]>([]);
   const [showCompDropdown, setShowCompDropdown] = useState(false);
 
+  // New Booking modal
+  const [newBookingOpen, setNewBookingOpen] = useState(false);
+  const [newForm, setNewForm] = useState({ name: "", phone: "", date: today, time: "", notes: "" });
+  const [newSelectedIds, setNewSelectedIds] = useState<number[]>([]);
+  const [newBookingDeals, setNewBookingDeals] = useState<{ id: number; name: string; price: number; color: string; services: string[] }[]>([]);
+  const [newBookingLoading, setNewBookingLoading] = useState(false);
+  const [newServiceSearch, setNewServiceSearch] = useState("");
+
   const { toast } = useToast();
 
   const loadBookings = async () => {
@@ -275,6 +283,9 @@ export default function BookingsPage() {
   useEffect(() => {
     fetch("/api/services").then(r => r.json()).then((data) => {
       if (Array.isArray(data)) setMenuServices(data.map((s: Record<string, unknown>) => ({ id: Number(s.id), name: String(s.name), category: String(s.category || "") })));
+    });
+    fetch("/api/deals").then(r => r.json()).then((data) => {
+      if (Array.isArray(data)) setNewBookingDeals(data);
     });
   }, []);
 
@@ -389,6 +400,32 @@ export default function BookingsPage() {
 
   const discount = parseInt(discountInput) || 0;
   const finalTotal = confirmModal ? confirmModal.total - discount : 0;
+
+  // ── New Booking ──────────────────────────────────────────────────────────
+  const handleCreateBooking = async () => {
+    if (!newForm.name.trim() || !newForm.phone.trim() || !newForm.date || !newForm.time || newSelectedIds.length === 0) {
+      toast("Fill in all required fields and select at least one service", "error");
+      return;
+    }
+    setNewBookingLoading(true);
+    const res = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newForm.name.trim(), phone: newForm.phone.trim(), date: newForm.date, time: newForm.time, notes: newForm.notes.trim() || undefined, service_ids: newSelectedIds }),
+    });
+    setNewBookingLoading(false);
+    if (res.ok) {
+      toast("Booking created", "success");
+      setNewBookingOpen(false);
+      setNewForm({ name: "", phone: "", date: today, time: "", notes: "" });
+      setNewSelectedIds([]);
+      setNewServiceSearch("");
+      loadBookings();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      toast(err.error || "Failed to create booking", "error");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -612,6 +649,132 @@ export default function BookingsPage() {
         </div>
       )}
 
+      {/* ── New Booking Modal ── */}
+      {newBookingOpen && (
+        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setNewBookingOpen(false)} />
+          <div className="relative bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-lg mx-0 sm:mx-4 max-h-[92vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+              <h3 className="font-heading text-base font-semibold text-charcoal">New Booking</h3>
+              <button onClick={() => setNewBookingOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none w-7 h-7 flex items-center justify-center">×</button>
+            </div>
+            <div className="p-5 space-y-5">
+              {/* October Deals quick-pick */}
+              {newBookingDeals.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">🎁 October Deals</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {newBookingDeals.map((deal) => {
+                      const isChosen = newSelectedIds.includes(deal.id);
+                      return (
+                        <button key={deal.id} type="button"
+                          onClick={() => {
+                            if (isChosen) {
+                              setNewSelectedIds((prev) => prev.filter((id) => id !== deal.id));
+                            } else {
+                              setNewSelectedIds((prev) => [...prev.filter((id) => !newBookingDeals.some((d) => d.id === id)), deal.id]);
+                            }
+                          }}
+                          className="text-left p-3 rounded-lg border-2 transition-all text-xs"
+                          style={{ borderColor: deal.color, backgroundColor: isChosen ? deal.color + "18" : "white", color: isChosen ? deal.color : "#374151" }}
+                        >
+                          <div className="font-semibold mb-0.5" style={{ color: deal.color }}>{deal.name}</div>
+                          <div className="text-gray-500 leading-relaxed">{deal.services.join(", ")}</div>
+                          <div className="font-bold mt-1" style={{ color: deal.color }}>Rs. {deal.price.toLocaleString()}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Individual services */}
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Individual Services</p>
+                <input
+                  type="text"
+                  placeholder="Search service…"
+                  value={newServiceSearch}
+                  onChange={(e) => setNewServiceSearch(e.target.value)}
+                  className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none mb-2"
+                />
+                <div className="max-h-40 overflow-y-auto border border-gray-100 rounded-md divide-y divide-gray-50">
+                  {menuServices
+                    .filter((s) => !newServiceSearch || s.name.toLowerCase().includes(newServiceSearch.toLowerCase()))
+                    .filter((s) => s.category !== "October Deals")
+                    .slice(0, 20)
+                    .map((s) => {
+                      const checked = newSelectedIds.includes(s.id);
+                      return (
+                        <button key={s.id} type="button"
+                          onClick={() => setNewSelectedIds((prev) => checked ? prev.filter((id) => id !== s.id) : [...prev, s.id])}
+                          className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-2 transition-colors ${checked ? "bg-gold/10 text-charcoal" : "hover:bg-gray-50 text-gray-700"}`}
+                        >
+                          <span className="flex-1 min-w-0 truncate">{s.name}</span>
+                          <span className="text-xs text-gray-400 shrink-0">{s.category}</span>
+                          {checked && <span className="text-gold shrink-0">✓</span>}
+                        </button>
+                      );
+                    })}
+                </div>
+                {newSelectedIds.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    {newSelectedIds.length} service{newSelectedIds.length !== 1 ? "s" : ""} selected
+                    {" — "}
+                    <button type="button" className="text-red-400 hover:text-red-500" onClick={() => setNewSelectedIds([])}>clear</button>
+                  </p>
+                )}
+              </div>
+
+              {/* Customer details */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
+                  <input type="text" placeholder="Customer name" value={newForm.name}
+                    onChange={(e) => setNewForm({ ...newForm, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Phone *</label>
+                  <input type="tel" placeholder="03xx-xxxxxxx" value={newForm.phone}
+                    onChange={(e) => setNewForm({ ...newForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Date *</label>
+                  <input type="date" value={newForm.date}
+                    onChange={(e) => setNewForm({ ...newForm, date: e.target.value })}
+                    className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Time *</label>
+                  <select value={newForm.time} onChange={(e) => setNewForm({ ...newForm, time: e.target.value })}
+                    className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none">
+                    <option value="">Select…</option>
+                    {["11:30 AM","12:00 PM","12:30 PM","1:00 PM","1:30 PM","2:00 PM","2:30 PM","3:00 PM","3:30 PM","4:00 PM","4:30 PM","5:00 PM","5:30 PM","6:00 PM","6:30 PM","7:00 PM","7:30 PM"].map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Notes (optional)</label>
+                <input type="text" placeholder="Any special requests…" value={newForm.notes}
+                  onChange={(e) => setNewForm({ ...newForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none" />
+              </div>
+            </div>
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-4 flex gap-3">
+              <button onClick={() => setNewBookingOpen(false)} className="flex-1 text-sm border border-gray-200 text-gray-500 py-2.5 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={handleCreateBooking} disabled={newBookingLoading}
+                className="flex-1 text-sm bg-gold text-white py-2.5 rounded-lg hover:bg-gold/90 font-medium disabled:opacity-60">
+                {newBookingLoading ? "Creating…" : "Create Booking"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Filters ── */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
         <div className="flex flex-wrap gap-4 items-center">
@@ -645,7 +808,10 @@ export default function BookingsPage() {
               <option value="no_show">No-show</option>
             </select>
           </div>
-          <div className="ml-auto mt-5 text-sm text-gray-500">{bookings.length} booking(s)</div>
+          <div className="ml-auto mt-5 flex items-center gap-3">
+            <span className="text-sm text-gray-500">{bookings.length} booking(s)</span>
+            <button onClick={() => setNewBookingOpen(true)} className="btn-gold py-2 px-4 text-sm">+ New Booking</button>
+          </div>
         </div>
       </div>
 
