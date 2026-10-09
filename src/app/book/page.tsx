@@ -65,13 +65,19 @@ export default function BookPage() {
     "Body Waxing", "Face Waxing", "Manicure & Pedicure", "Makeup", "Kids",
     "Assistant Bridal", "Signature Bridal", "Bridal",
   ];
-  const categories = [
-    "All",
-    ...Array.from(new Set(services.map((s) => s.category))).sort((a, b) => {
+  const allCats = Array.from(new Set(services.map((s) => s.category)));
+  const hasOctoberDeals = allCats.includes("October Deals");
+  const otherCats = allCats
+    .filter((c) => c !== "October Deals")
+    .sort((a, b) => {
       const ai = CATEGORY_ORDER.indexOf(a);
       const bi = CATEGORY_ORDER.indexOf(b);
       return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-    }),
+    });
+  const categories = [
+    "All",
+    ...(hasOctoberDeals ? ["October Deals"] : []),
+    ...otherCats,
   ];
   const filteredServices =
     activeCategory === "All"
@@ -154,96 +160,6 @@ export default function BookPage() {
         </div>
       </section>
 
-      {/* October Deals Banner */}
-      {deals.length > 0 && (
-        <section className="py-14 px-4 bg-charcoal-dark">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-10">
-              <span className="inline-flex items-center gap-2 bg-gold/20 text-gold text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-5">
-                🎁 Limited Time Offer — Expires October 31
-              </span>
-              <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mb-2">
-                October Special Deals
-              </h2>
-              <p className="text-gray-400 text-base">
-                Exclusive beauty packages at unbeatable prices — this month only
-              </p>
-            </div>
-
-            {/* Deal Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {deals.map((deal) => {
-                const isSelected = (selectedServices[deal.id] ?? 0) > 0;
-                return (
-                  <div
-                    key={deal.id}
-                    className="rounded-2xl p-6 transition-all"
-                    style={{
-                      background: `linear-gradient(135deg, ${deal.color}28, ${deal.color}10)`,
-                      border: `1.5px solid ${deal.color}55`,
-                      boxShadow: isSelected ? `0 0 0 3px ${deal.color}88, 0 8px 24px ${deal.color}22` : "none",
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-1">
-                      <span className="text-xs font-bold tracking-widest uppercase" style={{ color: deal.color }}>
-                        {deal.name}
-                      </span>
-                      {isSelected && (
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: deal.color }}>
-                          ✓ Selected
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-2xl font-bold text-white mb-4">
-                      Rs. {deal.price.toLocaleString()}
-                    </p>
-                    <ul className="space-y-1.5 mb-5">
-                      {deal.services.map((svc) => (
-                        <li key={svc} className="flex items-center gap-2 text-sm text-gray-300">
-                          <span className="flex-shrink-0 text-xs" style={{ color: deal.color }}>✓</span>
-                          {svc}
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          setSelectedServices((prev) => {
-                            const next = { ...prev };
-                            delete next[deal.id];
-                            return next;
-                          });
-                        } else {
-                          setSelectedServices((prev) => {
-                            const next = { ...prev };
-                            deals.forEach((d) => delete next[d.id]);
-                            next[deal.id] = 1;
-                            return next;
-                          });
-                        }
-                      }}
-                      className="w-full py-3 rounded-xl text-sm font-bold tracking-wide transition-all"
-                      style={
-                        isSelected
-                          ? { backgroundColor: "transparent", color: deal.color, border: `2px solid ${deal.color}` }
-                          : { backgroundColor: deal.color, color: "white", border: `2px solid ${deal.color}` }
-                      }
-                    >
-                      {isSelected ? "✓ Selected — tap to remove" : "Book This Deal"}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <p className="text-center text-gray-500 text-xs mt-8">
-              Select a deal above, then fill in your details below to confirm
-            </p>
-          </div>
-        </section>
-      )}
 
       <section className="py-16 px-4 bg-cream">
         <div className="max-w-4xl mx-auto">
@@ -285,7 +201,11 @@ export default function BookPage() {
                       type="button"
                       onClick={() => setActiveCategory(cat)}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        cat === "Azaadi Deals"
+                        cat === "October Deals"
+                          ? activeCategory === cat
+                            ? "text-white shadow-lg ring-2 ring-white ring-offset-2 ring-offset-amber-400"
+                            : "text-white opacity-90 hover:opacity-100"
+                          : cat === "Azaadi Deals"
                           ? activeCategory === cat
                             ? "text-white shadow-lg ring-2 ring-white ring-offset-2 ring-offset-white"
                             : "text-white opacity-85 hover:opacity-100"
@@ -293,9 +213,15 @@ export default function BookPage() {
                           ? "bg-gold text-white shadow-md"
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
-                      style={cat === "Azaadi Deals" ? { backgroundColor: "#015f2a" } : undefined}
+                      style={
+                        cat === "October Deals"
+                          ? { backgroundColor: "#C05A20" }
+                          : cat === "Azaadi Deals"
+                          ? { backgroundColor: "#015f2a" }
+                          : undefined
+                      }
                     >
-                      {cat}
+                      {cat === "October Deals" ? "October Deals ✦" : cat}
                     </button>
                   ))}
                 </div>
