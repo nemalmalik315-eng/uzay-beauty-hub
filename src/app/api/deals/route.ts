@@ -56,7 +56,7 @@ export async function GET() {
 
   const db = getDb();
   const { rows } = await db.execute(
-    "SELECT id, name, price, description FROM services WHERE category = 'October Deals' AND active = 1 ORDER BY price ASC"
+    "SELECT id, name, price, description FROM services WHERE category = 'October Deals' AND active = 1 ORDER BY name ASC"
   );
 
   return NextResponse.json(
