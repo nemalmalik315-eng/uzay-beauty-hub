@@ -9,6 +9,7 @@ interface Service {
   name: string;
   category: string;
   price: number;
+  price_max?: number | null;
   duration: number;
   duration_max?: number | null;
   description?: string | null;
@@ -260,7 +261,7 @@ export default function BookPage() {
                             )}
                             <div className="flex items-center gap-3 mt-2">
                               <span className="text-gold font-semibold text-sm">
-                                Rs. {service.price.toLocaleString()}
+                                Rs. {service.price.toLocaleString()}{service.price_max ? ` – ${service.price_max.toLocaleString()}` : ""}
                               </span>
                               {service.duration > 0 && (
                                 <span className="text-xs text-gray-400">
