@@ -214,6 +214,12 @@ export default function BillingPage() {
   const subtotal = selectedServices.reduce((sum, s) => sum + s.price * s.qty, 0);
   const grandTotal = Math.max(0, subtotal - discount);
 
+  const MAKEUP_HAIRDO_NAMES = new Set(["Glam Look", "Signature Glam Look"]);
+  const hasHairdoMakeupService = selectedServices.some((s) => {
+    const svc = services.find((sv) => sv.id === s.id);
+    return svc && (svc.category.includes("Bridal") || MAKEUP_HAIRDO_NAMES.has(svc.name));
+  });
+
   // Filter bills by service name, customer name, and payment status
   const filteredBills = bills.filter((b) => {
     if (showOutstandingOnly && b.payment_status === "paid") return false;
@@ -1240,47 +1246,84 @@ export default function BillingPage() {
 
           {/* Staff who performed the service */}
           <div className="mb-5">
-            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
-              Performed By <span className="normal-case text-gray-400 font-normal">(optional — up to 4 staff)</span>
-            </label>
-            <div className="flex flex-col gap-2">
-              {performers.map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <select
-                    value={p}
-                    onChange={(e) => {
-                      const updated = [...performers];
-                      updated[i] = e.target.value;
-                      setPerformers(updated);
-                    }}
-                    className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none flex-1 max-w-xs"
-                  >
-                    <option value="">{i === 0 ? "— Select staff —" : `— Staff ${i + 1} —`}</option>
-                    {staffEmployees
-                      .filter((emp) => !performers.includes(emp.name) || emp.name === p)
-                      .map((emp) => (
-                        <option key={emp.id} value={emp.name}>{emp.name}</option>
-                      ))}
-                  </select>
-                  {i > 0 && (
+            {hasHairdoMakeupService ? (
+              <>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                  Staff <span className="normal-case text-gray-400 font-normal">(optional)</span>
+                </label>
+                <div className="flex flex-col gap-2">
+                  {[{ label: "Makeup Artist", idx: 0 }, { label: "Hair Stylist", idx: 1 }].map(({ label, idx }) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-24 flex-shrink-0">{label}</span>
+                      <select
+                        value={performers[idx] ?? ""}
+                        onChange={(e) => {
+                          const updated = [...performers];
+                          while (updated.length <= idx) updated.push("");
+                          updated[idx] = e.target.value;
+                          setPerformers(updated);
+                        }}
+                        className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none flex-1 max-w-xs"
+                      >
+                        <option value="">— Select staff —</option>
+                        {staffEmployees
+                          .filter((emp) => {
+                            const otherIdx = idx === 0 ? 1 : 0;
+                            return emp.name !== (performers[otherIdx] ?? "");
+                          })
+                          .map((emp) => (
+                            <option key={emp.id} value={emp.name}>{emp.name}</option>
+                          ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                  Performed By <span className="normal-case text-gray-400 font-normal">(optional — up to 4 staff)</span>
+                </label>
+                <div className="flex flex-col gap-2">
+                  {performers.map((p, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <select
+                        value={p}
+                        onChange={(e) => {
+                          const updated = [...performers];
+                          updated[i] = e.target.value;
+                          setPerformers(updated);
+                        }}
+                        className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none flex-1 max-w-xs"
+                      >
+                        <option value="">{i === 0 ? "— Select staff —" : `— Staff ${i + 1} —`}</option>
+                        {staffEmployees
+                          .filter((emp) => !performers.includes(emp.name) || emp.name === p)
+                          .map((emp) => (
+                            <option key={emp.id} value={emp.name}>{emp.name}</option>
+                          ))}
+                      </select>
+                      {i > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setPerformers(performers.filter((_, idx) => idx !== i))}
+                          className="text-gray-400 hover:text-red-500 text-xl leading-none"
+                        >×</button>
+                      )}
+                    </div>
+                  ))}
+                  {performers.length < 4 && (
                     <button
                       type="button"
-                      onClick={() => setPerformers(performers.filter((_, idx) => idx !== i))}
-                      className="text-gray-400 hover:text-red-500 text-xl leading-none"
-                    >×</button>
+                      onClick={() => setPerformers([...performers, ""])}
+                      className="text-xs text-gold hover:text-gold-dark font-medium self-start px-2 py-1.5"
+                    >
+                      + Add staff
+                    </button>
                   )}
                 </div>
-              ))}
-              {performers.length < 4 && (
-                <button
-                  type="button"
-                  onClick={() => setPerformers([...performers, ""])}
-                  className="text-xs text-gold hover:text-gold-dark font-medium self-start px-2 py-1.5"
-                >
-                  + Add staff
-                </button>
-              )}
-            </div>
+              </>
+            )}
           </div>
 
           {/* Complimentary service */}
