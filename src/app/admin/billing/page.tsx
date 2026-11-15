@@ -215,10 +215,10 @@ export default function BillingPage() {
   const outstandingCount = bills.filter((b) => b.payment_status !== "paid").length;
   const subtotal = selectedServices.reduce((sum, s) => sum + s.price * s.qty, 0);
 
-  const MAKEUP_HAIRDO_NAMES = new Set(["Glam Look", "Signature Glam Look"]);
+  const MAKEUP_HAIRDO_NAMES = new Set(["Glam Look", "Signature Glam Look", "Soft Glam (with Hairdo & Lashes)"]);
   const hasHairdoMakeupService = selectedServices.some((s) => {
     const svc = services.find((sv) => sv.id === s.id);
-    return svc && (svc.category.includes("Bridal") || MAKEUP_HAIRDO_NAMES.has(svc.name));
+    return svc && (svc.category.includes("Bridal") || MAKEUP_HAIRDO_NAMES.has(svc.name) || (svc.category === "Makeup" && svc.name.toLowerCase().includes("hairdo")));
   });
   const effectiveDiscount = hasHairdoMakeupService ? makeupDiscount + hairdoDiscount : discount;
   const grandTotal = Math.max(0, subtotal - effectiveDiscount);
