@@ -18,6 +18,8 @@ interface Bill {
   created_at: string;
   performed_by?: string;
   billed_by?: string;
+  makeup_discount?: number | null;
+  hairdo_discount?: number | null;
 }
 
 interface StaffEmployee {
@@ -222,12 +224,13 @@ export default function BillingPage() {
   const MAKEUP_HAIRDO_NAMES = new Set(["Glam Look", "Signature Glam Look", "Soft Glam (with Hairdo & Lashes)"]);
   const hasHairdoMakeupService = selectedServices.some((s) => {
     const svc = services.find((sv) => sv.id === s.id);
-    return svc && (svc.category.includes("Bridal") || MAKEUP_HAIRDO_NAMES.has(svc.name) || (svc.category === "Makeup" && svc.name.toLowerCase().includes("hairdo")));
+    const name = svc?.name ?? s.name;
+    const category = svc?.category ?? "";
+    return category.includes("Bridal") || MAKEUP_HAIRDO_NAMES.has(name) || (category === "Makeup" && name.toLowerCase().includes("hairdo"));
   });
-  const hasHaircutBlowdry = selectedServices.some((s) => {
-    const svc = services.find((sv) => sv.id === s.id);
-    return svc && svc.name.toLowerCase().includes("haircut & style");
-  });
+  const hasHaircutBlowdry = selectedServices.some((s) =>
+    s.name.toLowerCase().includes("haircut & style")
+  );
   const hasSplitStaff = hasHairdoMakeupService || hasHaircutBlowdry;
   const splitLabel1 = hasHairdoMakeupService ? "Makeup Artist" : "Haircut";
   const splitLabel2 = hasHairdoMakeupService ? "Hair Stylist" : "Blowdry";
@@ -472,6 +475,8 @@ export default function BillingPage() {
     else if (bill.payment_status === "pending") setAmountPaidOverride(0);
     else setAmountPaidOverride(bill.amount_paid ?? null);
     setBillDate(bill.created_at.slice(0, 10));
+    setMakeupDiscount(bill.makeup_discount ?? 0);
+    setHairdoDiscount(bill.hairdo_discount ?? 0);
     setEditingBillId(bill.id);
     setSavedBillInfo(null);
     setBilledBy(bill.billed_by || "");
