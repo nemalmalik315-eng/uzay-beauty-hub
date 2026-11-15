@@ -1251,32 +1251,74 @@ export default function BillingPage() {
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
                   Staff <span className="normal-case text-gray-400 font-normal">(optional)</span>
                 </label>
-                <div className="flex flex-col gap-2">
-                  {[{ label: "Makeup Artist", idx: 0 }, { label: "Hair Stylist", idx: 1 }].map(({ label, idx }) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 w-24 flex-shrink-0">{label}</span>
-                      <select
-                        value={performers[idx] ?? ""}
-                        onChange={(e) => {
-                          const updated = [...performers];
-                          while (updated.length <= idx) updated.push("");
-                          updated[idx] = e.target.value;
-                          setPerformers(updated);
-                        }}
-                        className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none flex-1 max-w-xs"
+                <div className="flex flex-col gap-3">
+                  {/* Makeup Artist — single slot */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-24 flex-shrink-0">Makeup Artist</span>
+                    <select
+                      value={performers[0] ?? ""}
+                      onChange={(e) => {
+                        const updated = [...performers];
+                        while (updated.length < 2) updated.push("");
+                        updated[0] = e.target.value;
+                        setPerformers(updated);
+                      }}
+                      className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none flex-1 max-w-xs"
+                    >
+                      <option value="">— Select staff —</option>
+                      {staffEmployees
+                        .filter((emp) => !performers.slice(1).includes(emp.name))
+                        .map((emp) => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                    </select>
+                  </div>
+                  {/* Hair Stylists — expandable */}
+                  <div className="flex flex-col gap-2">
+                    {(performers.length < 2 ? [""] : performers.slice(1)).map((p, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 w-24 flex-shrink-0">
+                          {i === 0 ? "Hair Stylist" : ""}
+                        </span>
+                        <select
+                          value={p}
+                          onChange={(e) => {
+                            const updated = [...performers];
+                            while (updated.length < i + 2) updated.push("");
+                            updated[i + 1] = e.target.value;
+                            setPerformers(updated);
+                          }}
+                          className="px-3 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none flex-1 max-w-xs"
+                        >
+                          <option value="">— Select staff —</option>
+                          {staffEmployees
+                            .filter((emp) => {
+                              const otherHair = performers.slice(1).filter((_, hi) => hi !== i);
+                              return emp.name !== (performers[0] ?? "") && !otherHair.includes(emp.name);
+                            })
+                            .map((emp) => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                        </select>
+                        {i > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...performers];
+                              updated.splice(i + 1, 1);
+                              setPerformers(updated);
+                            }}
+                            className="text-gray-400 hover:text-red-500 text-xl leading-none"
+                          >×</button>
+                        )}
+                      </div>
+                    ))}
+                    {performers.length < 4 && (
+                      <button
+                        type="button"
+                        onClick={() => setPerformers([...performers, ""])}
+                        className="text-xs text-gold hover:text-gold-dark font-medium self-start pl-[6.5rem] py-1"
                       >
-                        <option value="">— Select staff —</option>
-                        {staffEmployees
-                          .filter((emp) => {
-                            const otherIdx = idx === 0 ? 1 : 0;
-                            return emp.name !== (performers[otherIdx] ?? "");
-                          })
-                          .map((emp) => (
-                            <option key={emp.id} value={emp.name}>{emp.name}</option>
-                          ))}
-                      </select>
-                    </div>
-                  ))}
+                        + Add hair stylist
+                      </button>
+                    )}
+                  </div>
                 </div>
               </>
             ) : (
