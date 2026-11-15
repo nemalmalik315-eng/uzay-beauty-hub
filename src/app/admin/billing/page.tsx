@@ -188,6 +188,8 @@ export default function BillingPage() {
   const [discount, setDiscount] = useState(0);
   const [discountMode, setDiscountMode] = useState<"amount" | "percent">("amount");
   const [discountPercent, setDiscountPercent] = useState<number | "">(0);
+  const [makeupDiscount, setMakeupDiscount] = useState(0);
+  const [hairdoDiscount, setHairdoDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [serviceSearch, setServiceSearch] = useState("");
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
@@ -212,13 +214,14 @@ export default function BillingPage() {
 
   const outstandingCount = bills.filter((b) => b.payment_status !== "paid").length;
   const subtotal = selectedServices.reduce((sum, s) => sum + s.price * s.qty, 0);
-  const grandTotal = Math.max(0, subtotal - discount);
 
   const MAKEUP_HAIRDO_NAMES = new Set(["Glam Look", "Signature Glam Look"]);
   const hasHairdoMakeupService = selectedServices.some((s) => {
     const svc = services.find((sv) => sv.id === s.id);
     return svc && (svc.category.includes("Bridal") || MAKEUP_HAIRDO_NAMES.has(svc.name));
   });
+  const effectiveDiscount = hasHairdoMakeupService ? makeupDiscount + hairdoDiscount : discount;
+  const grandTotal = Math.max(0, subtotal - effectiveDiscount);
 
   // Filter bills by service name, customer name, and payment status
   const filteredBills = bills.filter((b) => {
@@ -545,7 +548,9 @@ export default function BillingPage() {
             customer_phone: phone.trim() || undefined,
             service_name: encodedName,
             service_charge: subtotal,
-            discount,
+            discount: effectiveDiscount,
+            makeup_discount: hasHairdoMakeupService ? makeupDiscount : undefined,
+            hairdo_discount: hasHairdoMakeupService ? hairdoDiscount : undefined,
             payment_method: paymentMethod,
             payment_status: paymentStatus,
             amount_paid: paid,
@@ -566,7 +571,9 @@ export default function BillingPage() {
             customer_phone: phone.trim() || undefined,
             service_name: encodedName,
             service_charge: subtotal,
-            discount,
+            discount: effectiveDiscount,
+            makeup_discount: hasHairdoMakeupService ? makeupDiscount : undefined,
+            hairdo_discount: hasHairdoMakeupService ? hairdoDiscount : undefined,
             payment_method: paymentMethod,
             payment_status: paymentStatus,
             amount_paid: paid,
@@ -586,7 +593,7 @@ export default function BillingPage() {
         phone: phone.trim(),
         services: [...selectedServices],
         subtotal,
-        discount,
+        discount: effectiveDiscount,
         grandTotal,
         amountPaid: paid,
         paymentStatus,
@@ -601,6 +608,8 @@ export default function BillingPage() {
       setDiscount(0);
       setDiscountMode("amount");
       setDiscountPercent(0);
+      setMakeupDiscount(0);
+      setHairdoDiscount(0);
       setPaymentMethod("cash");
       setAmountPaidOverride(null);
       setServiceSearch("");
@@ -1425,69 +1434,99 @@ export default function BillingPage() {
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
                 Discount
               </label>
-              {/* Mode toggle */}
-              <div className="flex rounded-md border border-gray-200 overflow-hidden mb-2 text-xs font-medium">
-                <button
-                  type="button"
-                  onClick={() => { setDiscountMode("amount"); }}
-                  className={`flex-1 py-1.5 transition-colors ${discountMode === "amount" ? "bg-charcoal text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
-                >
-                  Rs. Amount
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setDiscountMode("percent"); }}
-                  className={`flex-1 py-1.5 transition-colors ${discountMode === "percent" ? "bg-charcoal text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
-                >
-                  % Off
-                </button>
-              </div>
-
-              {discountMode === "amount" ? (
-                <input
-                  type="number"
-                  placeholder="0"
-                  min={0}
-                  value={discount || ""}
-                  onChange={(e) => setDiscount(parseInt(e.target.value) || 0)}
-                  className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
-                />
-              ) : (
+              {hasHairdoMakeupService ? (
                 <div className="flex flex-col gap-2">
-                  {/* Preset % buttons */}
-                  <div className="flex gap-1.5 flex-wrap">
-                    {[10, 15, 20, 25, 50].map((pct) => (
-                      <button
-                        key={pct}
-                        type="button"
-                        onClick={() => {
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">Makeup</span>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      min={0}
+                      value={makeupDiscount || ""}
+                      onChange={(e) => setMakeupDiscount(parseInt(e.target.value) || 0)}
+                      className="flex-1 px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">Hair</span>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      min={0}
+                      value={hairdoDiscount || ""}
+                      onChange={(e) => setHairdoDiscount(parseInt(e.target.value) || 0)}
+                      className="flex-1 px-3 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                    />
+                  </div>
+                  {(makeupDiscount > 0 || hairdoDiscount > 0) && (
+                    <p className="text-xs text-gray-400">Total off: Rs. {(makeupDiscount + hairdoDiscount).toLocaleString()}</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Mode toggle */}
+                  <div className="flex rounded-md border border-gray-200 overflow-hidden mb-2 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={() => { setDiscountMode("amount"); }}
+                      className={`flex-1 py-1.5 transition-colors ${discountMode === "amount" ? "bg-charcoal text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
+                    >
+                      Rs. Amount
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDiscountMode("percent"); }}
+                      className={`flex-1 py-1.5 transition-colors ${discountMode === "percent" ? "bg-charcoal text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
+                    >
+                      % Off
+                    </button>
+                  </div>
+
+                  {discountMode === "amount" ? (
+                    <input
+                      type="number"
+                      placeholder="0"
+                      min={0}
+                      value={discount || ""}
+                      onChange={(e) => setDiscount(parseInt(e.target.value) || 0)}
+                      className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                    />
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-1.5 flex-wrap">
+                        {[10, 15, 20, 25, 50].map((pct) => (
+                          <button
+                            key={pct}
+                            type="button"
+                            onClick={() => {
+                              setDiscountPercent(pct);
+                              setDiscount(Math.round(subtotal * pct / 100));
+                            }}
+                            className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${discountPercent === pct ? "bg-gold border-gold text-white" : "border-gray-200 text-gray-600 hover:border-gold hover:text-gold"}`}
+                          >
+                            {pct}%
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="number"
+                        placeholder="Custom %"
+                        min={0}
+                        max={100}
+                        value={discountPercent || ""}
+                        onChange={(e) => {
+                          const pct = Math.min(100, parseInt(e.target.value) || 0);
                           setDiscountPercent(pct);
                           setDiscount(Math.round(subtotal * pct / 100));
                         }}
-                        className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${discountPercent === pct ? "bg-gold border-gold text-white" : "border-gray-200 text-gray-600 hover:border-gold hover:text-gold"}`}
-                      >
-                        {pct}%
-                      </button>
-                    ))}
-                  </div>
-                  {/* Custom % input */}
-                  <input
-                    type="number"
-                    placeholder="Custom %"
-                    min={0}
-                    max={100}
-                    value={discountPercent || ""}
-                    onChange={(e) => {
-                      const pct = Math.min(100, parseInt(e.target.value) || 0);
-                      setDiscountPercent(pct);
-                      setDiscount(Math.round(subtotal * pct / 100));
-                    }}
-                    className="w-full px-4 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
-                  />
-                  {discount > 0 && (
-                    <p className="text-xs text-gray-400">= Rs. {discount.toLocaleString()} off</p>
+                        className="w-full px-4 py-2 rounded-md border border-gray-200 text-sm focus:border-gold outline-none"
+                      />
+                      {discount > 0 && (
+                        <p className="text-xs text-gray-400">= Rs. {discount.toLocaleString()} off</p>
+                      )}
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </div>
             <div>
@@ -1512,10 +1551,10 @@ export default function BillingPage() {
                   <span>Subtotal</span>
                   <span>Rs. {subtotal.toLocaleString()}</span>
                 </div>
-                {discount > 0 && (
+                {effectiveDiscount > 0 && (
                   <div className="flex justify-between text-sm text-red-500">
-                    <span>Discount</span>
-                    <span>-Rs. {discount.toLocaleString()}</span>
+                    <span>Discount{hasHairdoMakeupService && makeupDiscount > 0 && hairdoDiscount > 0 ? ` (Makeup Rs. ${makeupDiscount.toLocaleString()} + Hair Rs. ${hairdoDiscount.toLocaleString()})` : hasHairdoMakeupService && makeupDiscount > 0 ? " (Makeup)" : hasHairdoMakeupService && hairdoDiscount > 0 ? " (Hair)" : ""}</span>
+                    <span>-Rs. {effectiveDiscount.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-bold text-charcoal border-t border-gray-200 mt-1.5 pt-1.5">

@@ -11,6 +11,8 @@ async function ensureBillingColumns() {
   try { await db.execute("ALTER TABLE billing ADD COLUMN amount_paid REAL"); } catch { /* exists */ }
   try { await db.execute("ALTER TABLE billing ADD COLUMN performed_by TEXT"); } catch { /* exists */ }
   try { await db.execute("ALTER TABLE billing ADD COLUMN billed_by TEXT"); } catch { /* exists */ }
+  try { await db.execute("ALTER TABLE billing ADD COLUMN makeup_discount REAL"); } catch { /* exists */ }
+  try { await db.execute("ALTER TABLE billing ADD COLUMN hairdo_discount REAL"); } catch { /* exists */ }
   billingColsEnsured = true;
 }
 
@@ -83,6 +85,8 @@ export async function POST(req: NextRequest) {
     service_name,
     service_charge,
     discount = 0,
+    makeup_discount,
+    hairdo_discount,
     payment_method = "cash",
     payment_status = "paid",
     amount_paid,
@@ -130,12 +134,12 @@ export async function POST(req: NextRequest) {
   const result = await db.execute(
     bill_date
       ? {
-          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, amount_paid, performed_by, billed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, effectivePaid, performed_by || null, billed_by || null, bill_date],
+          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, makeup_discount, hairdo_discount, total, payment_method, payment_status, amount_paid, performed_by, billed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, makeup_discount ?? null, hairdo_discount ?? null, total, payment_method, payment_status, effectivePaid, performed_by || null, billed_by || null, bill_date],
         }
       : {
-          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, amount_paid, performed_by, billed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, total, payment_method, payment_status, effectivePaid, performed_by || null, billed_by || null],
+          sql: `INSERT INTO billing (booking_id, customer_id, customer_name, service_name, service_charge, discount, makeup_discount, hairdo_discount, total, payment_method, payment_status, amount_paid, performed_by, billed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [booking_id || null, resolvedCustomerId, customer_name, service_name, service_charge, discount, makeup_discount ?? null, hairdo_discount ?? null, total, payment_method, payment_status, effectivePaid, performed_by || null, billed_by || null],
         }
   );
 
