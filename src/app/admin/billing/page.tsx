@@ -200,6 +200,9 @@ export default function BillingPage() {
   const [savedBillInfo, setSavedBillInfo] = useState<SavedBillInfo | null>(null);
   const [deletingBill, setDeletingBill] = useState<Bill | null>(null);
   const [editingBillId, setEditingBillId] = useState<number | null>(null);
+  const [editPasswordBill, setEditPasswordBill] = useState<Bill | null>(null);
+  const [editPassword, setEditPassword] = useState("");
+  const [editPasswordError, setEditPasswordError] = useState(false);
   const [staffEmployees, setStaffEmployees] = useState<StaffEmployee[]>([]);
   const [billedBy, setBilledBy] = useState("");
   const [performers, setPerformers] = useState<string[]>([""]);
@@ -699,6 +702,46 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-6">
+      {/* Edit password gate */}
+      {editPasswordBill && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-xs p-6">
+            <h2 className="text-base font-semibold text-charcoal mb-1">Edit Bill #{editPasswordBill.id}</h2>
+            <p className="text-xs text-gray-500 mb-4">Enter admin password to edit this bill.</p>
+            <input
+              type="password"
+              autoFocus
+              placeholder="Password"
+              value={editPassword}
+              onChange={(e) => { setEditPassword(e.target.value); setEditPasswordError(false); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (editPassword === "1122") { startEdit(editPasswordBill); setEditPasswordBill(null); setEditPassword(""); }
+                  else setEditPasswordError(true);
+                }
+              }}
+              className={`w-full px-4 py-2.5 rounded-md border text-sm outline-none mb-1 ${editPasswordError ? "border-red-400 focus:border-red-400" : "border-gray-200 focus:border-gold"}`}
+            />
+            {editPasswordError && <p className="text-xs text-red-500 mb-3">Incorrect password.</p>}
+            <div className="flex gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => { setEditPasswordBill(null); setEditPassword(""); setEditPasswordError(false); }}
+                className="flex-1 py-2 rounded-md border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+              >Cancel</button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (editPassword === "1122") { startEdit(editPasswordBill); setEditPasswordBill(null); setEditPassword(""); }
+                  else setEditPasswordError(true);
+                }}
+                className="flex-1 py-2 rounded-md bg-charcoal text-white text-sm font-medium hover:bg-opacity-90"
+              >Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog
         open={!!deletingBill}
         title="Delete Bill"
@@ -1727,7 +1770,7 @@ export default function BillingPage() {
                             Collect Rs. {(b.total - (b.amount_paid ?? 0)).toLocaleString()}
                           </button>
                         )}
-                        <button onClick={() => startEdit(b)} className="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
+                        <button onClick={() => { setEditPasswordBill(b); setEditPassword(""); setEditPasswordError(false); }} className="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
                         <button onClick={() => printReceipt(b)} className="text-xs text-gold hover:text-gold-dark font-medium">Print</button>
                         <button onClick={() => setDeletingBill(b)} className="text-xs text-red-400 hover:text-red-600">Delete</button>
                       </div>
@@ -1798,7 +1841,7 @@ export default function BillingPage() {
                     Collect Rs. {(b.total - (b.amount_paid ?? 0)).toLocaleString()}
                   </button>
                 )}
-                <button onClick={() => startEdit(b)} className="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
+                <button onClick={() => { setEditPasswordBill(b); setEditPassword(""); setEditPasswordError(false); }} className="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
                 <button onClick={() => printReceipt(b)} className="text-xs text-gold hover:text-gold-dark font-medium">Print Receipt</button>
                 <button onClick={() => setDeletingBill(b)} className="text-xs text-red-400 hover:text-red-600">Delete</button>
               </div>
