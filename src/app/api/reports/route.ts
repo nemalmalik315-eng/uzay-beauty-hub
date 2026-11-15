@@ -105,6 +105,8 @@ export async function GET(req: NextRequest) {
         COUNT(*) as transactions,
         COALESCE(SUM(service_charge), 0) as charges,
         COALESCE(SUM(discount), 0) as discounts,
+        COALESCE(SUM(makeup_discount), 0) as makeup_discounts,
+        COALESCE(SUM(hairdo_discount), 0) as hairdo_discounts,
         COALESCE(SUM(total), 0) as revenue
       FROM billing
       WHERE DATE(created_at) >= DATE('now', '-30 days')
@@ -118,6 +120,8 @@ export async function GET(req: NextRequest) {
         COUNT(*) as transactions,
         COALESCE(SUM(service_charge), 0) as charges,
         COALESCE(SUM(discount), 0) as discounts,
+        COALESCE(SUM(makeup_discount), 0) as makeup_discounts,
+        COALESCE(SUM(hairdo_discount), 0) as hairdo_discounts,
         COALESCE(SUM(total), 0) as revenue
       FROM billing
       WHERE DATE(created_at) >= DATE('now', '-90 days')
@@ -131,6 +135,8 @@ export async function GET(req: NextRequest) {
         COUNT(*) as transactions,
         COALESCE(SUM(service_charge), 0) as charges,
         COALESCE(SUM(discount), 0) as discounts,
+        COALESCE(SUM(makeup_discount), 0) as makeup_discounts,
+        COALESCE(SUM(hairdo_discount), 0) as hairdo_discounts,
         COALESCE(SUM(total), 0) as revenue
       FROM billing
       WHERE DATE(created_at) >= DATE('now', '-365 days')
@@ -145,7 +151,9 @@ export async function GET(req: NextRequest) {
     SELECT
       COUNT(*) as transactions,
       COALESCE(SUM(total), 0) as revenue,
-      COALESCE(SUM(discount), 0) as discounts
+      COALESCE(SUM(discount), 0) as discounts,
+      COALESCE(SUM(makeup_discount), 0) as makeup_discounts,
+      COALESCE(SUM(hairdo_discount), 0) as hairdo_discounts
     FROM billing
     WHERE DATE(created_at) = DATE('now')
   `);

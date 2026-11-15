@@ -7,6 +7,8 @@ interface ReportRow {
   transactions: number;
   charges: number;
   discounts: number;
+  makeup_discounts: number;
+  hairdo_discounts: number;
   revenue: number;
 }
 
@@ -14,6 +16,8 @@ interface TodaySummary {
   transactions: number;
   revenue: number;
   discounts: number;
+  makeup_discounts: number;
+  hairdo_discounts: number;
 }
 
 interface PeakCell { day_of_week: string; hour_24: string; count: string }
@@ -113,6 +117,13 @@ export default function ReportsPage() {
             <div>
               <p className="text-xs sm:text-sm text-gray-500">Discounts</p>
               <p className="text-base sm:text-3xl font-bold text-red-500">Rs. {today.discounts.toFixed(0)}</p>
+              {(today.makeup_discounts > 0 || today.hairdo_discounts > 0) && (
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  {today.makeup_discounts > 0 && `Makeup Rs. ${Math.round(today.makeup_discounts).toLocaleString()}`}
+                  {today.makeup_discounts > 0 && today.hairdo_discounts > 0 && " · "}
+                  {today.hairdo_discounts > 0 && `Hair Rs. ${Math.round(today.hairdo_discounts).toLocaleString()}`}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -305,7 +316,16 @@ export default function ReportsPage() {
                     <td className="px-6 py-4 text-sm font-medium text-charcoal font-mono">{row.period}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{row.transactions}</td>
                     <td className="px-6 py-4 text-sm text-charcoal">Rs. {row.charges.toFixed(0)}</td>
-                    <td className="px-6 py-4 text-sm text-red-500">-Rs. {row.discounts.toFixed(0)}</td>
+                    <td className="px-6 py-4 text-sm text-red-500">
+                      -Rs. {row.discounts.toFixed(0)}
+                      {(row.makeup_discounts > 0 || row.hairdo_discounts > 0) && (
+                        <p className="text-[10px] text-gray-400 font-normal mt-0.5">
+                          {row.makeup_discounts > 0 && `Makeup Rs. ${Math.round(row.makeup_discounts).toLocaleString()}`}
+                          {row.makeup_discounts > 0 && row.hairdo_discounts > 0 && " · "}
+                          {row.hairdo_discounts > 0 && `Hair Rs. ${Math.round(row.hairdo_discounts).toLocaleString()}`}
+                        </p>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-sm font-bold text-green-600">Rs. {row.revenue.toFixed(0)}</td>
                   </tr>
                 ))
@@ -336,6 +356,13 @@ export default function ReportsPage() {
                 <div>
                   <p className="text-gray-400 uppercase text-[10px]">Discount</p>
                   <p className="text-red-500">-Rs. {row.discounts.toFixed(0)}</p>
+                  {(row.makeup_discounts > 0 || row.hairdo_discounts > 0) && (
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {row.makeup_discounts > 0 && `M Rs. ${Math.round(row.makeup_discounts).toLocaleString()}`}
+                      {row.makeup_discounts > 0 && row.hairdo_discounts > 0 && " · "}
+                      {row.hairdo_discounts > 0 && `H Rs. ${Math.round(row.hairdo_discounts).toLocaleString()}`}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="text-gray-400 uppercase text-[10px]">Revenue</p>
