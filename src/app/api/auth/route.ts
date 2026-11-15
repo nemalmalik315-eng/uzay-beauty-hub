@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb from "@/lib/db";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+
+function signToken(payload: string): string {
+  const secret = process.env.JWT_SECRET ?? "dev-secret-change-me";
+  const b64 = Buffer.from(payload).toString("base64");
+  const sig = crypto.createHmac("sha256", secret).update(b64).digest("hex");
+  return `${b64}.${sig}`;
+}
+
+function decodeToken(token: string): { id: string; username: string } | null {
+  try {
+    const dot = token.lastIndexOf(".");
+    if (dot === -1) return null;
+    const payloadB64 = token.slice(0, dot);
+    const payload = Buffer.from(payloadB64, "base64").toString();
+    const [id, username] = payload.split(":");
+    if (!id || !username) return null;
+    return { id, username };
+  } catch {
+    return null;
+  }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +47,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
-  const token = Buffer.from(`${user.id}:${user.username}:${Date.now()}`).toString("base64");
+  const token = signToken(`${user.id}:${user.username}:${Date.now()}`);
 
   const response = NextResponse.json({ message: "Login successful", username: user.username });
   response.cookies.set("admin_token", token, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24,
     path: "/",
@@ -52,9 +74,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const decoded = Buffer.from(token, "base64").toString();
-    const [id, username] = decoded.split(":");
-    if (id && username) {
+    const decoded = decodeToken(token);
+    if (decoded) {
+      const { id, username } = decoded;
       const db = getDb();
       const { rows } = await db.execute({
         sql: "SELECT id FROM admin_users WHERE id = ? AND username = ?",
