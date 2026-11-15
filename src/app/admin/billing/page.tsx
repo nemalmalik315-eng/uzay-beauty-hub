@@ -221,7 +221,16 @@ export default function BillingPage() {
     const svc = services.find((sv) => sv.id === s.id);
     return svc && (svc.category.includes("Bridal") || MAKEUP_HAIRDO_NAMES.has(svc.name) || (svc.category === "Makeup" && svc.name.toLowerCase().includes("hairdo")));
   });
-  const effectiveDiscount = hasHairdoMakeupService ? makeupDiscount + hairdoDiscount : discount;
+  const hasHaircutBlowdry = selectedServices.some((s) => {
+    const svc = services.find((sv) => sv.id === s.id);
+    return svc && svc.name.toLowerCase().includes("haircut & style");
+  });
+  const hasSplitStaff = hasHairdoMakeupService || hasHaircutBlowdry;
+  const splitLabel1 = hasHairdoMakeupService ? "Makeup Artist" : "Haircut";
+  const splitLabel2 = hasHairdoMakeupService ? "Hair Stylist" : "Blowdry";
+  const discountLabel1 = hasHairdoMakeupService ? "Makeup" : "Haircut";
+  const discountLabel2 = hasHairdoMakeupService ? "Hair" : "Blowdry";
+  const effectiveDiscount = hasSplitStaff ? makeupDiscount + hairdoDiscount : discount;
   const grandTotal = Math.max(0, subtotal - effectiveDiscount);
 
   // Filter bills by service name, customer name, and payment status
@@ -552,8 +561,8 @@ export default function BillingPage() {
             service_name: encodedName,
             service_charge: subtotal,
             discount: effectiveDiscount,
-            makeup_discount: hasHairdoMakeupService ? makeupDiscount : undefined,
-            hairdo_discount: hasHairdoMakeupService ? hairdoDiscount : undefined,
+            makeup_discount: hasSplitStaff ? makeupDiscount : undefined,
+            hairdo_discount: hasSplitStaff ? hairdoDiscount : undefined,
             payment_method: paymentMethod,
             payment_status: paymentStatus,
             amount_paid: paid,
@@ -575,8 +584,8 @@ export default function BillingPage() {
             service_name: encodedName,
             service_charge: subtotal,
             discount: effectiveDiscount,
-            makeup_discount: hasHairdoMakeupService ? makeupDiscount : undefined,
-            hairdo_discount: hasHairdoMakeupService ? hairdoDiscount : undefined,
+            makeup_discount: hasSplitStaff ? makeupDiscount : undefined,
+            hairdo_discount: hasSplitStaff ? hairdoDiscount : undefined,
             payment_method: paymentMethod,
             payment_status: paymentStatus,
             amount_paid: paid,
@@ -1259,15 +1268,15 @@ export default function BillingPage() {
 
           {/* Staff who performed the service */}
           <div className="mb-5">
-            {hasHairdoMakeupService ? (
+            {hasSplitStaff ? (
               <>
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
                   Staff <span className="normal-case text-gray-400 font-normal">(optional)</span>
                 </label>
                 <div className="flex flex-col gap-3">
-                  {/* Makeup Artist — single slot */}
+                  {/* Role 1 — single slot */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-24 flex-shrink-0">Makeup Artist</span>
+                    <span className="text-xs text-gray-500 w-24 flex-shrink-0">{splitLabel1}</span>
                     <select
                       value={performers[0] ?? ""}
                       onChange={(e) => {
@@ -1284,12 +1293,12 @@ export default function BillingPage() {
                         .map((emp) => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
                     </select>
                   </div>
-                  {/* Hair Stylists — expandable */}
+                  {/* Role 2 — expandable */}
                   <div className="flex flex-col gap-2">
                     {(performers.length < 2 ? [""] : performers.slice(1)).map((p, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <span className="text-xs text-gray-500 w-24 flex-shrink-0">
-                          {i === 0 ? "Hair Stylist" : ""}
+                          {i === 0 ? splitLabel2 : ""}
                         </span>
                         <select
                           value={p}
@@ -1328,7 +1337,7 @@ export default function BillingPage() {
                         onClick={() => setPerformers([...performers, ""])}
                         className="text-xs text-gold hover:text-gold-dark font-medium self-start pl-[6.5rem] py-1"
                       >
-                        + Add hair stylist
+                        + Add {splitLabel2.toLowerCase()}
                       </button>
                     )}
                   </div>
@@ -1450,10 +1459,10 @@ export default function BillingPage() {
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
                 Discount
               </label>
-              {hasHairdoMakeupService ? (
+              {hasSplitStaff ? (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">Makeup</span>
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">{discountLabel1}</span>
                     <input
                       type="number"
                       placeholder="0"
@@ -1464,7 +1473,7 @@ export default function BillingPage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">Hair</span>
+                    <span className="text-xs text-gray-500 w-16 flex-shrink-0">{discountLabel2}</span>
                     <input
                       type="number"
                       placeholder="0"
@@ -1569,7 +1578,7 @@ export default function BillingPage() {
                 </div>
                 {effectiveDiscount > 0 && (
                   <div className="flex justify-between text-sm text-red-500">
-                    <span>Discount{hasHairdoMakeupService && makeupDiscount > 0 && hairdoDiscount > 0 ? ` (Makeup Rs. ${makeupDiscount.toLocaleString()} + Hair Rs. ${hairdoDiscount.toLocaleString()})` : hasHairdoMakeupService && makeupDiscount > 0 ? " (Makeup)" : hasHairdoMakeupService && hairdoDiscount > 0 ? " (Hair)" : ""}</span>
+                    <span>Discount{hasSplitStaff && makeupDiscount > 0 && hairdoDiscount > 0 ? ` (${discountLabel1} Rs. ${makeupDiscount.toLocaleString()} + ${discountLabel2} Rs. ${hairdoDiscount.toLocaleString()})` : hasSplitStaff && makeupDiscount > 0 ? ` (${discountLabel1})` : hasSplitStaff && hairdoDiscount > 0 ? ` (${discountLabel2})` : ""}</span>
                     <span>-Rs. {effectiveDiscount.toLocaleString()}</span>
                   </div>
                 )}
