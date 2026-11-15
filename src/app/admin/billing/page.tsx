@@ -68,7 +68,7 @@ interface SavedBillInfo {
   paymentMethod: string;
   billDate: string;
   performedBy?: string;
-  compService?: string;
+  compServices?: string[];
 }
 
 function buildWhatsAppUrl(info: SavedBillInfo): string {
@@ -102,7 +102,7 @@ function buildWhatsAppUrl(info: SavedBillInfo): string {
     "",
     "*Services:*",
     ...info.services.flatMap((s) => Array(s.qty).fill(`• ${s.name} — Rs. ${s.price.toLocaleString()}`)),
-    ...(info.compService ? [`🎁 Complimentary: ${info.compService} (free)`] : []),
+    ...(info.compServices?.length ? info.compServices.map((cs) => `🎁 Complimentary: ${cs} (free)`) : []),
     "",
     ...(info.discount > 0 ? [`Subtotal: Rs. ${info.subtotal.toLocaleString()}`, `Discount: −Rs. ${info.discount.toLocaleString()}`] : []),
     ...paymentLines,
@@ -203,7 +203,8 @@ export default function BillingPage() {
   const [staffEmployees, setStaffEmployees] = useState<StaffEmployee[]>([]);
   const [billedBy, setBilledBy] = useState("");
   const [performers, setPerformers] = useState<string[]>([""]);
-  const [compService, setCompService] = useState("");
+  const [compServices, setCompServices] = useState<string[]>([]);
+  const [compSearch, setCompSearch] = useState("");
   const [showCompDropdown, setShowCompDropdown] = useState(false);
   const phoneTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const nameTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -428,10 +429,10 @@ export default function BillingPage() {
   const startEdit = (bill: Bill) => {
     const items = parseServiceItems(bill.service_name);
     const rebuilt: SelectedService[] = [];
-    let parsedComp = "";
+    const parsedComps: string[] = [];
     for (const item of items) {
       if (item.name.startsWith("🎁") || item.price === 0) {
-        parsedComp = item.name.replace(/^🎁\s*/, "").replace(/\s*\(free\)$/, "");
+        parsedComps.push(item.name.replace(/^🎁\s*/, "").replace(/\s*\(free\)$/, ""));
         continue;
       }
       const svc = services.find((s) => s.name === item.name);
@@ -447,7 +448,8 @@ export default function BillingPage() {
       }
     }
     setSelectedServices(rebuilt);
-    setCompService(parsedComp);
+    setCompServices(parsedComps);
+    setCompSearch("");
     setCustomerName(bill.customer_name);
     setPhone(bill.customer_phone || "");
     setDiscount(bill.discount);
@@ -514,7 +516,8 @@ export default function BillingPage() {
     setCheckinBanner(null);
     setBilledBy("");
     setPerformers([""]);
-    setCompService("");
+    setCompServices([]);
+    setCompSearch("");
     setShowCompDropdown(false);
     setNameFilter("");
     setServiceFilter("");
@@ -528,8 +531,8 @@ export default function BillingPage() {
     setSaving(true);
     try {
       const baseEncoded = encodeServiceName(selectedServices);
-      const encodedName = compService.trim()
-        ? `${baseEncoded}|||🎁 ${compService.trim()} (free)~~0`
+      const encodedName = compServices.length > 0
+        ? `${baseEncoded}${compServices.map((cs) => `|||🎁 ${cs} (free)~~0`).join("")}`
         : baseEncoded;
       let savedId: number;
 
@@ -600,7 +603,7 @@ export default function BillingPage() {
         paymentMethod,
         billDate,
         performedBy,
-        compService: compService.trim() || undefined,
+        compServices: compServices.length > 0 ? [...compServices] : undefined,
       });
       setPhone("");
       setCustomerName("");
@@ -617,7 +620,8 @@ export default function BillingPage() {
       setEditingBillId(null);
       setBilledBy("");
       setPerformers([""]);
-      setCompService("");
+      setCompServices([]);
+      setCompSearch("");
       setShowCompDropdown(false);
       loadBills();
     } finally {
@@ -974,11 +978,11 @@ export default function BillingPage() {
                 <span className="text-gray-500">Rs. {(s.price * s.qty).toLocaleString()}</span>
               </div>
             ))}
-            {savedBillInfo.compService && (
-              <div className="flex justify-between text-emerald-600 text-xs pt-1">
-                <span>🎁 {savedBillInfo.compService}</span><span>Free</span>
+            {savedBillInfo.compServices?.map((cs, i) => (
+              <div key={i} className="flex justify-between text-emerald-600 text-xs pt-1">
+                <span>🎁 {cs}</span><span>Free</span>
               </div>
-            )}
+            ))}
             {savedBillInfo.discount > 0 && (
               <div className="flex justify-between text-red-500 border-t border-gray-200 pt-1 mt-1">
                 <span>Discount</span><span>−Rs. {savedBillInfo.discount.toLocaleString()}</span>
@@ -1382,29 +1386,44 @@ export default function BillingPage() {
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
               Complimentary Service <span className="normal-case text-gray-400 font-normal">(optional — added free)</span>
             </label>
+            {compServices.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {compServices.map((cs, i) => (
+                  <span key={i} className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs px-2.5 py-1 rounded-full border border-emerald-200">
+                    🎁 {cs}
+                    <button
+                      type="button"
+                      onClick={() => setCompServices((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="text-emerald-400 hover:text-emerald-700 leading-none ml-0.5"
+                    >×</button>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="relative">
               <input
                 type="text"
-                placeholder="Type to search services..."
-                value={compService}
-                onChange={(e) => { setCompService(e.target.value); setShowCompDropdown(true); }}
+                placeholder="Type to search and add..."
+                value={compSearch}
+                onChange={(e) => { setCompSearch(e.target.value); setShowCompDropdown(true); }}
                 onFocus={() => setShowCompDropdown(true)}
                 onBlur={() => setTimeout(() => setShowCompDropdown(false), 150)}
                 className="w-full px-4 py-2.5 rounded-md border border-gray-200 text-sm focus:border-emerald-400 outline-none pr-8"
               />
-              {compService && (
+              {compSearch && (
                 <button
                   type="button"
-                  onMouseDown={() => setCompService("")}
+                  onMouseDown={() => setCompSearch("")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none"
                 >×</button>
               )}
               {showCompDropdown && (
                 <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
                   {(() => {
-                    const q = compService.toLowerCase();
+                    const q = compSearch.toLowerCase();
                     const filtered = services.filter((s) =>
-                      s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)
+                      (s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)) &&
+                      !compServices.includes(s.name)
                     ).slice(0, 8);
                     return filtered.length === 0 ? (
                       <p className="px-4 py-3 text-sm text-gray-400">No services found</p>
@@ -1412,7 +1431,7 @@ export default function BillingPage() {
                       <button
                         key={s.id}
                         type="button"
-                        onMouseDown={() => { setCompService(s.name); setShowCompDropdown(false); }}
+                        onMouseDown={() => { setCompServices((prev) => [...prev, s.name]); setCompSearch(""); setShowCompDropdown(false); }}
                         className="w-full px-4 py-2.5 text-left hover:bg-emerald-50 text-sm flex justify-between"
                       >
                         <span>{s.name}</span>
@@ -1423,9 +1442,6 @@ export default function BillingPage() {
                 </div>
               )}
             </div>
-            {compService && !showCompDropdown && (
-              <p className="text-xs text-emerald-600 mt-1">🎁 {compService} — free</p>
-            )}
           </div>
 
           {/* Discount & Payment */}
