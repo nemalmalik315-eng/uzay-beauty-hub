@@ -5,6 +5,7 @@ const PUBLIC_ROUTES: { path: string; methods: string[] }[] = [
   { path: "/api/auth",     methods: ["GET", "POST", "DELETE"] },
   { path: "/api/bookings", methods: ["POST"] },          // public booking form
   { path: "/api/services", methods: ["GET"] },           // booking page reads services
+  { path: "/api/deals",    methods: ["GET"] },           // booking page reads deals
   { path: "/admin/login",  methods: ["GET"] },
 ];
 

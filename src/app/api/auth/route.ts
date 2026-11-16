@@ -3,6 +3,20 @@ import getDb from "@/lib/db";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
+// Simple in-memory brute-force guard: max 10 failed attempts per IP per 15 min
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 });
+    return true;
+  }
+  entry.count += 1;
+  return entry.count <= 10;
+}
+function clearAttempts(ip: string) { loginAttempts.delete(ip); }
+
 function signToken(payload: string): string {
   const secret = process.env.JWT_SECRET ?? "dev-secret-change-me";
   const b64 = Buffer.from(payload).toString("base64");
@@ -27,6 +41,11 @@ function decodeToken(token: string): { id: string; username: string } | null {
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: "Too many attempts. Try again in 15 minutes." }, { status: 429 });
+  }
+
   const db = getDb();
   const body = await req.json();
   const { username, password } = body;
@@ -47,6 +66,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
+  clearAttempts(ip);
   const token = signToken(`${user.id}:${user.username}:${Date.now()}`);
 
   const response = NextResponse.json({ message: "Login successful", username: user.username });
