@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -54,6 +54,56 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [showMore, setShowMore] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("default");
+  const knownBookingIds = useRef<Set<number> | null>(null);
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Check notification support & current permission on mount
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotifPermission("unsupported");
+    } else {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestNotifPermission = async () => {
+    if (!("Notification" in window)) return;
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+  };
+
+  const checkNewBookings = useCallback(async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+    const res = await fetch("/api/bookings?status=pending").catch(() => null);
+    if (!res?.ok) return;
+    const data: Array<{ id: number; customer_name: string; service_name: string; date: string; time: string }> =
+      await res.json().catch(() => []);
+    if (!Array.isArray(data)) return;
+
+    const currentIds = new Set<number>(data.map((b) => b.id));
+
+    if (knownBookingIds.current === null) {
+      // First poll — just record existing IDs, don't notify
+      knownBookingIds.current = currentIds;
+      return;
+    }
+
+    const newBookings = data.filter((b) => !knownBookingIds.current!.has(b.id));
+    newBookings.forEach((b) => {
+      try {
+        const svcName = b.service_name?.split(" + ")[0] || "a service";
+        new Notification("New Booking 🎉", {
+          body: `${b.customer_name} — ${svcName} at ${b.time}`,
+          icon: "/icons/icon-192.png",
+          tag: `booking-${b.id}`,
+        });
+      } catch {}
+    });
+
+    knownBookingIds.current = currentIds;
+  }, []);
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -76,7 +126,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               let viewedIds: number[] = [];
               try { viewedIds = JSON.parse(localStorage.getItem("viewedBookingIds") || "[]"); } catch {}
               if (pathname === "/admin/bookings") {
-                // Admin is looking at bookings — mark all as seen
                 const merged = Array.from(new Set([...viewedIds, ...pendingIds]));
                 localStorage.setItem("viewedBookingIds", JSON.stringify(merged));
                 setPendingCount(0);
@@ -85,13 +134,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               }
             })
             .catch(() => {});
+
+          // Start polling for new bookings (notification)
+          knownBookingIds.current = null;
+          checkNewBookings();
+          if (pollTimer.current) clearInterval(pollTimer.current);
+          pollTimer.current = setInterval(checkNewBookings, 30000);
         }
       })
       .catch(() => {
         router.push("/admin/login");
         setAuthenticated(false);
       });
-  }, [pathname, router]);
+
+    return () => {
+      if (pollTimer.current) clearInterval(pollTimer.current);
+    };
+  }, [pathname, router, checkNewBookings]);
 
   const handleLogout = async () => {
     await fetch("/api/auth", { method: "DELETE" });
@@ -189,11 +248,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <h1 className="hidden lg:block text-lg font-semibold text-charcoal font-heading">{currentLabel}</h1>
 
               {/* Right side */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {/* Desktop date */}
-                <span className="hidden lg:block text-sm text-gray-400">
+                <span className="hidden lg:block text-sm text-gray-400 mr-2">
                   {new Date().toLocaleDateString("en-PK", { weekday: "short", day: "numeric", month: "short" })}
                 </span>
+
+                {/* Notification bell */}
+                {notifPermission !== "unsupported" && notifPermission !== "denied" && (
+                  <button
+                    onClick={notifPermission === "granted" ? undefined : requestNotifPermission}
+                    title={notifPermission === "granted" ? "Notifications on" : "Enable notifications"}
+                    className={`w-9 h-9 flex items-center justify-center rounded-full transition-all relative
+                      ${notifPermission === "granted"
+                        ? "text-gold lg:text-gold"
+                        : "text-gray-400 lg:text-gray-400 hover:text-gold active:bg-white/10 lg:hover:bg-gold/10 cursor-pointer"
+                      }`}
+                  >
+                    {notifPermission === "granted" ? (
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                      </svg>
+                    )}
+                    {notifPermission !== "granted" && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                    )}
+                  </button>
+                )}
+
                 {/* Mobile logout */}
                 <button
                   onClick={handleLogout}
