@@ -58,6 +58,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const knownBookingIds = useRef<Set<number> | null>(null);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const playNotifSound = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const notes = [523.25, 659.25, 783.99]; // C5 E5 G5 — major chord ding
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const start = ctx.currentTime + i * 0.12;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.5);
+        osc.start(start);
+        osc.stop(start + 0.5);
+      });
+    } catch {}
+  };
+
   // Check notification support & current permission on mount
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) {
@@ -91,6 +112,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     const newBookings = data.filter((b) => !knownBookingIds.current!.has(b.id));
+    if (newBookings.length > 0) playNotifSound();
     newBookings.forEach((b) => {
       try {
         const svcName = b.service_name?.split(" + ")[0] || "a service";
@@ -258,7 +280,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {notifPermission !== "unsupported" && notifPermission !== "denied" && (
                   <button
                     onClick={notifPermission === "granted"
-                      ? () => { try { new Notification("Test 🔔", { body: "Notifications are working!", icon: "/icons/icon-192.png" }); } catch {} }
+                      ? () => { playNotifSound(); try { new Notification("Test 🔔", { body: "Notifications are working!", icon: "/icons/icon-192.png" }); } catch {} }
                       : requestNotifPermission}
                     title={notifPermission === "granted" ? "Tap to send a test notification" : "Enable notifications"}
                     className={`w-9 h-9 flex items-center justify-center rounded-full transition-all relative
