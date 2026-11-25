@@ -488,7 +488,7 @@ export default function BillingPage() {
   );
 
   const CATEGORY_ORDER = [
-    "Hair", "Hair Color", "Hair Treatment", "Dye Application",
+    "Hair Cut", "Hair Treatment", "Hair Colour",
     "Facials", "Cleansing", "Polisher", "Scrub & Mask",
     "Body Waxing", "Face Waxing", "Threading",
     "Manicure & Pedicure", "Massage", "Makeup", "Kids",

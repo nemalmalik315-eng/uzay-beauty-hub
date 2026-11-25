@@ -62,7 +62,7 @@ export default function BookPage() {
   }, []);
 
   const CATEGORY_ORDER = [
-    "Hair", "Hair Color", "Hair Treatment", "Facials", "Cleansing", "Polisher",
+    "Hair Cut", "Hair Treatment", "Hair Colour", "Facials", "Cleansing", "Polisher",
     "Body Waxing", "Face Waxing", "Manicure & Pedicure", "Makeup", "Kids",
     "Assistant Bridal", "Signature Bridal", "Bridal",
   ];

@@ -15,10 +15,9 @@ interface Service {
 }
 
 const CATEGORY_ORDER = [
-  "Hair",
-  "Hair Color",
+  "Hair Cut",
   "Hair Treatment",
-  "Dye Application",
+  "Hair Colour",
   "Facials",
   "Cleansing",
   "Polisher",

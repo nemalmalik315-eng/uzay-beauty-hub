@@ -38,10 +38,9 @@ function fmt12(h: number) {
 }
 
 const CAT_COLORS: Record<string, string> = {
-  "Hair": "#b8860b",
-  "Hair Color": "#c0392b",
+  "Hair Cut": "#b8860b",
+  "Hair Colour": "#c0392b",
   "Hair Treatment": "#8b6914",
-  "Dye Application": "#a0522d",
   "Facials": "#e74c8b",
   "Cleansing": "#f39c12",
   "Polisher": "#1abc9c",
