@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   sql += " ORDER BY expense_date DESC, id DESC";
 
   const { rows } = await db.execute({ sql, args });
-  const total = (rows as Array<{ amount: number }>).reduce((s, r) => s + Number(r.amount), 0);
+  const total = rows.reduce((s, r) => s + Number(r.amount), 0);
   return NextResponse.json({ expenses: rows, total });
 }
 
