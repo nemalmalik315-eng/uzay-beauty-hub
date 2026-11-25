@@ -73,6 +73,31 @@ interface SavedBillInfo {
   compServices?: string[];
 }
 
+function buildReminderUrl(bill: Bill): string | null {
+  if (!bill.customer_phone) return null;
+  const digits = bill.customer_phone.replace(/\D/g, "");
+  const waPhone = digits.startsWith("0") ? "92" + digits.slice(1)
+    : digits.startsWith("92") ? digits : "92" + digits;
+  const remaining = bill.payment_status === "partial"
+    ? bill.total - (bill.amount_paid ?? 0)
+    : bill.total;
+  const dateStr = new Date(bill.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
+  const lines = [
+    `Assalamualaykum ${bill.customer_name},`,
+    "",
+    "This is a friendly reminder from *Uzay Beauty Hub* 💄",
+    "",
+    `Your payment of *Rs. ${remaining.toLocaleString()}* is still outstanding for your visit on ${dateStr}.`,
+    ...(bill.payment_status === "partial" ? [`(Total bill: Rs. ${bill.total.toLocaleString()} · Paid: Rs. ${(bill.amount_paid ?? 0).toLocaleString()})`] : []),
+    "",
+    "Kindly arrange the payment at your earliest convenience.",
+    "",
+    "Thank you! ✨",
+    "Uzay Beauty Hub",
+  ];
+  return `https://wa.me/${waPhone}?text=${encodeURIComponent(lines.join("\n"))}`;
+}
+
 function buildWhatsAppUrl(info: SavedBillInfo): string {
   const digits = info.phone.replace(/\D/g, "");
   const waPhone = digits.startsWith("0") ? "92" + digits.slice(1)
@@ -1775,6 +1800,11 @@ export default function BillingPage() {
                             Collect Rs. {(b.total - (b.amount_paid ?? 0)).toLocaleString()}
                           </button>
                         )}
+                        {(b.payment_status === "pending" || b.payment_status === "partial") && buildReminderUrl(b) && (
+                          <a href={buildReminderUrl(b)!} target="_blank" rel="noopener noreferrer" className="text-xs text-[#25D366] hover:text-[#1EBE5A] font-medium">
+                            Remind
+                          </a>
+                        )}
                         <button onClick={() => { setEditPasswordBill(b); setEditPassword(""); setEditPasswordError(false); }} className="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
                         <button onClick={() => printReceipt(b)} className="text-xs text-gold hover:text-gold-dark font-medium">Print</button>
                         <button onClick={() => setDeletingBill(b)} className="text-xs text-red-400 hover:text-red-600">Delete</button>
@@ -1845,6 +1875,11 @@ export default function BillingPage() {
                   <button onClick={() => collectRemaining(b)} className="text-xs text-blue-600 hover:text-blue-800 font-semibold">
                     Collect Rs. {(b.total - (b.amount_paid ?? 0)).toLocaleString()}
                   </button>
+                )}
+                {(b.payment_status === "pending" || b.payment_status === "partial") && buildReminderUrl(b) && (
+                  <a href={buildReminderUrl(b)!} target="_blank" rel="noopener noreferrer" className="text-xs text-[#25D366] hover:text-[#1EBE5A] font-medium">
+                    Remind
+                  </a>
                 )}
                 <button onClick={() => { setEditPasswordBill(b); setEditPassword(""); setEditPasswordError(false); }} className="text-xs text-blue-500 hover:text-blue-700 font-medium">Edit</button>
                 <button onClick={() => printReceipt(b)} className="text-xs text-gold hover:text-gold-dark font-medium">Print Receipt</button>
