@@ -11,6 +11,7 @@ const sidebarItems = [
   { href: "/admin/bookings", label: "Bookings", icon: "calendar" },
   { href: "/admin/billing", label: "Billing", icon: "wallet" },
   { href: "/admin/customers", label: "Customers", icon: "users" },
+  { href: "/admin/deals", label: "Deals", icon: "tag" },
   { href: "/admin/stock", label: "Stock", icon: "box" },
   { href: "/admin/staff", label: "Staff", icon: "staff" },
   { href: "/admin/expenses", label: "Expenses", icon: "receipt" },
@@ -25,6 +26,7 @@ const bottomTabs = [
 ];
 
 const moreItems = [
+  { href: "/admin/deals", label: "Deals", icon: "tag" },
   { href: "/admin/stock", label: "Stock", icon: "box" },
   { href: "/admin/staff", label: "Staff", icon: "staff" },
   { href: "/admin/expenses", label: "Expenses", icon: "receipt" },
@@ -43,6 +45,7 @@ function Icon({ name, className = "w-5 h-5" }: { name: string; className?: strin
     more: <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>,
     external: <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>,
     receipt: <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>,
+    tag: <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" /></svg>,
     logout: <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>,
   };
   return <>{icons[name]}</> || null;
