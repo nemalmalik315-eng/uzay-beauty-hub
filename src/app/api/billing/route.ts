@@ -25,12 +25,21 @@ export async function GET(req: NextRequest) {
   const month = searchParams.get("month"); // YYYY-MM format for past months
 
   const paymentStatus = searchParams.get("payment_status");
+  const customer = searchParams.get("customer");
+  const outstandingOnly = searchParams.get("outstanding") === "1";
 
   let query = "SELECT b.*, COALESCE(c.phone, '') as customer_phone FROM billing b LEFT JOIN customers c ON c.id = b.customer_id";
   const conditions: string[] = [];
   const params: (string | number)[] = [];
 
-  if (paymentStatus) {
+  if (customer) {
+    conditions.push("LOWER(b.customer_name) = LOWER(?)");
+    params.push(customer);
+  }
+
+  if (outstandingOnly) {
+    conditions.push("b.payment_status IN ('pending', 'partial')");
+  } else if (paymentStatus) {
     conditions.push("b.payment_status = ?");
     params.push(paymentStatus);
   }

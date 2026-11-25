@@ -236,6 +236,8 @@ export default function BillingPage() {
   const [compServices, setCompServices] = useState<string[]>([]);
   const [compSearch, setCompSearch] = useState("");
   const [showCompDropdown, setShowCompDropdown] = useState(false);
+  const [customerOutstanding, setCustomerOutstanding] = useState<{ count: number; remaining: number; bills: Bill[] } | null>(null);
+  const outstandingTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const phoneTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const nameTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const justSelectedCustomer = useRef(false);
@@ -375,6 +377,29 @@ export default function BillingPage() {
       setShowNameSuggestions(arr.length > 0);
     }, 300);
   }, [customerName]);
+
+  // Fetch outstanding balance for the current customer
+  useEffect(() => {
+    if (!showAdd || customerName.length < 2) {
+      setCustomerOutstanding(null);
+      return;
+    }
+    clearTimeout(outstandingTimeout.current);
+    outstandingTimeout.current = setTimeout(async () => {
+      const res = await fetch(`/api/billing?customer=${encodeURIComponent(customerName)}&outstanding=1`);
+      const data = await res.json();
+      const outBills: Bill[] = Array.isArray(data.bills) ? data.bills : [];
+      if (outBills.length === 0) {
+        setCustomerOutstanding(null);
+        return;
+      }
+      const remaining = outBills.reduce((sum, b) => {
+        if (b.payment_status === "partial") return sum + b.total - (b.amount_paid ?? 0);
+        return sum + b.total;
+      }, 0);
+      setCustomerOutstanding({ count: outBills.length, remaining, bills: outBills });
+    }, 500);
+  }, [customerName, showAdd]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -561,6 +586,7 @@ export default function BillingPage() {
     setCompServices([]);
     setCompSearch("");
     setShowCompDropdown(false);
+    setCustomerOutstanding(null);
     setNameFilter("");
     setServiceFilter("");
     setShowAdd(false);
@@ -1228,6 +1254,28 @@ export default function BillingPage() {
               </select>
             </div>
           </div>
+
+          {/* Outstanding balance banner */}
+          {customerOutstanding && !editingBillId && (
+            <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-5">
+              <span className="text-orange-500 text-lg leading-none mt-0.5">⚠️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-orange-800">
+                  {customerName} has Rs. {customerOutstanding.remaining.toLocaleString()} outstanding
+                </p>
+                <div className="mt-1 space-y-0.5">
+                  {customerOutstanding.bills.map((b) => {
+                    const rem = b.payment_status === "partial" ? b.total - (b.amount_paid ?? 0) : b.total;
+                    return (
+                      <p key={b.id} className="text-xs text-orange-600">
+                        Bill #{b.id} · {fmtBillDate(b.created_at)} · Rs. {rem.toLocaleString()} {b.payment_status === "partial" ? "remaining" : "unpaid"}
+                      </p>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Service picker */}
           <div className="mb-5">
