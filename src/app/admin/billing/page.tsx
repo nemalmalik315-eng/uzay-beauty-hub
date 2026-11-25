@@ -1379,13 +1379,13 @@ export default function BillingPage() {
                         )}
                       </div>
                     ))}
-                    {performers.length < 4 && (
+                    {performers.length < staffEmployees.length && (
                       <button
                         type="button"
                         onClick={() => setPerformers([...performers, ""])}
                         className="text-xs text-gold hover:text-gold-dark font-medium self-start pl-[6.5rem] py-1"
                       >
-                        + Add {splitLabel2.toLowerCase()}
+                        + Add staff
                       </button>
                     )}
                   </div>
@@ -1394,7 +1394,7 @@ export default function BillingPage() {
             ) : (
               <>
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
-                  Performed By <span className="normal-case text-gray-400 font-normal">(optional — up to 4 staff)</span>
+                  Performed By <span className="normal-case text-gray-400 font-normal">(optional)</span>
                 </label>
                 <div className="flex flex-col gap-2">
                   {performers.map((p, i) => (
@@ -1424,7 +1424,7 @@ export default function BillingPage() {
                       )}
                     </div>
                   ))}
-                  {performers.length < 4 && (
+                  {performers.length < staffEmployees.length && (
                     <button
                       type="button"
                       onClick={() => setPerformers([...performers, ""])}
