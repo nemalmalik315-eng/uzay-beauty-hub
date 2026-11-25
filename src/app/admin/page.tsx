@@ -10,6 +10,8 @@ interface DashboardData {
   lowStockCount: number;
   outstandingCount: number;
   outstandingTotal: number;
+  monthExpenses: number;
+  monthRevenue: number;
   recentBookings: Array<{
     id: number;
     customer_name: string;
@@ -117,13 +119,17 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function load() {
-      const [billingRes, bookingsRes, customersRes, stockRes, analyticsRes, outstandingRes] = await Promise.all([
+      const now = new Date();
+      const monthParam = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const [billingRes, bookingsRes, customersRes, stockRes, analyticsRes, outstandingRes, monthBillRes, expensesRes] = await Promise.all([
         fetch("/api/billing?period=today"),
         fetch("/api/bookings"),
         fetch("/api/customers"),
         fetch("/api/stock"),
         fetch("/api/analytics").catch(() => null),
         fetch("/api/billing?outstanding=1"),
+        fetch(`/api/billing?month=${monthParam}`),
+        fetch(`/api/expenses?month=${monthParam}`),
       ]);
       const billing = await billingRes.json().catch(() => ({}));
       const bookings = await bookingsRes.json().catch(() => []);
@@ -131,6 +137,8 @@ export default function AdminDashboard() {
       const stock = await stockRes.json().catch(() => ({}));
       const analyticsData = analyticsRes ? await analyticsRes.json().catch(() => null) : null;
       const outstandingData = await outstandingRes.json().catch(() => ({}));
+      const monthBillData = await monthBillRes.json().catch(() => ({}));
+      const expensesData = await expensesRes.json().catch(() => ({}));
 
       const todayStr = new Date().toISOString().split("T")[0];
       const bookingsArr = Array.isArray(bookings) ? bookings : [];
@@ -144,6 +152,9 @@ export default function AdminDashboard() {
         return sum + b.total;
       }, 0);
 
+      const monthRevenue = Number(monthBillData.summary?.total_revenue) || 0;
+      const monthExpenses = Number(expensesData.total) || 0;
+
       setData({
         todayRevenue: billing.summary?.total_revenue || 0,
         todayBookings: todayBookings.length,
@@ -151,6 +162,8 @@ export default function AdminDashboard() {
         lowStockCount: stock.lowStockCount || 0,
         outstandingCount: outstandingBills.length,
         outstandingTotal,
+        monthRevenue,
+        monthExpenses,
         recentBookings: bookingsArr.slice(0, 5),
       });
       setAnalytics(analyticsData);
@@ -243,6 +256,30 @@ export default function AdminDashboard() {
           <p className="text-xs text-gray-400 mt-0.5 leading-tight">Low Stock</p>
         </Link>
       </div>
+
+      {/* Net Profit banner */}
+      {(() => {
+        const netProfit = data.monthRevenue - data.monthExpenses;
+        return (
+          <Link href="/admin/expenses" className={`flex items-center gap-4 rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-shadow ${netProfit >= 0 ? "bg-gold/10" : "bg-red-50"}`}>
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${netProfit >= 0 ? "bg-gold/20" : "bg-red-100"}`}>
+              <svg className={`w-5 h-5 ${netProfit >= 0 ? "text-gold" : "text-red-500"}`} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-500">This month&apos;s net profit</p>
+              <p className={`text-xl font-bold font-heading ${netProfit >= 0 ? "text-gold" : "text-red-600"}`}>
+                {netProfit < 0 ? "−" : ""}Rs. {Math.abs(netProfit).toLocaleString()}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-[11px] text-gray-400">Rev: Rs. {data.monthRevenue.toLocaleString()}</p>
+              <p className="text-[11px] text-gray-400">Exp: Rs. {data.monthExpenses.toLocaleString()}</p>
+            </div>
+          </Link>
+        );
+      })()}
 
       {/* Revenue Chart */}
       <div className="bg-white rounded-2xl shadow-sm p-5">
