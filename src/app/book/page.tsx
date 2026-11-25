@@ -28,6 +28,7 @@ export default function BookPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedServices, setSelectedServices] = useState<Record<number, number>>({});
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -80,10 +81,16 @@ export default function BookPage() {
     ...(hasOctoberDeals ? ["October Deals"] : []),
     ...otherCats,
   ];
-  const filteredServices =
-    activeCategory === "All"
-      ? services
-      : services.filter((s) => s.category === activeCategory);
+  const isSearching = searchQuery.trim().length > 0;
+  const filteredServices = isSearching
+    ? services.filter((s) =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (s.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : activeCategory === "All"
+    ? services
+    : services.filter((s) => s.category === activeCategory);
 
   const addService = (id: number) => {
     setSelectedServices((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
@@ -194,8 +201,33 @@ export default function BookPage() {
                   </h2>
                 </div>
 
-                {/* Category Tabs */}
-                <div className="flex flex-wrap gap-2 mb-6">
+                {/* Search */}
+                <div className="relative mb-4">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gold/60 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  </svg>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search services…"
+                    className="w-full pl-9 pr-9 py-2.5 rounded-full border border-gray-200 bg-gray-50 text-charcoal text-sm placeholder-gray-400 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-charcoal transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M18 6 6 18M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {/* Category Tabs — hidden while searching */}
+                {!isSearching && <div className="flex flex-wrap gap-2 mb-6">
                   {categories.map((cat) => (
                     <button
                       key={cat}
@@ -225,9 +257,12 @@ export default function BookPage() {
                       {cat === "October Deals" ? "October Deals ✦" : cat}
                     </button>
                   ))}
-                </div>
+                </div>}
 
                 {/* Service Cards */}
+                {isSearching && filteredServices.length === 0 && (
+                  <p className="text-center text-gray-400 py-6 text-sm">No services found for &ldquo;{searchQuery}&rdquo;</p>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {filteredServices.map((service) => {
                     const qty = selectedServices[service.id] || 0;
