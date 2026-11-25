@@ -60,27 +60,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const playNotifSound = () => {
     try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const play = () => {
-        const t = ctx.currentTime;
-        // Three ascending tones played on one oscillator
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(880, t);        // A5
-        osc.frequency.setValueAtTime(1046.5, t + 0.18); // C6
-        osc.frequency.setValueAtTime(1318.5, t + 0.36); // E6
-        gain.gain.setValueAtTime(0.6, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.75);
-        osc.start(t);
-        osc.stop(t + 0.75);
-      };
-      if (ctx.state === "suspended") ctx.resume().then(play);
-      else play();
+      const audio = new Audio("/notification.wav");
+      audio.volume = 1;
+      audio.play().catch(() => {});
     } catch {}
   };
 
