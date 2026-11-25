@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb from "@/lib/db";
 import { ensureStaffTables } from "@/lib/ensure-staff-tables";
+import { isAuthenticated, unauthorized } from "@/lib/requireAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   await ensureStaffTables();
   const db = getDb();
   const { searchParams } = new URL(req.url);
@@ -19,6 +21,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   await ensureStaffTables();
   const db = getDb();
   const body = await req.json();
@@ -37,6 +40,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   await ensureStaffTables();
   const db = getDb();
   const body = await req.json();

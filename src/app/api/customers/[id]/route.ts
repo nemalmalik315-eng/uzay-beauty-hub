@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb from "@/lib/db";
+import { isAuthenticated, unauthorized } from "@/lib/requireAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +8,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const { id } = await params;
 

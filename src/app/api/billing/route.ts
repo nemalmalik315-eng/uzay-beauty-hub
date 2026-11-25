@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb from "@/lib/db";
+import { isAuthenticated, unauthorized } from "@/lib/requireAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ async function ensureBillingColumns() {
 }
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   await ensureBillingColumns();
   const db = getDb();
   const { searchParams } = new URL(req.url);
@@ -87,6 +89,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const body = await req.json();
   const {
@@ -159,6 +162,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const body = await req.json();
   const { id, customer_name, customer_phone, service_name, service_charge, discount = 0, makeup_discount, hairdo_discount, payment_method = "cash", payment_status, amount_paid, bill_date, performed_by, billed_by } = body;
@@ -211,6 +215,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

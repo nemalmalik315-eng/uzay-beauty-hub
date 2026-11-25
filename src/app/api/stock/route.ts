@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb from "@/lib/db";
+import { isAuthenticated, unauthorized } from "@/lib/requireAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const lowStock = searchParams.get("low_stock");
@@ -25,6 +27,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const body = await req.json();
   const { product_name, category, quantity, min_threshold = 5, unit_price = 0 } = body;
@@ -42,6 +45,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const body = await req.json();
   const { id, quantity, product_name, category, min_threshold, unit_price } = body;

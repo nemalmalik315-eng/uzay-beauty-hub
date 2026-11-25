@@ -29,6 +29,10 @@ function decodeToken(token: string): { id: string; username: string } | null {
     const dot = token.lastIndexOf(".");
     if (dot === -1) return null;
     const payloadB64 = token.slice(0, dot);
+    const sig = token.slice(dot + 1);
+    const secret = process.env.JWT_SECRET ?? "dev-secret-change-me";
+    const expected = crypto.createHmac("sha256", secret).update(payloadB64).digest("hex");
+    if (sig !== expected) return null;
     const payload = Buffer.from(payloadB64, "base64").toString();
     const [id, username] = payload.split(":");
     if (!id || !username) return null;

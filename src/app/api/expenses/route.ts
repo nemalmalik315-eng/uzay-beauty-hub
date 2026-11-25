@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb from "@/lib/db";
+import { isAuthenticated, unauthorized } from "@/lib/requireAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ async function ensureTable() {
 }
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   await ensureTable();
   const db = getDb();
   const { searchParams } = new URL(req.url);
@@ -39,6 +41,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   await ensureTable();
   const db = getDb();
   const { category, description, amount, expense_date } = await req.json();
@@ -53,6 +56,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   await ensureTable();
   const db = getDb();
   const { id, category, description, amount, expense_date } = await req.json();
@@ -65,6 +69,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   await ensureTable();
   const db = getDb();
   const { searchParams } = new URL(req.url);

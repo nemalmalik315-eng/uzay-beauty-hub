@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb from "@/lib/db";
+import { isAuthenticated, unauthorized } from "@/lib/requireAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ function parseGroupedRows(rows: Record<string, unknown>[]) {
 }
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   try { await db.execute("ALTER TABLE bookings ADD COLUMN complimentary_service TEXT"); } catch { /* exists */ }
   try { await db.execute("ALTER TABLE bookings ADD COLUMN performed_by TEXT"); } catch { /* exists */ }
@@ -43,7 +45,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
 
   const whereClause = date ? "WHERE b.date = ?" : "";
-  const havingClause = status ? "HAVING MAX(b.status) = ?" : "";
+  const havingClause = status ? "HAVING SUM(CASE WHEN b.status = ? THEN 1 ELSE 0 END) = COUNT(*)" : "";
   const args: (string)[] = [...(date ? [date] : []), ...(status ? [status] : [])];
 
   const query = `
@@ -128,6 +130,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   try { await db.execute("ALTER TABLE bookings ADD COLUMN complimentary_service TEXT"); } catch { /* exists */ }
   try { await db.execute("ALTER TABLE bookings ADD COLUMN performed_by TEXT"); } catch { /* exists */ }
@@ -160,4 +163,17 @@ export async function PATCH(req: NextRequest) {
   });
 
   return NextResponse.json({ message: "Booking updated" });
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
+  const db = getDb();
+  const { searchParams } = new URL(req.url);
+  const groupId = searchParams.get("group_id");
+  if (!groupId) return NextResponse.json({ error: "Missing group_id" }, { status: 400 });
+  await db.execute({
+    sql: "DELETE FROM bookings WHERE COALESCE(booking_group_id, id) = ?",
+    args: [Number(groupId)],
+  });
+  return NextResponse.json({ message: "Booking deleted" });
 }
