@@ -2,7 +2,7 @@
   "name": "Uzay Beauty Hub",
   "short_name": "Uzay Beauty",
   "description": "Premium hair, skin, nails & bridal makeup in Lahore. Book your appointment online.",
-  "start_url": "/",
+  "start_url": "/admin/billing",
   "display": "standalone",
   "background_color": "#19191B",
   "theme_color": "#C9A84C",
