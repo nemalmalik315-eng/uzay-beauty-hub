@@ -17,10 +17,16 @@ interface Service {
 
 interface Deal {
   id: number;
-  name: string;
-  price: number;
+  collection: string;
   color: string;
-  services: string[];
+  name: string;
+  service_ids: number[];
+  services: { name: string; price: number }[];
+  original_price: number;
+  discount_percent: number | null;
+  custom_price: number | null;
+  final_price: number;
+  active: boolean;
 }
 
 export default function BookPage() {
@@ -67,8 +73,13 @@ export default function BookPage() {
     "Body Waxing", "Face Waxing", "Manicure & Pedicure", "Makeup", "Kids",
     "Assistant Bridal", "Signature Bridal", "Bridal",
   ];
+
+  // Group deals by collection
+  const dealCollections = Array.from(new Set(deals.map((d) => d.collection)));
+  const getDealCollectionColor = (name: string) => deals.find((d) => d.collection === name)?.color ?? "#C9A84C";
+  const isDealCollection = dealCollections.includes(activeCategory);
+
   const allCats = Array.from(new Set(services.map((s) => s.category)));
-  const hasOctoberDeals = allCats.includes("October Deals");
   const otherCats = allCats
     .filter((c) => c !== "October Deals")
     .sort((a, b) => {
@@ -76,11 +87,8 @@ export default function BookPage() {
       const bi = CATEGORY_ORDER.indexOf(b);
       return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
     });
-  const categories = [
-    "All",
-    ...(hasOctoberDeals ? ["October Deals"] : []),
-    ...otherCats,
-  ];
+  const categories = ["All", ...otherCats];
+
   const isSearching = searchQuery.trim().length > 0;
   const filteredServices = isSearching
     ? services.filter((s) =>
@@ -227,43 +235,99 @@ export default function BookPage() {
                 </div>
 
                 {/* Category Tabs — hidden while searching */}
-                {!isSearching && <div className="flex flex-wrap gap-2 mb-6">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setActiveCategory(cat)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        cat === "October Deals"
-                          ? activeCategory === cat
-                            ? "text-white shadow-lg ring-2 ring-white ring-offset-2 ring-offset-amber-400"
-                            : "text-white opacity-90 hover:opacity-100"
-                          : cat === "Azaadi Deals"
-                          ? activeCategory === cat
-                            ? "text-white shadow-lg ring-2 ring-white ring-offset-2 ring-offset-white"
-                            : "text-white opacity-85 hover:opacity-100"
-                          : activeCategory === cat
-                          ? "bg-gold text-white shadow-md"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                      style={
-                        cat === "October Deals"
-                          ? { backgroundColor: "#C05A20" }
-                          : cat === "Azaadi Deals"
-                          ? { backgroundColor: "#015f2a" }
-                          : undefined
-                      }
-                    >
-                      {cat === "October Deals" ? "October Deals ✦" : cat}
-                    </button>
-                  ))}
-                </div>}
+                {!isSearching && (
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {/* Deal collection tabs */}
+                    {dealCollections.map((col) => {
+                      const color = getDealCollectionColor(col);
+                      const isActive = activeCategory === col;
+                      return (
+                        <button
+                          key={col}
+                          type="button"
+                          onClick={() => setActiveCategory(col)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all text-white ${isActive ? "shadow-lg ring-2 ring-white ring-offset-1" : "opacity-85 hover:opacity-100"}`}
+                          style={{ backgroundColor: color, ringOffsetColor: color }}
+                        >
+                          ✦ {col}
+                        </button>
+                      );
+                    })}
+                    {/* Regular category tabs */}
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setActiveCategory(cat)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          activeCategory === cat
+                            ? "bg-gold text-white shadow-md"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-                {/* Service Cards */}
+                {/* Deal cards — shown when a deal collection tab is active */}
+                {!isSearching && isDealCollection && (
+                  <div className="space-y-3 mb-2">
+                    {deals.filter((d) => d.collection === activeCategory).map((deal) => {
+                      const allAdded = deal.service_ids.every((id) => (selectedServices[id] ?? 0) > 0);
+                      return (
+                        <div key={deal.id} className={`rounded-xl border p-4 transition-all ${allAdded ? "border-gold bg-gold/5" : "border-gray-100 bg-white"}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-charcoal">{deal.name}</p>
+                              {deal.services.length > 0 && (
+                                <ul className="mt-1.5 space-y-0.5">
+                                  {deal.services.map((s, i) => (
+                                    <li key={i} className="flex items-start gap-1.5 text-xs text-gray-500">
+                                      <span className="text-gold flex-shrink-0 mt-px">✓</span>
+                                      {s.name}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                              <div className="flex items-center gap-3 mt-3">
+                                {deal.original_price > 0 && deal.final_price !== deal.original_price && (
+                                  <span className="text-sm text-gray-400 line-through">Rs. {deal.original_price.toLocaleString()}</span>
+                                )}
+                                <span className="text-gold font-bold">Rs. {deal.final_price.toLocaleString()}</span>
+                                {deal.discount_percent !== null && (
+                                  <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                                    {deal.discount_percent}% off
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                deal.service_ids.forEach((id) => {
+                                  if (!(selectedServices[id] ?? 0)) {
+                                    setSelectedServices((prev) => ({ ...prev, [id]: 1 }));
+                                  }
+                                });
+                              }}
+                              className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all ${allAdded ? "bg-gold text-white" : "border-2 border-gold text-gold hover:bg-gold hover:text-white"}`}
+                            >
+                              {allAdded ? "Added ✓" : "Add Deal"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Service Cards — hidden when a deal collection tab is active */}
                 {isSearching && filteredServices.length === 0 && (
                   <p className="text-center text-gray-400 py-6 text-sm">No services found for &ldquo;{searchQuery}&rdquo;</p>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(!isDealCollection || isSearching) && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {filteredServices.map((service) => {
                     const qty = selectedServices[service.id] || 0;
                     const isSelected = qty > 0;
@@ -338,7 +402,7 @@ export default function BookPage() {
                       </div>
                     );
                   })}
-                </div>
+                </div>}
 
                 {/* Selected Summary */}
                 {selectedDetails.length > 0 && (
