@@ -257,8 +257,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {/* Notification bell */}
                 {notifPermission !== "unsupported" && notifPermission !== "denied" && (
                   <button
-                    onClick={notifPermission === "granted" ? undefined : requestNotifPermission}
-                    title={notifPermission === "granted" ? "Notifications on" : "Enable notifications"}
+                    onClick={notifPermission === "granted"
+                      ? () => { try { new Notification("Test 🔔", { body: "Notifications are working!", icon: "/icons/icon-192.png" }); } catch {} }
+                      : requestNotifPermission}
+                    title={notifPermission === "granted" ? "Tap to send a test notification" : "Enable notifications"}
                     className={`w-9 h-9 flex items-center justify-center rounded-full transition-all relative
                       ${notifPermission === "granted"
                         ? "text-gold lg:text-gold"
