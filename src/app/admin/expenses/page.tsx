@@ -3,14 +3,15 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/admin/Toast";
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { key: "electricity", label: "Electricity", icon: "⚡", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
   { key: "inventory", label: "Inventory", icon: "📦", color: "bg-blue-50 text-blue-700 border-blue-200" },
   { key: "makeup", label: "Makeup / Products", icon: "💄", color: "bg-pink-50 text-pink-700 border-pink-200" },
   { key: "rent", label: "Rent", icon: "🏠", color: "bg-purple-50 text-purple-700 border-purple-200" },
-  { key: "salary", label: "Staff Salary", icon: "💰", color: "bg-green-50 text-green-700 border-green-200" },
   { key: "other", label: "Other", icon: "📝", color: "bg-gray-50 text-gray-700 border-gray-200" },
 ];
+
+const CUSTOM_COLOR = "bg-indigo-50 text-indigo-700 border-indigo-200";
 
 const PAY_PIN = "1122";
 
@@ -45,6 +46,8 @@ export default function ExpensesPage() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [form, setForm] = useState({ category: "electricity", description: "", amount: "", expense_date: todayStr() });
   const [saving, setSaving] = useState(false);
+  const [customCatInput, setCustomCatInput] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -84,6 +87,15 @@ export default function ExpensesPage() {
   const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const netProfit = monthRevenue - totalExpenses;
 
+  // Build full category list: defaults + any custom ones found in expense records
+  const customKeysInData = Array.from(
+    new Set(expenses.map((e) => e.category).filter((k) => !DEFAULT_CATEGORIES.find((c) => c.key === k)))
+  );
+  const CATEGORIES = [
+    ...DEFAULT_CATEGORIES,
+    ...customKeysInData.map((k) => ({ key: k, label: k, icon: "🏷️", color: CUSTOM_COLOR })),
+  ];
+
   const catMap = Object.fromEntries(CATEGORIES.map((c) => [c.key, c]));
 
   const breakdown = CATEGORIES.map((cat) => ({
@@ -94,17 +106,25 @@ export default function ExpensesPage() {
   const startAdd = () => {
     setEditingExpense(null);
     setForm({ category: "electricity", description: "", amount: "", expense_date: todayStr() });
+    setCustomCatInput("");
+    setShowCustomInput(false);
     setShowAdd(true);
   };
 
   const startEdit = (exp: Expense) => {
     setEditingExpense(exp);
     setForm({ category: exp.category, description: exp.description || "", amount: String(exp.amount), expense_date: exp.expense_date });
+    const isCustom = !DEFAULT_CATEGORIES.find((c) => c.key === exp.category);
+    setCustomCatInput(isCustom ? exp.category : "");
+    setShowCustomInput(isCustom);
     setShowAdd(false);
   };
 
   const saveExpense = async () => {
-    if (!form.amount || !form.expense_date) return;
+    if (!form.amount || !form.expense_date || !form.category) {
+      toast("Please fill in all required fields", "error");
+      return;
+    }
     setSaving(true);
     const payload = {
       category: form.category,
@@ -217,15 +237,39 @@ export default function ExpensesPage() {
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.key}
-                  onClick={() => setForm((f) => ({ ...f, category: cat.key }))}
+                  onClick={() => { setForm((f) => ({ ...f, category: cat.key })); setShowCustomInput(false); }}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    form.category === cat.key ? "bg-gold text-white border-gold shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-gold"
+                    form.category === cat.key && !showCustomInput ? "bg-gold text-white border-gold shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-gold"
                   }`}
                 >
                   {cat.icon} {cat.label}
                 </button>
               ))}
+              {/* Custom category button */}
+              <button
+                onClick={() => { setShowCustomInput(true); setCustomCatInput(""); setForm((f) => ({ ...f, category: "" })); }}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  showCustomInput ? "bg-gold text-white border-gold shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-gold"
+                }`}
+              >
+                + Custom
+              </button>
             </div>
+            {showCustomInput && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={customCatInput}
+                  onChange={(e) => {
+                    setCustomCatInput(e.target.value);
+                    setForm((f) => ({ ...f, category: e.target.value.trim() }));
+                  }}
+                  placeholder="e.g. Gas, Water, Marketing…"
+                  autoFocus
+                  className="flex-1 px-3 py-2 rounded-lg border border-indigo-300 text-sm focus:border-indigo-500 outline-none"
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
