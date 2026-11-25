@@ -51,14 +51,14 @@ export async function GET(req: NextRequest) {
       LIMIT 6
     `),
     safeQuery(db, `
-      SELECT e.name, COALESCE(bp.total_bonus, 0) as revenue, COALESCE(bp.bill_count, 0) as bills
-      FROM employees e
-      LEFT JOIN (
-        SELECT employee_id, SUM(amount) as total_bonus, COUNT(*) as bill_count
-        FROM bonus_payouts
-        WHERE created_at >= DATE('now','-30 days')
-        GROUP BY employee_id
-      ) bp ON bp.employee_id = e.id
+      SELECT
+        TRIM(performed_by) as name,
+        SUM(total) as revenue,
+        COUNT(*) as bills
+      FROM billing
+      WHERE performed_by IS NOT NULL AND TRIM(performed_by) != ''
+        AND created_at >= DATE('now','-30 days')
+      GROUP BY TRIM(performed_by)
       ORDER BY revenue DESC
     `),
     safeQuery(db, `
