@@ -13,7 +13,7 @@ const DEFAULT_CATEGORIES = [
 
 const CUSTOM_COLOR = "bg-indigo-50 text-indigo-700 border-indigo-200";
 
-const PAY_PIN = "1122";
+const PAY_PIN = "1296";
 
 interface Expense {
   id: number;

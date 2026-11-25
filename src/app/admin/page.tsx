@@ -43,7 +43,7 @@ function greet() {
   return "Good evening";
 }
 
-const REVENUE_PIN = "1122";
+const REVENUE_PIN = "1296";
 
 function RevenueChart({ data }: { data: Array<{ day: string; revenue: number }> }) {
   const days: Array<{ label: string; revenue: number; isToday: boolean }> = [];

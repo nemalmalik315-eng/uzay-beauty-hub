@@ -163,7 +163,7 @@ function encodeServiceName(services: SelectedService[]): string {
   return services.flatMap((s) => Array(s.qty).fill(`${s.name}~~${s.price}`)).join("|||");
 }
 
-const BILLING_PIN = "1122";
+const BILLING_PIN = "1296";
 
 export default function BillingPage() {
   const [bills, setBills] = useState<Bill[]>([]);
@@ -772,7 +772,7 @@ export default function BillingPage() {
               onChange={(e) => { setEditPassword(e.target.value); setEditPasswordError(false); }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  if (editPassword === "1122") { startEdit(editPasswordBill); setEditPasswordBill(null); setEditPassword(""); }
+                  if (editPassword === "1296") { startEdit(editPasswordBill); setEditPasswordBill(null); setEditPassword(""); }
                   else setEditPasswordError(true);
                 }
               }}
@@ -788,7 +788,7 @@ export default function BillingPage() {
               <button
                 type="button"
                 onClick={() => {
-                  if (editPassword === "1122") { startEdit(editPasswordBill); setEditPasswordBill(null); setEditPassword(""); }
+                  if (editPassword === "1296") { startEdit(editPasswordBill); setEditPasswordBill(null); setEditPassword(""); }
                   else setEditPasswordError(true);
                 }}
                 className="flex-1 py-2 rounded-md bg-charcoal text-white text-sm font-medium hover:bg-opacity-90"
