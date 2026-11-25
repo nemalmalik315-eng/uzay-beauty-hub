@@ -9,8 +9,8 @@ export async function GET() {
   const afterOctober2026 = now > new Date("2026-10-31T23:59:59");
   const { rows } = await db.execute(
     afterOctober2026
-      ? "SELECT * FROM services WHERE active = 1 AND category != 'October Deals' ORDER BY category, price"
-      : "SELECT * FROM services WHERE active = 1 ORDER BY category, price"
+      ? "SELECT * FROM services WHERE active = 1 AND category != 'October Deals' ORDER BY category, sort_order, id"
+      : "SELECT * FROM services WHERE active = 1 ORDER BY category, sort_order, id"
   );
   return NextResponse.json(rows);
 }

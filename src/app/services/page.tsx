@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ServicesPage() {
   const db = getDb();
-  const { rows } = await db.execute("SELECT * FROM services WHERE active = 1 ORDER BY category, id");
+  const { rows } = await db.execute("SELECT * FROM services WHERE active = 1 ORDER BY category, sort_order, id");
   const services: Service[] = rows.map((r) => ({
     id: r.id as number,
     name: r.name as string,
