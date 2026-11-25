@@ -70,8 +70,8 @@ export default function BookPage() {
 
   const CATEGORY_ORDER = [
     "Hair Cut", "Hair Treatment", "Hair Colour", "Facials", "Cleansing", "Polisher",
-    "Body Waxing", "Face Waxing", "Manicure & Pedicure", "Makeup", "Kids",
-    "Assistant Bridal", "Signature Bridal", "Bridal",
+    "Body Waxing", "Face Waxing", "Threading", "Manicure & Pedicure", "Makeup", "Kids",
+    "Massage", "Mehndi", "Assistant Bridal", "Signature Bridal", "Bridal",
   ];
 
   // Group deals by collection
