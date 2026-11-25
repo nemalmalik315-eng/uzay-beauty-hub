@@ -344,19 +344,27 @@ export default function AdminDashboard() {
             )
           ) : (
             analytics?.staffPerformance?.length ? (
-              <div className="space-y-2">
-                {analytics.staffPerformance.map((s, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-gold">{s.name.charAt(0)}</span>
+              <div className="space-y-3">
+                {analytics.staffPerformance.map((s, i) => {
+                  const max = Number(analytics.staffPerformance[0].bills) || 1;
+                  const pct = (Number(s.bills) / max) * 100;
+                  return (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[10px] font-bold text-gold">{s.name.charAt(0)}</span>
+                          </div>
+                          <span className="text-xs text-charcoal font-medium">{s.name}</span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-medium">{s.bills} {Number(s.bills) === 1 ? "session" : "sessions"}</span>
+                      </div>
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-gold/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-charcoal">{s.name}</p>
-                      <p className="text-xs text-gray-400">{s.bills} bills</p>
-                    </div>
-                    <p className="text-sm font-bold text-charcoal">Rs. {Number(s.revenue).toLocaleString()}</p>
-                  </div>
-                ))}
+                  );
+                })}
                 <p className="text-[10px] text-gray-400 pt-1">Last 30 days</p>
               </div>
             ) : (

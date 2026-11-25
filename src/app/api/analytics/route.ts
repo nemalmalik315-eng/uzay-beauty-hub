@@ -53,13 +53,12 @@ export async function GET(req: NextRequest) {
     safeQuery(db, `
       SELECT
         TRIM(performed_by) as name,
-        SUM(total) as revenue,
         COUNT(*) as bills
       FROM billing
       WHERE performed_by IS NOT NULL AND TRIM(performed_by) != ''
         AND created_at >= DATE('now','-30 days')
       GROUP BY TRIM(performed_by)
-      ORDER BY revenue DESC
+      ORDER BY bills DESC
     `),
     safeQuery(db, `
       SELECT strftime('%Y-%m', created_at) as month, COALESCE(SUM(total),0) as revenue, COUNT(*) as count
