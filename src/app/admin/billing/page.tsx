@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useToast } from "@/components/admin/Toast";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 
@@ -166,6 +167,7 @@ function encodeServiceName(services: SelectedService[]): string {
 const BILLING_PIN = "1296";
 
 export default function BillingPage() {
+  const searchParams = useSearchParams();
   const [bills, setBills] = useState<Bill[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [period, setPeriod] = useState("today");
@@ -221,7 +223,7 @@ export default function BillingPage() {
   const [serviceSearch, setServiceSearch] = useState("");
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [amountPaidOverride, setAmountPaidOverride] = useState<number | null>(null);
-  const [showOutstandingOnly, setShowOutstandingOnly] = useState(false);
+  const [showOutstandingOnly, setShowOutstandingOnly] = useState(() => false);
   const [saving, setSaving] = useState(false);
   const [billDate, setBillDate] = useState(new Date().toISOString().split("T")[0]);
   const [savedBillInfo, setSavedBillInfo] = useState<SavedBillInfo | null>(null);
@@ -281,9 +283,11 @@ export default function BillingPage() {
     bills.flatMap((b) => parseServiceItems(b.service_name).map((s) => s.name))
   )].sort();
 
-  const loadBills = async () => {
+  const loadBills = async (outstandingMode = showOutstandingOnly) => {
     let url: string;
-    if (period === "custom" && customDate) {
+    if (outstandingMode) {
+      url = `/api/billing?outstanding=1`;
+    } else if (period === "custom" && customDate) {
       url = `/api/billing?date=${customDate}`;
     } else if (period === "month-pick" && customMonth) {
       url = `/api/billing?month=${customMonth}`;
@@ -296,11 +300,23 @@ export default function BillingPage() {
     setSummary(data.summary ?? null);
   };
 
+  // Initialise outstanding mode from URL param (e.g. dashboard tile link)
   useEffect(() => {
-    loadBills();
+    if (searchParams.get("outstanding") === "1") {
+      setShowOutstandingOnly(true);
+      loadBills(true);
+    } else {
+      loadBills(false);
+    }
     fetch("/api/services")
       .then((r) => r.json())
       .then((data) => setServices(Array.isArray(data) ? data : []));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!showOutstandingOnly) loadBills(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period, customDate, customMonth]);
 
   useEffect(() => {
@@ -960,7 +976,7 @@ export default function BillingPage() {
           </div>
           <div className="ml-auto flex gap-2 items-center">
             <button
-              onClick={() => setShowOutstandingOnly(!showOutstandingOnly)}
+              onClick={() => { const next = !showOutstandingOnly; setShowOutstandingOnly(next); loadBills(next); }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 showOutstandingOnly ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-600 hover:bg-orange-100"
               }`}
