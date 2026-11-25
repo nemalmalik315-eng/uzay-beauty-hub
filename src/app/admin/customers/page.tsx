@@ -39,6 +39,8 @@ interface CustomerDetail {
     discount: number;
     total: number;
     payment_method: string;
+    payment_status: string;
+    amount_paid: number | null;
     created_at: string;
   }>;
   bookingHistory: Array<{
@@ -361,6 +363,27 @@ export default function CustomersPage() {
                   Last visit: {new Date(selectedCustomer.stats.lastVisit).toLocaleDateString()}
                 </p>
               )}
+
+              {/* Outstanding balance banner */}
+              {(() => {
+                const outstandingBills = selectedCustomer.bills.filter(b => b.payment_status === "pending" || b.payment_status === "partial");
+                if (outstandingBills.length === 0) return null;
+                const outstandingTotal = outstandingBills.reduce((sum, b) => {
+                  if (b.payment_status === "partial") return sum + b.total - (b.amount_paid ?? 0);
+                  return sum + b.total;
+                }, 0);
+                return (
+                  <div className="mt-3 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    <p className="text-xs text-orange-700 font-medium">
+                      Outstanding balance: <span className="font-bold">Rs. {outstandingTotal.toLocaleString()}</span>
+                      {outstandingBills.length > 1 && ` across ${outstandingBills.length} bills`}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Transaction history */}
@@ -372,26 +395,35 @@ export default function CustomersPage() {
                     Walk-in Bills
                   </h4>
                   <div className="space-y-3">
-                    {selectedCustomer.bills.map((bill) => (
-                      <div key={bill.id} className="flex items-start justify-between gap-3 py-3 border-b border-gray-50">
-                        <div className="min-w-0 flex-1">
-                          <div className="space-y-0.5">
-                            {bill.service_name.split("|||").map((part, i) => (
-                              <p key={i} className="text-sm font-medium text-charcoal">{part.split("~~")[0]?.trim() || part.trim()}</p>
-                            ))}
+                    {selectedCustomer.bills.map((bill) => {
+                      const isOutstanding = bill.payment_status === "pending" || bill.payment_status === "partial";
+                      const remaining = bill.payment_status === "partial" ? bill.total - (bill.amount_paid ?? 0) : bill.total;
+                      return (
+                        <div key={bill.id} className={`flex items-start justify-between gap-3 py-3 border-b border-gray-50 ${isOutstanding ? "bg-orange-50/50 -mx-1 px-1 rounded" : ""}`}>
+                          <div className="min-w-0 flex-1">
+                            <div className="space-y-0.5">
+                              {bill.service_name.split("|||").map((part, i) => (
+                                <p key={i} className="text-sm font-medium text-charcoal">{part.split("~~")[0]?.trim() || part.trim()}</p>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {new Date(bill.created_at).toLocaleDateString()} • {bill.payment_method}
+                            </p>
+                            {isOutstanding && (
+                              <span className={`inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${bill.payment_status === "partial" ? "bg-yellow-100 text-yellow-700" : "bg-orange-100 text-orange-700"}`}>
+                                {bill.payment_status === "partial" ? `Partial — Rs. ${remaining.toFixed(0)} due` : "Unpaid"}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {new Date(bill.created_at).toLocaleDateString()} • {bill.payment_method}
-                          </p>
+                          <div className="text-right flex-shrink-0">
+                            <p className={`text-sm font-bold ${isOutstanding ? "text-orange-600" : "text-green-600"}`}>Rs. {bill.total.toFixed(0)}</p>
+                            {bill.discount > 0 && (
+                              <p className="text-xs text-red-400">-Rs. {bill.discount.toFixed(0)} off</p>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-sm font-bold text-green-600">Rs. {bill.total.toFixed(0)}</p>
-                          {bill.discount > 0 && (
-                            <p className="text-xs text-red-400">-Rs. {bill.discount.toFixed(0)} off</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

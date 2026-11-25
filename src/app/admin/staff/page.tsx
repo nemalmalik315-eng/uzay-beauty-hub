@@ -41,7 +41,7 @@ interface AttendanceSummary {
 type Tab = "team" | "attendance" | "bonuses" | "pay";
 
 // ← Change this to whatever PIN you want
-const PAY_PIN = "1234";
+const PAY_PIN = "1122";
 
 interface BonusEmployee {
   employee_id: number;

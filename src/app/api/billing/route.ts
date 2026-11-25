@@ -44,10 +44,13 @@ export async function GET(req: NextRequest) {
     params.push(paymentStatus);
   }
 
+  // When fetching all outstanding (no date scope), skip the date filter
+  const skipDateFilter = outstandingOnly && !period && !date && !month && !customer;
+
   if (month) {
     conditions.push("strftime('%Y-%m', b.created_at) = ?");
     params.push(month);
-  } else if (period === "today" || (!period && !date)) {
+  } else if (!skipDateFilter && (period === "today" || (!period && !date))) {
     conditions.push("DATE(b.created_at) = DATE('now')");
   } else if (period === "week") {
     conditions.push("strftime('%Y-%W', b.created_at) = strftime('%Y-%W', 'now')");
@@ -158,7 +161,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const db = getDb();
   const body = await req.json();
-  const { id, customer_name, customer_phone, service_name, service_charge, discount = 0, payment_method = "cash", payment_status, amount_paid, bill_date, performed_by, billed_by } = body;
+  const { id, customer_name, customer_phone, service_name, service_charge, discount = 0, makeup_discount, hairdo_discount, payment_method = "cash", payment_status, amount_paid, bill_date, performed_by, billed_by } = body;
 
   if (!id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -191,6 +194,8 @@ export async function PATCH(req: NextRequest) {
     sets.push("service_name = ?", "service_charge = ?", "discount = ?", "total = ?", "payment_method = ?");
     args.push(service_name, service_charge ?? 0, discount ?? 0, total, payment_method);
   }
+  if (makeup_discount !== undefined) { sets.push("makeup_discount = ?"); args.push(makeup_discount ?? null); }
+  if (hairdo_discount !== undefined) { sets.push("hairdo_discount = ?"); args.push(hairdo_discount ?? null); }
   if (payment_status !== undefined) { sets.push("payment_status = ?"); args.push(payment_status); }
   if (amount_paid !== undefined) { sets.push("amount_paid = ?"); args.push(amount_paid); }
   if (bill_date) { sets.push("created_at = ?"); args.push(bill_date); }

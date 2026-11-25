@@ -8,6 +8,8 @@ interface DashboardData {
   todayBookings: number;
   totalCustomers: number;
   lowStockCount: number;
+  outstandingCount: number;
+  outstandingTotal: number;
   recentBookings: Array<{
     id: number;
     customer_name: string;
@@ -115,29 +117,40 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function load() {
-      const [billingRes, bookingsRes, customersRes, stockRes, analyticsRes] = await Promise.all([
+      const [billingRes, bookingsRes, customersRes, stockRes, analyticsRes, outstandingRes] = await Promise.all([
         fetch("/api/billing?period=today"),
         fetch("/api/bookings"),
         fetch("/api/customers"),
         fetch("/api/stock"),
         fetch("/api/analytics").catch(() => null),
+        fetch("/api/billing?outstanding=1"),
       ]);
       const billing = await billingRes.json().catch(() => ({}));
       const bookings = await bookingsRes.json().catch(() => []);
       const customers = await customersRes.json().catch(() => []);
       const stock = await stockRes.json().catch(() => ({}));
       const analyticsData = analyticsRes ? await analyticsRes.json().catch(() => null) : null;
+      const outstandingData = await outstandingRes.json().catch(() => ({}));
 
       const todayStr = new Date().toISOString().split("T")[0];
       const bookingsArr = Array.isArray(bookings) ? bookings : [];
       const customersArr = Array.isArray(customers) ? customers : [];
       const todayBookings = bookingsArr.filter((b: { date: string }) => b.date === todayStr);
 
+      const outstandingBills: Array<{ payment_status: string; total: number; amount_paid: number | null }> =
+        Array.isArray(outstandingData.bills) ? outstandingData.bills : [];
+      const outstandingTotal = outstandingBills.reduce((sum, b) => {
+        if (b.payment_status === "partial") return sum + b.total - (b.amount_paid ?? 0);
+        return sum + b.total;
+      }, 0);
+
       setData({
         todayRevenue: billing.summary?.total_revenue || 0,
         todayBookings: todayBookings.length,
         totalCustomers: customersArr.length,
         lowStockCount: stock.lowStockCount || 0,
+        outstandingCount: outstandingBills.length,
+        outstandingTotal,
         recentBookings: bookingsArr.slice(0, 5),
       });
       setAnalytics(analyticsData);
@@ -193,7 +206,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Link href="/admin/bookings" className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow active:scale-[0.98]">
           <div className="w-9 h-9 bg-gold/10 rounded-xl flex items-center justify-center mb-3">
             <svg className="w-5 h-5 text-gold" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
@@ -208,6 +221,18 @@ export default function AdminDashboard() {
           </div>
           <p className="text-2xl font-bold text-charcoal">{data.totalCustomers}</p>
           <p className="text-xs text-gray-400 mt-0.5 leading-tight">Total Clients</p>
+        </Link>
+
+        <Link href="/admin/billing?outstanding=1" className={`rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow active:scale-[0.98] ${data.outstandingCount > 0 ? "bg-orange-50" : "bg-white"}`}>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${data.outstandingCount > 0 ? "bg-orange-100" : "bg-gray-100"}`}>
+            <svg className={`w-5 h-5 ${data.outstandingCount > 0 ? "text-orange-500" : "text-gray-400"}`} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75" /></svg>
+          </div>
+          <p className={`text-xl font-bold ${data.outstandingCount > 0 ? "text-orange-600" : "text-charcoal"}`}>
+            {data.outstandingCount > 0 ? `Rs. ${data.outstandingTotal.toLocaleString()}` : "0"}
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5 leading-tight">
+            {data.outstandingCount > 0 ? `${data.outstandingCount} unpaid` : "No Outstanding"}
+          </p>
         </Link>
 
         <Link href="/admin/stock" className={`rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow active:scale-[0.98] ${data.lowStockCount > 0 ? "bg-red-50" : "bg-white"}`}>
