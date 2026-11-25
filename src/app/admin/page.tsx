@@ -257,8 +257,8 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      {/* Net Profit banner */}
-      {(() => {
+      {/* Net Profit banner — only visible after PIN unlock */}
+      {revenueUnlocked && (() => {
         const netProfit = data.monthRevenue - data.monthExpenses;
         return (
           <Link href="/admin/expenses" className={`flex items-center gap-4 rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-shadow ${netProfit >= 0 ? "bg-gold/10" : "bg-red-50"}`}>
