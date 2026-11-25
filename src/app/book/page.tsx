@@ -247,7 +247,7 @@ export default function BookPage() {
                           type="button"
                           onClick={() => setActiveCategory(col)}
                           className={`px-4 py-2 rounded-full text-sm font-medium transition-all text-white ${isActive ? "shadow-lg ring-2 ring-white ring-offset-1" : "opacity-85 hover:opacity-100"}`}
-                          style={{ backgroundColor: color, ringOffsetColor: color }}
+                          style={{ backgroundColor: color }}
                         >
                           ✦ {col}
                         </button>
