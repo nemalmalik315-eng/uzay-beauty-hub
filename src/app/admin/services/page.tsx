@@ -26,7 +26,7 @@ const CATEGORIES = [
 const BLANK_FORM = { name: "", category: CATEGORIES[0], price: "", price_max: "", duration: "", description: "" };
 
 export default function ServicesPage() {
-  const toast = useToast();
+  const { toast } = useToast();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCat, setFilterCat] = useState("");

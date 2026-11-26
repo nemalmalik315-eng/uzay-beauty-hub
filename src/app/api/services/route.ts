@@ -80,7 +80,8 @@ export async function PATCH(req: NextRequest) {
   }
 
   const setClauses = fields.map((f) => `${f} = ?`).join(", ");
-  const args = [...fields.map((f) => updates[f] as unknown), id];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const args = [...fields.map((f) => updates[f] as any), id];
 
   await db.execute({
     sql: `UPDATE services SET ${setClauses} WHERE id = ?`,
