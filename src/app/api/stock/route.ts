@@ -77,6 +77,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

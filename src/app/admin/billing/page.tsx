@@ -492,7 +492,7 @@ export default function BillingPage() {
     "Facials", "Cleansing", "Polisher", "Scrub & Mask",
     "Body Waxing", "Face Waxing", "Threading",
     "Manicure & Pedicure", "Massage", "Makeup", "Kids",
-    "Mehndi", "Assistant Bridal", "Signature Bridal", "Azaadi Deals",
+    "Mehndi", "Assistant Bridal", "Signature Bridal",
   ];
 
   // Group services by category for the dropdown

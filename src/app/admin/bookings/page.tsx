@@ -662,7 +662,7 @@ export default function BookingsPage() {
               {/* October Deals quick-pick */}
               {newBookingDeals.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">🎁 October Deals</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">🎁 Deals</p>
                   <div className="grid grid-cols-2 gap-2">
                     {newBookingDeals.map((deal) => {
                       const isChosen = newSelectedIds.includes(deal.id);
@@ -701,7 +701,6 @@ export default function BookingsPage() {
                 <div className="max-h-40 overflow-y-auto border border-gray-100 rounded-md divide-y divide-gray-50">
                   {menuServices
                     .filter((s) => !newServiceSearch || s.name.toLowerCase().includes(newServiceSearch.toLowerCase()))
-                    .filter((s) => s.category !== "October Deals")
                     .slice(0, 20)
                     .map((s) => {
                       const checked = newSelectedIds.includes(s.id);

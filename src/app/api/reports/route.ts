@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import getDb from "@/lib/db";
+import { isAuthenticated, unauthorized } from "@/lib/requireAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") || "daily";
