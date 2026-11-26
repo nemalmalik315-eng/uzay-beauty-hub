@@ -77,9 +77,17 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!isAuthenticated(req)) return unauthorized();
   const db = getDb();
   const { id } = await params;
-  const body = await req.json();
+
+  let body: Record<string, string>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
   const { name, phone, email, surname, house_no, society, notes } = body;
 
   if (phone) {
@@ -92,18 +100,23 @@ export async function PATCH(
     }
   }
 
-  await db.execute({
-    sql: `UPDATE customers SET
-            name    = COALESCE(?, name),
-            phone   = COALESCE(?, phone),
-            email   = ?,
-            surname = ?,
-            house_no = ?,
-            society = ?,
-            notes   = ?
-          WHERE id = ?`,
-    args: [name || null, phone || null, email || null, surname || null, house_no || null, society || null, notes || null, Number(id)],
-  });
+  try {
+    await db.execute({
+      sql: `UPDATE customers SET
+              name    = COALESCE(?, name),
+              phone   = COALESCE(?, phone),
+              email   = ?,
+              surname = ?,
+              house_no = ?,
+              society = ?,
+              notes   = ?
+            WHERE id = ?`,
+      args: [name || null, phone || null, email || null, surname || null, house_no || null, society || null, notes || null, Number(id)],
+    });
+  } catch (err) {
+    console.error("PATCH /api/customers/[id] DB error:", err);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }

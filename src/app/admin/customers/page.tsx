@@ -119,13 +119,18 @@ export default function CustomersPage() {
     }
   };
 
-  const viewCustomer = async (id: number) => {
+  const viewCustomer = async (id: number, openEdit = false) => {
     setLoadingDetail(true);
     setEditingCustomer(false);
     const res = await fetch(`/api/customers/${id}`);
     if (res.ok) {
       const data = await res.json();
       setSelectedCustomer(data);
+      if (openEdit) {
+        const c = data.customer;
+        setEditForm({ name: c.name, phone: c.phone, email: c.email || "", surname: c.surname || "", house_no: c.house_no || "", society: c.society || "", notes: c.notes || "" });
+        setEditingCustomer(true);
+      }
     } else {
       toast("Failed to load customer details", "error");
     }
@@ -599,13 +604,22 @@ export default function CustomersPage() {
                       {c.last_visit ? new Date(c.last_visit).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => viewCustomer(c.id)}
-                        disabled={loadingDetail}
-                        className="text-xs text-gold hover:text-gold-dark font-medium"
-                      >
-                        View
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => viewCustomer(c.id)}
+                          disabled={loadingDetail}
+                          className="text-xs text-gold hover:text-gold-dark font-medium"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => viewCustomer(c.id, true)}
+                          disabled={loadingDetail}
+                          className="text-xs text-gray-400 hover:text-gray-600 font-medium"
+                        >
+                          Edit
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -623,14 +637,16 @@ export default function CustomersPage() {
           </div>
         ) : (
           customers.map((c) => (
-            <button
+            <div
               key={c.id}
-              onClick={() => viewCustomer(c.id)}
-              disabled={loadingDetail}
-              className="w-full text-left bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:bg-gray-50 transition-colors"
+              className="bg-white rounded-lg shadow-sm border border-gray-100 p-4"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
+                <button
+                  onClick={() => viewCustomer(c.id)}
+                  disabled={loadingDetail}
+                  className="min-w-0 flex-1 text-left"
+                >
                   <p className="text-sm font-medium text-charcoal truncate">{c.name}{c.surname ? ` ${c.surname}` : ""}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{c.phone}</p>
                   <div className="flex gap-3 mt-1.5">
@@ -644,10 +660,15 @@ export default function CustomersPage() {
                       <span className="text-xs text-gray-400">{new Date(c.last_visit).toLocaleDateString()}</span>
                     )}
                   </div>
+                </button>
+                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <button onClick={() => viewCustomer(c.id)} disabled={loadingDetail}
+                    className="text-xs text-gold font-medium">View →</button>
+                  <button onClick={() => viewCustomer(c.id, true)} disabled={loadingDetail}
+                    className="text-xs text-gray-400 hover:text-gray-600 font-medium">Edit</button>
                 </div>
-                <span className="flex-shrink-0 text-xs text-gold font-medium">View →</span>
               </div>
-            </button>
+            </div>
           ))
         )}
       </div>
